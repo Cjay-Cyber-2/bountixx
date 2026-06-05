@@ -29,6 +29,11 @@ export const metadata: Metadata = {
   title: "Bountixx — Compete. Conquer. Collect.",
   description:
     "The AI-powered multiplayer challenge arena. Drop any challenge, lock the room, one winner claims the bounty.",
+  icons: {
+    icon: "/logo.png",
+    shortcut: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export const viewport = {
