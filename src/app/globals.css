@@ -1,0 +1,168 @@
+@import "tailwindcss";
+
+/* ─── Bountixx Design Tokens ─── */
+:root {
+  --ignite: #FF6B1A;
+  --crown: #F0A500;
+  --void: #9B6BFF;
+  --cosmos: #0E0818;
+  --cosmos-2: #130C24;
+  --cosmos-3: #1E1340;
+  --cosmos-4: #2D1B69;
+  --haze: #E8E0FF;
+  --haze-2: #9B8FC0;
+  --haze-3: #4A3F70;
+  --danger: #FF2D55;
+  --success: #00D68F;
+
+  --clip-arena: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+  --clip-arena-sm: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+}
+
+/* ─── Tailwind v4 Theme ─── */
+@theme inline {
+  --color-ignite:   #FF6B1A;
+  --color-crown:    #F0A500;
+  --color-void:     #9B6BFF;
+  --color-cosmos:   #0E0818;
+  --color-cosmos-2: #130C24;
+  --color-cosmos-3: #1E1340;
+  --color-cosmos-4: #2D1B69;
+  --color-haze:     #E8E0FF;
+  --color-haze-2:   #9B8FC0;
+  --color-haze-3:   #4A3F70;
+  --color-danger:   #FF2D55;
+  --color-success:  #00D68F;
+}
+
+/* ─── Base ─── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: auto; }
+
+body {
+  background: var(--cosmos);
+  color: var(--haze);
+  font-family: var(--font-rajdhani, 'Rajdhani'), sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--cosmos-2); }
+::-webkit-scrollbar-thumb { background: var(--cosmos-4); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--void); }
+
+/* ─── Focus ─── */
+:focus-visible { outline: 2px solid var(--ignite); outline-offset: 2px; }
+
+/* ─── Typography helpers ─── */
+.font-orbitron  { font-family: var(--font-orbitron, 'Orbitron'), monospace; }
+.font-rajdhani  { font-family: var(--font-rajdhani, 'Rajdhani'), sans-serif; }
+.font-share-mono { font-family: var(--font-share-mono, 'Share Tech Mono'), monospace; }
+
+/* ─── Clip-path ─── */
+.clip-arena    { clip-path: var(--clip-arena); }
+.clip-arena-sm { clip-path: var(--clip-arena-sm); }
+
+/* ─── Scan-line ─── */
+@keyframes scanline {
+  from { top: -2px; }
+  to   { top: 100%; }
+}
+.scanline-fx { position: relative; overflow: hidden; }
+.scanline-fx::after {
+  content: '';
+  position: absolute; left: 0; right: 0; height: 2px;
+  background: rgba(255,107,26,0.05);
+  animation: scanline 7s linear infinite;
+  pointer-events: none;
+}
+
+/* ─── Live dot pulse ─── */
+@keyframes livepulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.2; }
+}
+.dot-live { display: inline-block; animation: livepulse 1s ease-in-out infinite; }
+
+/* ─── Pulse rings ─── */
+@keyframes pulsering {
+  0%   { transform: scale(1); opacity: 0.4; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+.pulse-ring { animation: pulsering 2s ease-out infinite; }
+.pulse-ring-delay { animation: pulsering 2s ease-out 0.7s infinite; }
+
+/* ─── Ticker ─── */
+@keyframes ticker-ltr { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes ticker-rtl { from { transform: translateX(-50%); } to { transform: translateX(0); } }
+.ticker-ltr { animation: ticker-ltr 30s linear infinite; }
+.ticker-rtl { animation: ticker-rtl 36s linear infinite; }
+.ticker-ltr:hover, .ticker-rtl:hover { animation-play-state: paused; }
+
+/* ─── Spinner ─── */
+@keyframes spin360 { to { transform: rotate(360deg); } }
+.spinner {
+  width: 20px; height: 20px;
+  border: 2px solid var(--cosmos-4);
+  border-top-color: var(--ignite);
+  border-radius: 50%;
+  animation: spin360 0.65s linear infinite;
+}
+
+/* ─── Skeleton shimmer ─── */
+@keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+.skeleton { position: relative; overflow: hidden; background: var(--cosmos-3); border-radius: 2px; }
+.skeleton::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100%);
+  animation: shimmer 1.6s infinite;
+}
+
+/* ─── Gradient text ─── */
+.text-gradient-fire {
+  background: linear-gradient(135deg, var(--ignite), var(--crown));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.text-gradient-void {
+  background: linear-gradient(135deg, var(--void), #C77DFF);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+
+/* ─── Glow helpers ─── */
+.glow-ignite { box-shadow: 0 0 28px rgba(255,107,26,0.4); }
+.glow-crown  { box-shadow: 0 0 28px rgba(240,165,0,0.4); }
+.glow-void   { box-shadow: 0 0 28px rgba(155,107,255,0.4); }
+.glow-success { box-shadow: 0 0 20px rgba(0,214,143,0.4); }
+
+/* ─── Float bob ─── */
+@keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+.bob { animation: bob 2.8s ease-in-out infinite; }
+
+/* ─── Counter ring rotation ─── */
+@keyframes ring-spin { to { transform: rotate(360deg); } }
+@keyframes ring-spin-rev { to { transform: rotate(-360deg); } }
+.ring-spin     { animation: ring-spin 8s linear infinite; transform-origin: center; }
+.ring-spin-rev { animation: ring-spin-rev 10s linear infinite; transform-origin: center; }
+
+/* ─── Confetti particle ─── */
+@keyframes confetti-fall {
+  0%   { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+/* ─── Typewriter cursor ─── */
+@keyframes cursor-blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+.cursor-blink { animation: cursor-blink 0.8s step-start infinite; }
+
+/* ─── Reduced motion ─── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
