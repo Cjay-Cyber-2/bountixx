@@ -42,21 +42,21 @@ export default function ProfilePage() {
           <div className="absolute inset-0 bg-cosmos-2" style={{ opacity: 0.85 }} />
           {/* User info */}
           <div className="absolute bottom-6 left-6 flex items-end gap-4">
-            <div className="w-20 h-20 rounded-full bg-cosmos-3 border-[3px] border-ignite flex items-center justify-center">
-              <span className="font-orbitron font-bold text-2xl text-ignite">AP</span>
+            <div className="w-20 h-20 rounded-full bg-cosmos-3 border-[3px] border-void flex items-center justify-center">
+              <span className="font-orbitron font-bold text-2xl text-void">AP</span>
             </div>
             <div>
-              <h1 className="font-orbitron font-bold text-3xl text-haze">@arena_player</h1>
+              <h1 className="font-zen-dots text-2xl text-haze">@arena_player</h1>
               <div className="flex items-center gap-3 mt-1">
-                <span className="font-share-mono text-xs text-haze-3">JOINED JAN 2025</span>
-                <span className="text-ignite text-xs">·</span>
-                <span className="font-share-mono text-xs text-haze-3">124 ARENAS</span>
+                <span className="font-space-mono text-xs text-haze-3">JOINED JAN 2025</span>
+                <span className="text-void text-xs">·</span>
+                <span className="font-space-mono text-xs text-haze-3">124 ARENAS</span>
               </div>
             </div>
           </div>
           {/* Coin balance */}
           <div className="absolute bottom-6 right-6 flex items-center gap-2">
-            <span className="font-share-mono text-[9px] text-haze-3 tracking-widest">BALANCE</span>
+            <span className="font-space-mono text-[9px] text-haze-3 tracking-widest">BALANCE</span>
             <span className="font-orbitron font-bold text-2xl text-crown">450</span>
           </div>
         </div>
@@ -78,10 +78,10 @@ export default function ProfilePage() {
                 <AnimatedNumber
                   value={s.value}
                   suffix={s.suffix}
-                  className="font-orbitron font-bold text-4xl text-ignite block mb-1"
+                  className="font-orbitron font-bold text-3xl text-void block mb-1"
                   format={!s.suffix}
                 />
-                <p className="font-share-mono text-[9px] text-haze-3 tracking-[3px] uppercase">
+                <p className="font-space-mono text-[9px] text-haze-3 tracking-[3px] uppercase">
                   {s.label}
                 </p>
               </motion.div>
@@ -92,14 +92,14 @@ export default function ProfilePage() {
           <div className="bg-cosmos-2 border border-cosmos-4 p-6">
             <div className="flex items-center justify-between mb-4">
               <p className="font-orbitron font-bold text-sm text-haze">CHAMPION</p>
-              <p className="font-share-mono text-xs text-ignite">6,820 / 10,000 XP to LEGENDARY</p>
+              <p className="font-space-mono text-xs text-void">6,820 / 10,000 XP to LEGENDARY</p>
             </div>
             <XPBar current={6820} max={10000} thick color="void" />
           </div>
 
           {/* Achievements */}
           <div>
-            <h2 className="font-orbitron font-bold text-xl text-haze mb-5">ACHIEVEMENTS</h2>
+            <h2 className="font-zen-dots text-lg text-haze mb-5">ACHIEVEMENTS</h2>
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
               {ACHIEVEMENTS.map((a) => (
                 <div
@@ -108,8 +108,8 @@ export default function ProfilePage() {
                     a.earned ? "opacity-100" : "opacity-25"
                   }`}
                 >
-                  <div className="w-8 h-8 rounded-full bg-cosmos-3 border border-ignite/30 flex items-center justify-center mb-3">
-                    <span className="text-ignite text-sm">✦</span>
+                  <div className="w-8 h-8 rounded-full bg-cosmos-3 border border-void/30 flex items-center justify-center mb-3">
+                    <span className="text-void text-sm">✦</span>
                   </div>
                   <p className="font-rajdhani font-bold text-sm text-haze mb-1">{a.name}</p>
                   <p className="font-rajdhani text-xs text-haze-2">{a.desc}</p>
@@ -120,7 +120,7 @@ export default function ProfilePage() {
 
           {/* Room history */}
           <div>
-            <h2 className="font-orbitron font-bold text-xl text-haze mb-5">RECENT ARENAS</h2>
+            <h2 className="font-zen-dots text-lg text-haze mb-5">RECENT ARENAS</h2>
             <div className="bg-cosmos-2 border border-cosmos-4 overflow-hidden">
               {HISTORY.map((h, i) => (
                 <div
@@ -130,10 +130,10 @@ export default function ProfilePage() {
                   }`}
                 >
                   <p className="font-rajdhani font-bold text-sm text-haze flex-1 truncate">{h.name}</p>
-                  <span className="font-share-mono text-[10px] text-haze-3">{h.category}</span>
-                  <span className="font-share-mono text-[10px] text-success">{h.place}</span>
+                  <span className="font-space-mono text-[10px] text-haze-3">{h.category}</span>
+                  <span className="font-space-mono text-[10px] text-success">{h.place}</span>
                   <span className="font-orbitron font-bold text-sm text-crown">+{h.coins}</span>
-                  <span className="font-share-mono text-[10px] text-haze-3">{h.date}</span>
+                  <span className="font-space-mono text-[10px] text-haze-3">{h.date}</span>
                 </div>
               ))}
             </div>

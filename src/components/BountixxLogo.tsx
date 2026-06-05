@@ -11,7 +11,6 @@ export function BountixxLogo({
   showWordmark = false,
   className = "",
 }: LogoProps) {
-  /* The mark's natural proportions are 1:1 since the new logo is square */
   const h = size;
   const w = size;
 
@@ -33,7 +32,7 @@ export function BountixxLogo({
           style={{ fontSize: size * 0.36 }}
         >
           <span style={{ color: "var(--haze)" }}>BOUN</span>
-          <span style={{ color: "var(--ignite)" }}>TI</span>
+          <span style={{ color: "var(--void)" }}>TI</span>
           <span style={{ color: "var(--crown)" }}>XX</span>
         </span>
       )}
@@ -49,7 +48,7 @@ export function BountixxWordmark({ size = 20 }: { size?: number }) {
       style={{ fontSize: size }}
     >
       <span style={{ color: "var(--haze)" }}>BOUN</span>
-      <span style={{ color: "var(--ignite)" }}>TI</span>
+      <span style={{ color: "var(--void)" }}>TI</span>
       <span style={{ color: "var(--crown)" }}>XX</span>
     </span>
   );

@@ -18,14 +18,14 @@ const LEADERBOARD = [
 ];
 
 function Confetti() {
-  const particles = Array.from({ length: 40 }, (_, i) => ({
+  const [particles] = useState(() => Array.from({ length: 40 }, (_, i) => ({
     id: i,
     x: Math.random() * 100,
-    color: ["#FF6B1A", "#F0A500", "#9B6BFF", "#FFFFFF", "#00D68F"][i % 5],
+    color: ["#FF6B1A", "#F0A500", "#a855f7", "#FFFFFF", "#00D68F"][i % 5],
     delay: Math.random() * 1.5,
     duration: 2 + Math.random() * 2,
     size: 3 + Math.random() * 6,
-  }));
+  })));
 
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-0" aria-hidden="true">
@@ -96,7 +96,7 @@ export default function ResultsPage() {
           </motion.p>
 
           <motion.h1
-            className="font-orbitron font-bold text-4xl text-haze"
+            className="font-zen-dots text-3xl text-haze"
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 1.5, type: "spring", damping: 14 }}
@@ -104,7 +104,7 @@ export default function ResultsPage() {
             @zainab_codes
           </motion.h1>
 
-          <p className="font-share-mono text-xs text-haze-2">Solved in 1:42</p>
+          <p className="font-space-mono text-xs text-haze-2">Solved in 1:42</p>
 
           {/* Coin reward */}
           <motion.div
@@ -131,7 +131,7 @@ export default function ResultsPage() {
           animate="show"
           className="w-full flex flex-col gap-2"
         >
-          <p className="font-share-mono text-[10px] text-haze-3 tracking-widest mb-2">FINAL STANDINGS</p>
+          <p className="font-space-mono text-[10px] text-haze-3 tracking-widest mb-2">FINAL STANDINGS</p>
           {LEADERBOARD.map((p) => (
             <motion.div
               key={p.rank}
@@ -152,9 +152,9 @@ export default function ResultsPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-rajdhani font-bold text-sm text-haze truncate">@{p.name}</p>
-                <p className="font-share-mono text-[9px] text-haze-3">{p.detail}</p>
+                <p className="font-space-mono text-[9px] text-haze-3">{p.detail}</p>
               </div>
-              <span className="font-share-mono text-xs text-haze-3">{p.time}</span>
+              <span className="font-space-mono text-xs text-haze-3">{p.time}</span>
               <span className="font-orbitron font-bold text-sm text-crown shrink-0">
                 {p.coins > 0 ? `+${p.coins}` : "—"}
               </span>
@@ -192,9 +192,9 @@ export default function ResultsPage() {
               className="flex flex-col items-center gap-4 text-center"
               onClick={() => setShowRankUp(false)}
             >
-              <p className="font-orbitron font-black text-6xl text-haze glow-ignite">RANK UP!</p>
+              <p className="font-zen-dots text-5xl text-haze glow-ignite">RANK UP!</p>
               <p className="font-orbitron font-bold text-2xl text-crown">YOU ARE NOW: ELITE</p>
-              <p className="font-share-mono text-xs text-haze-2 mt-2">Tap anywhere to continue</p>
+              <p className="font-space-mono text-xs text-haze-2 mt-2">Tap anywhere to continue</p>
             </motion.div>
           </motion.div>
         )}

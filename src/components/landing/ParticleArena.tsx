@@ -10,7 +10,7 @@ interface Particle {
 
 const COLORS = [
   "rgba(255,107,26,0.8)",
-  "rgba(155,107,255,0.6)",
+  "rgba(168,85,247,0.6)",
   "rgba(240,165,0,0.6)",
 ];
 
@@ -56,7 +56,7 @@ export function ParticleArena() {
           const dist = Math.sqrt(dx * dx + dy * dy);
           if (dist < 100) {
             ctx!.beginPath();
-            ctx!.strokeStyle = `rgba(155,107,255,${(1 - dist / 100) * 0.18})`;
+            ctx!.strokeStyle = `rgba(168,85,247,${(1 - dist / 100) * 0.18})`;
             ctx!.lineWidth = 0.5;
             ctx!.moveTo(particles[i].x, particles[i].y);
             ctx!.lineTo(particles[j].x, particles[j].y);

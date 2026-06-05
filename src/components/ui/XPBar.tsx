@@ -34,7 +34,7 @@ export function XPBar({
   return (
     <div ref={ref} className={cn("w-full", className)}>
       {label && (
-        <p className="font-share-mono text-[10px] text-haze-3 mb-1 tracking-widest uppercase">
+        <p className="font-space-mono text-[10px] text-haze-3 mb-1 tracking-widest uppercase">
           {label}
         </p>
       )}

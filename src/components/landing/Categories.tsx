@@ -17,7 +17,7 @@ const categories = [
     phase2: false,
   },
   {
-    icon: Brain, label: "Logic", color: "#9B6BFF",
+    icon: Brain, label: "Logic", color: "#a855f7",
     desc: "Puzzles, riddles, lateral thinking",
     phase2: false,
   },
@@ -45,10 +45,10 @@ export function Categories() {
   return (
     <section id="categories" className="py-36 px-6 lg:px-14" ref={ref}>
       <div className="max-w-[1400px] mx-auto">
-      <p className="font-share-mono text-xs text-ignite tracking-[6px] mb-4 uppercase">
+      <p className="font-space-mono text-xs text-void tracking-[6px] mb-4 uppercase">
         Challenge Types
       </p>
-      <h2 className="font-orbitron font-bold text-4xl lg:text-5xl text-haze mb-16">
+      <h2 className="font-zen-dots text-3xl lg:text-4xl text-haze mb-16">
         WHAT CAN YOU CHALLENGE?
       </h2>
 
@@ -70,7 +70,7 @@ export function Categories() {
             >
               {cat.phase2 && (
                 <div className="absolute inset-0 bg-cosmos-2/60 flex items-center justify-center z-10">
-                  <span className="font-share-mono text-xs text-haze-3 border border-haze-3/40 px-3 py-1 bg-cosmos-2">
+                  <span className="font-space-mono text-xs text-haze-3 border border-haze-3/40 px-3 py-1 bg-cosmos-2">
                     COMING SOON
                   </span>
                 </div>

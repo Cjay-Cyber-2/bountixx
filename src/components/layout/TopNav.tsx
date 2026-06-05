@@ -28,7 +28,7 @@ export function TopNav() {
         <div className="max-w-[1400px] mx-auto h-full px-5 flex items-center justify-between gap-6">
 
           {/* Logo */}
-          <Link href="/dashboard" className="shrink-0">
+          <Link href="/dashboard" className="shrink-0 cursor-target">
             <BountixxLogo size={38} showWordmark />
           </Link>
 
@@ -41,7 +41,7 @@ export function TopNav() {
                   key={href}
                   href={href}
                   className={cn(
-                    "relative flex items-center gap-2 px-4 py-2 font-rajdhani font-semibold text-sm transition-colors",
+                    "cursor-target relative flex items-center gap-2 px-4 py-2 font-rajdhani font-semibold text-sm transition-colors",
                     active ? "text-haze" : "text-haze-2 hover:text-haze"
                   )}
                 >
@@ -56,7 +56,7 @@ export function TopNav() {
                     />
                   )}
                   {active && (
-                    <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-ignite" />
+                    <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-void" />
                   )}
                 </Link>
               );
@@ -73,19 +73,19 @@ export function TopNav() {
 
             {/* Notifications */}
             <button
-              className="relative text-haze-2 hover:text-haze transition-colors p-1"
+              className="cursor-target relative text-haze-2 hover:text-haze transition-colors p-1"
               aria-label="Notifications"
             >
               <Bell size={18} />
               <span
-                className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-ignite border border-cosmos"
+                className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-void border border-cosmos"
                 aria-hidden
               />
             </button>
 
             {/* Avatar */}
-            <Link href="/profile/me">
-              <div className="w-8 h-8 rounded-full border-2 border-ignite/60 bg-cosmos-3 flex items-center justify-center hover:border-ignite transition-colors">
+            <Link href="/profile/me" className="cursor-target">
+              <div className="w-8 h-8 rounded-full border-2 border-void/60 bg-cosmos-3 flex items-center justify-center hover:border-void transition-colors">
                 <span className="font-orbitron font-bold text-[10px] text-haze">CJ</span>
               </div>
             </Link>
@@ -123,7 +123,7 @@ export function TopNav() {
                   className={cn(
                     "flex items-center gap-3 px-6 py-4 font-rajdhani font-semibold text-base border-b border-cosmos-4/40 transition-colors",
                     active
-                      ? "text-ignite bg-ignite/5"
+                      ? "text-void bg-void/5"
                       : "text-haze-2 hover:text-haze hover:bg-cosmos-2"
                   )}
                 >
@@ -137,7 +137,7 @@ export function TopNav() {
                 <span className="text-crown text-xs">⬡</span>
                 <span className="font-orbitron font-bold text-sm text-crown">450</span>
               </div>
-              <span className="font-share-mono text-[10px] text-haze-3">CHALLENGER RANK</span>
+              <span className="font-space-mono text-[10px] text-haze-3">CHALLENGER RANK</span>
             </div>
           </motion.div>
         )}
@@ -162,7 +162,7 @@ export function MobileBottomNav() {
             href={href}
             className={cn(
               "flex-1 flex flex-col items-center gap-1 py-3 transition-colors",
-              active ? "text-ignite" : "text-haze-3 hover:text-haze-2"
+              active ? "text-void" : "text-haze-3 hover:text-haze-2"
             )}
           >
             <Icon size={20} aria-hidden />

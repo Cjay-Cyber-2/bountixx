@@ -16,18 +16,18 @@ export function LoadingScreen({ show = true }: { show?: boolean }) {
           {/* Logo with pulsing rings */}
           <div className="relative flex items-center justify-center">
             <span
-              className="absolute inset-0 border border-ignite/30 rounded-full pulse-ring"
+              className="absolute inset-0 border border-void/30 rounded-full pulse-ring"
               style={{ width: 120, height: 120, top: -20, left: -20 }}
             />
             <span
-              className="absolute inset-0 border border-ignite/20 rounded-full pulse-ring-delay"
+              className="absolute inset-0 border border-void/20 rounded-full pulse-ring-delay"
               style={{ width: 120, height: 120, top: -20, left: -20 }}
             />
             <BountixxLogo size={64} />
           </div>
 
           {/* Loading text with animated dots */}
-          <p className="font-share-mono text-xs text-ignite tracking-[6px] uppercase">
+          <p className="font-space-mono text-xs text-void tracking-[6px] uppercase">
             LOADING ARENA
             <LoadingDots />
           </p>
@@ -43,7 +43,7 @@ function LoadingDots() {
       {[0, 1, 2].map((i) => (
         <motion.span
           key={i}
-          className="inline-block w-1 h-1 rounded-full bg-ignite"
+          className="inline-block w-1 h-1 rounded-full bg-void"
           animate={{ scale: [1, 1.5, 1], opacity: [0.4, 1, 0.4] }}
           transition={{ duration: 0.9, repeat: Infinity, delay: i * 0.18 }}
         />

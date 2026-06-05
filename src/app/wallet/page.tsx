@@ -38,7 +38,7 @@ export default function WalletPage() {
   return (
     <AppLayout>
       <div className="px-6 lg:px-10 py-8 max-w-5xl">
-        <h1 className="font-orbitron font-bold text-2xl text-haze tracking-wide mb-10">
+        <h1 className="font-zen-dots text-2xl text-haze mb-10">
           YOUR WALLET
         </h1>
 
@@ -59,7 +59,7 @@ export default function WalletPage() {
                 <span className="font-orbitron font-bold text-2xl text-amber-900">BX</span>
               </div>
               <div>
-                <p className="font-share-mono text-[10px] text-haze-3 tracking-widest mb-1">
+                <p className="font-space-mono text-[10px] text-haze-3 tracking-widest mb-1">
                   BOUNTIXX COINS
                 </p>
                 <AnimatedNumber
@@ -75,9 +75,9 @@ export default function WalletPage() {
                 <button
                   key={tab}
                   onClick={() => setFilter(tab)}
-                  className={`px-4 py-3 font-share-mono text-[10px] tracking-widest border-b-2 transition-all ${
+                  className={`cursor-target px-4 py-3 font-space-mono text-[10px] tracking-widest border-b-2 transition-all ${
                     filter === tab
-                      ? "border-ignite text-ignite"
+                      ? "border-void text-void"
                       : "border-transparent text-haze-3 hover:text-haze-2"
                   }`}
                 >
@@ -124,7 +124,7 @@ export default function WalletPage() {
                     >
                       {t.amount > 0 ? `+${t.amount}` : t.amount === 0 ? "FREE" : t.amount}
                     </span>
-                    <span className="font-share-mono text-[10px] text-haze-3 shrink-0">{t.date}</span>
+                    <span className="font-space-mono text-[10px] text-haze-3 shrink-0">{t.date}</span>
                   </div>
                 ))
               )}
@@ -139,10 +139,10 @@ export default function WalletPage() {
             className="flex flex-col gap-5"
           >
             <motion.div variants={slideUp}>
-              <p className="font-share-mono text-[10px] text-haze-3 tracking-widest mb-1 uppercase">
+              <p className="font-space-mono text-[10px] text-haze-3 tracking-widest mb-1 uppercase">
                 Purchase
               </p>
-              <h2 className="font-orbitron font-bold text-2xl text-haze">BUY COINS</h2>
+              <h2 className="font-zen-dots text-xl text-haze">BUY COINS</h2>
             </motion.div>
 
             {BUNDLES.map((b, i) => (
@@ -150,14 +150,14 @@ export default function WalletPage() {
                 key={b.label}
                 variants={slideUp}
                 onClick={() => setSelected(i)}
-                className={`relative text-left p-4 border transition-all hover:-translate-y-0.5 clip-arena-sm ${
+                className={`cursor-target relative text-left p-4 border transition-all hover:-translate-y-0.5 clip-arena-sm ${
                   selected === i
-                    ? "border-ignite bg-ignite/8"
-                    : "border-cosmos-4 bg-cosmos-2 hover:border-ignite/50"
+                    ? "border-void bg-void/8"
+                    : "border-cosmos-4 bg-cosmos-2 hover:border-void/50"
                 }`}
               >
                 {b.popular && (
-                  <span className="absolute top-2 right-2 font-share-mono text-[8px] text-cosmos bg-ignite px-2 py-0.5 tracking-widest">
+                  <span className="absolute top-2 right-2 font-space-mono text-[8px] text-cosmos bg-void px-2 py-0.5 tracking-widest">
                     MOST POPULAR
                   </span>
                 )}
@@ -166,7 +166,7 @@ export default function WalletPage() {
                     <p className="font-orbitron font-bold text-2xl text-crown">
                       {b.coins.toLocaleString()}
                     </p>
-                    <p className="font-share-mono text-[9px] text-haze-3 mt-0.5 uppercase">
+                    <p className="font-space-mono text-[9px] text-haze-3 mt-0.5 uppercase">
                       {b.label}
                     </p>
                   </div>
@@ -181,7 +181,7 @@ export default function WalletPage() {
             </Button>
 
             {/* Trust signals */}
-            <p className="font-share-mono text-[9px] text-haze-3 text-center tracking-wider">
+            <p className="font-space-mono text-[9px] text-haze-3 text-center tracking-wider">
               Secure payment · Instant delivery · No subscription
             </p>
           </motion.div>

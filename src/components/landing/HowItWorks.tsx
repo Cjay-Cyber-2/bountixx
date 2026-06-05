@@ -38,15 +38,15 @@ export function HowItWorks() {
       <div className="max-w-[1400px] mx-auto">
       {/* Heading */}
       <div className="mb-16 relative">
-        <p className="font-share-mono text-xs text-ignite tracking-[6px] mb-3 uppercase">
+        <p className="font-space-mono text-xs text-void tracking-[6px] mb-3 uppercase">
           How It Works
         </p>
-        <h2 className="font-orbitron font-bold text-4xl lg:text-5xl text-haze">
+        <h2 className="font-zen-dots text-3xl lg:text-4xl text-haze">
           HOW THE ARENA WORKS
         </h2>
         {/* Animated underline */}
         <motion.div
-          className="h-[3px] bg-ignite mt-4"
+          className="h-[3px] bg-void mt-4"
           initial={{ width: 0 }}
           animate={inView ? { width: "100%" } : { width: 0 }}
           transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
@@ -100,7 +100,7 @@ export function HowItWorks() {
                   aria-hidden="true"
                 >
                   <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                    <path d="M5 12H19M13 6l6 6-6 6" stroke="var(--ignite)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.4" />
+                    <path d="M5 12H19M13 6l6 6-6 6" stroke="var(--void)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.4" />
                   </svg>
                 </div>
               )}

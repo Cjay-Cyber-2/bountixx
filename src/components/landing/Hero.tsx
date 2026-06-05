@@ -11,7 +11,7 @@ import { fadeIn, wordContainer, wordChild } from "@/lib/animations";
 
 const HEADLINE_WORDS = [
   { text: "COMPETE.",  color: "var(--haze)"   },
-  { text: "CONQUER.", color: "var(--ignite)"  },
+  { text: "CONQUER.", color: "var(--void)"  },
   { text: "COLLECT.", color: "var(--crown)"   },
 ];
 
@@ -49,7 +49,7 @@ export function Hero() {
         {/* Deep purple top-right blob */}
         <div
           className="absolute top-0 right-0 w-[700px] h-[700px] rounded-full opacity-50"
-          style={{ background: "radial-gradient(circle, rgba(109,40,217,0.18) 0%, transparent 65%)" }}
+          style={{ background: "radial-gradient(circle, rgba(168,85,247,0.18) 0%, transparent 65%)" }}
         />
         {/* Warm ignite bottom-left blob */}
         <div
@@ -90,7 +90,7 @@ export function Hero() {
                 <span className="absolute inset-0 rounded-full bg-success animate-[livepulse_1.5s_ease-in-out_infinite]" />
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-success" />
               </span>
-              <span className="font-share-mono text-xs text-success tracking-[3px] uppercase">
+              <span className="font-space-mono text-xs text-success tracking-[3px] uppercase">
                 2,341 Competitors Online
               </span>
             </motion.div>
@@ -101,7 +101,7 @@ export function Hero() {
               initial="hidden"
               animate="show"
               transition={{ delay: 0.3 }}
-              className="font-share-mono text-[11px] text-haze-3 tracking-[8px] uppercase mb-6"
+              className="font-space-mono text-[11px] text-haze-3 tracking-[8px] uppercase mb-6"
             >
               The AI-Powered Challenge Arena
             </motion.p>
@@ -118,10 +118,10 @@ export function Hero() {
                 <motion.h1
                   key={text}
                   variants={wordChild}
-                  className="font-orbitron font-black leading-[0.9] tracking-tight block"
+                  className="font-zen-dots leading-[0.95] tracking-tight block"
                   style={{
                     color,
-                    fontSize: "clamp(3.5rem, 10vw, 7.5rem)",
+                    fontSize: "clamp(2.5rem, 6vw, 5rem)",
                   }}
                 >
                   {text}
@@ -176,7 +176,7 @@ export function Hero() {
                   <span className="font-orbitron font-bold text-lg text-haze leading-none">
                     {n}
                   </span>
-                  <span className="font-share-mono text-[10px] text-haze-3 tracking-widest uppercase">
+                  <span className="font-space-mono text-[10px] text-haze-3 tracking-widest uppercase">
                     {label}
                   </span>
                 </div>
@@ -196,12 +196,12 @@ export function Hero() {
             <div className="relative flex items-center justify-center">
               {/* Outer ring pulse */}
               <span
-                className="absolute rounded-full border border-ignite/15 animate-[pulsering_3s_ease-out_infinite]"
+                className="absolute rounded-full border border-void/15 animate-[pulsering_3s_ease-out_infinite]"
                 style={{ width: 360, height: 360 }}
                 aria-hidden
               />
               <span
-                className="absolute rounded-full border border-void/10 animate-[pulsering_3s_ease-out_infinite_1s]"
+                className="absolute rounded-full border border-void-deep/10 animate-[pulsering_3s_ease-out_infinite_1s]"
                 style={{ width: 360, height: 360 }}
                 aria-hidden
               />
@@ -210,7 +210,7 @@ export function Hero() {
                 className="absolute w-48 h-48 rounded-full pointer-events-none"
                 style={{
                   background:
-                    "radial-gradient(circle, rgba(155,107,255,0.12) 0%, transparent 70%)",
+                    "radial-gradient(circle, rgba(168,85,247,0.12) 0%, transparent 70%)",
                 }}
                 aria-hidden
               />
@@ -233,12 +233,12 @@ export function Hero() {
             >
               {/* Card header */}
               <div className="flex items-center justify-between mb-4">
-                <span className="font-share-mono text-[10px] text-haze-3 tracking-widest uppercase">
+                <span className="font-space-mono text-[10px] text-haze-3 tracking-widest uppercase">
                   Live Arena
                 </span>
                 <span className="flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-ignite animate-[livepulse_1.5s_ease-in-out_infinite]" aria-hidden />
-                  <span className="font-share-mono text-[10px] text-ignite">LIVE</span>
+                  <span className="font-space-mono text-[10px] text-ignite">LIVE</span>
                 </span>
               </div>
               <p className="font-orbitron font-bold text-sm text-haze mb-4 leading-snug">
@@ -247,9 +247,9 @@ export function Hero() {
               {/* Player bars */}
               <div className="space-y-2.5 mb-4">
                 {[
-                  { name: "zainab_codes", pct: 78, color: "#FF6B1A" },
-                  { name: "dev_tolu",     pct: 52, color: "#9B6BFF" },
-                  { name: "chisom_x",     pct: 91, color: "#F0A500" },
+                  { name: "zainab_codes", pct: 78, color: "#FF6B1A", delay: 1.4 },
+                  { name: "dev_tolu",     pct: 52, color: "#a855f7", delay: 1.6 },
+                  { name: "chisom_x",     pct: 91, color: "#F0A500", delay: 1.8 },
                 ].map((p) => (
                   <div key={p.name} className="flex items-center gap-3">
                     <span className="font-rajdhani text-xs text-haze-2 w-24 shrink-0 truncate">
@@ -259,12 +259,12 @@ export function Hero() {
                       <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${p.pct}%` }}
-                        transition={{ delay: 1.4 + Math.random() * 0.4, duration: 0.9, ease: "easeOut" }}
+                        transition={{ delay: p.delay, duration: 0.9, ease: "easeOut" }}
                         className="h-full rounded-full"
                         style={{ background: p.color }}
                       />
                     </div>
-                    <span className="font-share-mono text-[9px] text-haze-3 w-8 text-right">
+                    <span className="font-space-mono text-[9px] text-haze-3 w-8 text-right">
                       {p.pct}%
                     </span>
                   </div>
@@ -272,7 +272,7 @@ export function Hero() {
               </div>
               {/* Timer */}
               <div className="flex items-center justify-between pt-3 border-t border-cosmos-4">
-                <span className="font-share-mono text-[10px] text-haze-3">TIME LEFT</span>
+                <span className="font-space-mono text-[10px] text-haze-3">TIME LEFT</span>
                 <span className="font-orbitron font-bold text-sm text-danger">00:42</span>
               </div>
             </motion.div>
@@ -287,8 +287,8 @@ export function Hero() {
         transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
         aria-hidden
       >
-        <div className="w-px h-10 bg-gradient-to-b from-transparent to-ignite/60" />
-        <span className="font-share-mono text-[9px] text-haze-3 tracking-[4px] uppercase">
+        <div className="w-px h-10 bg-gradient-to-b from-transparent to-void/60" />
+        <span className="font-space-mono text-[9px] text-haze-3 tracking-[4px] uppercase">
           Explore
         </span>
       </motion.div>

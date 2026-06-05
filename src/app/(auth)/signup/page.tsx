@@ -26,7 +26,7 @@ export default function SignupPage() {
         {/* Background glow */}
         <div
           className="absolute inset-0 pointer-events-none"
-          style={{ background: "radial-gradient(ellipse 60% 50% at 50% 40%, rgba(155,107,255,0.08), transparent)" }}
+          style={{ background: "radial-gradient(ellipse 60% 50% at 50% 40%, rgba(168,85,247,0.08), transparent)" }}
           aria-hidden="true"
         />
 
@@ -46,7 +46,7 @@ export default function SignupPage() {
           </motion.div>
 
           {/* Tagline */}
-          <p className="font-rajdhani font-bold text-2xl text-ignite mb-10 tracking-wide">
+          <p className="font-zen-dots text-xl text-void mb-10">
             Compete. Conquer. Collect.
           </p>
 
@@ -58,7 +58,7 @@ export default function SignupPage() {
             transition={{ duration: 0.5 }}
             className="bg-cosmos border border-cosmos-4 p-6 max-w-xs text-left clip-arena-sm"
           >
-            <p className="font-share-mono text-[10px] text-ignite tracking-widest mb-3">
+            <p className="font-space-mono text-[10px] text-void tracking-widest mb-3">
               ✦ {q.rank.toUpperCase()} · {q.handle}
             </p>
             <p className="font-rajdhani text-lg text-haze-2 italic leading-relaxed">
@@ -82,7 +82,7 @@ export default function SignupPage() {
           </motion.div>
 
           <motion.div variants={slideUp}>
-            <h1 className="font-orbitron font-bold text-3xl text-haze mb-2">
+            <h1 className="font-zen-dots text-2xl text-haze mb-2">
               CREATE ACCOUNT
             </h1>
             <p className="font-rajdhani text-sm text-haze-2 mb-10">
@@ -102,14 +102,14 @@ export default function SignupPage() {
             {/* Divider */}
             <div className="flex items-center gap-3">
               <span className="flex-1 h-px bg-cosmos-4" />
-              <span className="font-share-mono text-[10px] text-haze-3">OR</span>
+              <span className="font-space-mono text-[10px] text-haze-3">OR</span>
               <span className="flex-1 h-px bg-cosmos-4" />
             </div>
 
             {/* Google OAuth */}
             <button
               type="button"
-              className="flex items-center justify-center gap-3 h-12 border border-cosmos-4 text-haze-2
+              className="cursor-target flex items-center justify-center gap-3 h-12 border border-cosmos-4 text-haze-2
                          font-rajdhani font-semibold text-sm tracking-wide hover:border-haze-3 hover:text-haze transition-colors"
             >
               <GoogleIcon />
@@ -122,7 +122,7 @@ export default function SignupPage() {
             className="font-rajdhani text-sm text-haze-3 text-center mt-8"
           >
             Already have an account?{" "}
-            <Link href="/login" className="text-void hover:underline">
+            <Link href="/login" className="cursor-target text-void hover:underline">
               Sign in
             </Link>
           </motion.p>
@@ -135,15 +135,15 @@ export default function SignupPage() {
 function Field({ label, type, placeholder }: { label: string; type: string; placeholder: string }) {
   return (
     <div>
-      <label className="block font-share-mono text-[11px] text-ignite tracking-[3px] mb-2 uppercase">
+      <label className="block font-space-mono text-[11px] text-void tracking-[3px] mb-2 uppercase">
         {label}
       </label>
       <input
         type={type}
         placeholder={placeholder}
         className="w-full h-12 px-4 bg-cosmos-2 border border-cosmos-4 text-haze font-rajdhani text-base
-                   placeholder:text-haze-3 focus:outline-none focus:border-ignite
-                   focus:shadow-[0_0_0_2px_rgba(255,107,26,0.2)] transition-all"
+                   placeholder:text-haze-3 focus:outline-none focus:border-void
+                   focus:shadow-[0_0_0_2px_rgba(168,85,247,0.2)] transition-all"
         style={{ borderRadius: 0 }}
       />
     </div>
@@ -161,7 +161,7 @@ function PasswordField({
 }) {
   return (
     <div>
-      <label className="block font-share-mono text-[11px] text-ignite tracking-[3px] mb-2 uppercase">
+      <label className="block font-space-mono text-[11px] text-void tracking-[3px] mb-2 uppercase">
         {label}
       </label>
       <div className="relative">
@@ -169,8 +169,8 @@ function PasswordField({
           type={show ? "text" : "password"}
           placeholder="••••••••"
           className="w-full h-12 px-4 pr-12 bg-cosmos-2 border border-cosmos-4 text-haze font-rajdhani text-base
-                     placeholder:text-haze-3 focus:outline-none focus:border-ignite
-                     focus:shadow-[0_0_0_2px_rgba(255,107,26,0.2)] transition-all"
+                     placeholder:text-haze-3 focus:outline-none focus:border-void
+                     focus:shadow-[0_0_0_2px_rgba(168,85,247,0.2)] transition-all"
           style={{ borderRadius: 0 }}
         />
         <button

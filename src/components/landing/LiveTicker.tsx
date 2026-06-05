@@ -9,7 +9,7 @@ function TickerRow({ content, reverse = false }: { content: string; reverse?: bo
   return (
     <div className="overflow-hidden flex items-center h-[26px]">
       <span
-        className={`inline-block whitespace-nowrap font-share-mono text-xs text-haze-2 ${
+        className={`inline-block whitespace-nowrap font-space-mono text-xs text-haze-2 ${
           reverse ? "ticker-rtl" : "ticker-ltr"
         }`}
       >

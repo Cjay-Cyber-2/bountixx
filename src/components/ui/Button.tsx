@@ -58,7 +58,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={combinedRef}
         className={cn(
-          "relative inline-flex items-center justify-center gap-2 clip-arena",
+          "cursor-target relative inline-flex items-center justify-center gap-2 clip-arena",
           "transition-all duration-200 select-none",
           "disabled:opacity-40 disabled:cursor-not-allowed",
           variantClasses[variant],

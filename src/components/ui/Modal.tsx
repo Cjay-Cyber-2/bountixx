@@ -61,7 +61,7 @@ export function Modal({ open, onClose, title, children, size = "md" }: ModalProp
                   </h2>
                   <button
                     onClick={onClose}
-                    className="text-haze-3 hover:text-ignite transition-colors"
+                    className="cursor-target text-haze-3 hover:text-void transition-colors"
                     aria-label="Close modal"
                   >
                     <X size={18} />

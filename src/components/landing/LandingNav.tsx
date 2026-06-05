@@ -29,7 +29,7 @@ export function LandingNav() {
     >
       <div className="max-w-[1400px] mx-auto h-16 px-6 lg:px-12 flex items-center justify-between gap-6">
         {/* Logo */}
-        <Link href="/" aria-label="Bountixx home">
+        <Link href="/" aria-label="Bountixx home" className="cursor-target">
           <BountixxLogo size={36} showWordmark />
         </Link>
 
@@ -43,7 +43,7 @@ export function LandingNav() {
             <a
               key={href}
               href={href}
-              className="font-rajdhani font-semibold text-sm text-haze-2 hover:text-haze transition-colors"
+              className="cursor-target font-rajdhani font-semibold text-sm text-haze-2 hover:text-haze transition-colors"
             >
               {label}
             </a>

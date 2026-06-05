@@ -1,8 +1,8 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import Link from "next/link";
-import { Zap, Bell, Circle, Trophy, TrendingUp, Coins, Swords } from "lucide-react";
+import { Zap, Circle, Trophy, TrendingUp, Coins, Swords } from "lucide-react";
 import { useState, useEffect } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/Button";
@@ -12,13 +12,13 @@ import { staggerContainer, slideUp, fadeIn } from "@/lib/animations";
 const STAT_CARDS = [
   { label: "ROOMS CREATED", value: 24,   color: "var(--ignite)", icon: Swords,     glow: "#FF6B1A" },
   { label: "ROOMS WON",     value: 11,   color: "var(--crown)",  icon: Trophy,     glow: "#F0A500" },
-  { label: "TOTAL XP",      value: 6820, color: "var(--void)",   icon: TrendingUp, glow: "#9B6BFF" },
+  { label: "TOTAL XP",      value: 6820, color: "var(--void)",   icon: TrendingUp, glow: "#a855f7" },
   { label: "COIN BALANCE",  value: 450,  color: "var(--crown)",  icon: Coins,      glow: "#F0A500", coin: true },
 ];
 
 const ONLINE_PLAYERS = [
   { name: "zainab_codes", rank: "ELITE",      initials: "ZC", rankColor: "#F0A500" },
-  { name: "dev_tolu",     rank: "CHAMPION",   initials: "DT", rankColor: "#9B6BFF" },
+  { name: "dev_tolu",     rank: "CHAMPION",   initials: "DT", rankColor: "#a855f7" },
   { name: "chisom_x",     rank: "LEGENDARY",  initials: "CX", rankColor: "#FF6B1A" },
   { name: "code_chief",   rank: "CHALLENGER", initials: "CC", rankColor: "#E8E0FF" },
   { name: "ade_logic",    rank: "ELITE",      initials: "AL", rankColor: "#F0A500" },
@@ -33,7 +33,7 @@ const RECENT_ROOMS = [
 
 const CATEGORY_COLORS: Record<string, string> = {
   Coding: "#FF6B1A",
-  Trivia: "#9B6BFF",
+  Trivia: "#a855f7",
   Math:   "#00D68F",
 };
 
@@ -52,7 +52,7 @@ function LiveClock() {
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
   }, []);
-  return <span className="font-share-mono text-xs text-haze-3">{time}</span>;
+  return <span className="font-space-mono text-xs text-haze-3">{time}</span>;
 }
 
 export default function DashboardPage() {
@@ -68,10 +68,10 @@ export default function DashboardPage() {
           className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12"
         >
           <div>
-            <p className="font-share-mono text-xs text-haze-3 tracking-[3px] uppercase mb-2">
+            <p className="font-space-mono text-xs text-haze-3 tracking-[3px] uppercase mb-2">
               Welcome back, Champion
             </p>
-            <h1 className="font-orbitron font-black text-3xl md:text-4xl text-haze leading-tight">
+            <h1 className="font-zen-dots text-2xl md:text-3xl text-haze leading-tight">
               ARENA DASHBOARD
             </h1>
           </div>
@@ -115,10 +115,10 @@ export default function DashboardPage() {
                 />
                 <AnimatedNumber
                   value={s.value}
-                  className="font-orbitron font-black text-5xl block mb-2"
+                  className="font-orbitron font-black text-3xl md:text-4xl block mb-2"
                   style={{ color: s.color }}
                 />
-                <p className="font-share-mono text-[9px] text-haze-3 tracking-[3px] uppercase">
+                <p className="font-space-mono text-[9px] text-haze-3 tracking-[3px] uppercase">
                   {s.label}
                 </p>
               </motion.div>
@@ -134,20 +134,20 @@ export default function DashboardPage() {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.35, duration: 0.55 }}
-            className="relative overflow-hidden bg-cosmos-2 border border-ignite/25 p-8 flex flex-col gap-5"
-            style={{ background: "rgba(255,107,26,0.04)" }}
+            className="relative overflow-hidden bg-cosmos-2 border border-void/25 p-8 flex flex-col gap-5"
+            style={{ background: "rgba(168,85,247,0.04)" }}
           >
             {/* Decorative gradient blob */}
             <div
               className="absolute -top-8 -right-8 w-40 h-40 rounded-full opacity-30 pointer-events-none"
-              style={{ background: "radial-gradient(circle, #FF6B1A55, transparent 70%)" }}
+              style={{ background: "radial-gradient(circle, #a855f755, transparent 70%)" }}
               aria-hidden
             />
             {/* Pulse Zap */}
             <div className="relative w-12 h-12 flex items-center justify-center">
-              <span className="absolute inset-0 rounded-full border border-ignite/40 animate-[pulsering_2s_ease-out_infinite]" aria-hidden />
-              <span className="absolute inset-0 scale-125 rounded-full border border-ignite/20 animate-[pulsering_2s_ease-out_infinite_0.6s]" aria-hidden />
-              <Zap size={24} className="text-ignite relative z-10" aria-hidden />
+              <span className="absolute inset-0 rounded-full border border-void/40 animate-[pulsering_2s_ease-out_infinite]" aria-hidden />
+              <span className="absolute inset-0 scale-125 rounded-full border border-void/20 animate-[pulsering_2s_ease-out_infinite_0.6s]" aria-hidden />
+              <Zap size={24} className="text-void relative z-10" aria-hidden />
             </div>
             <div>
               <h2 className="font-orbitron font-bold text-xl text-haze mb-2 leading-tight">
@@ -177,9 +177,9 @@ export default function DashboardPage() {
                 <Circle size={10} className="text-success fill-success relative z-10" aria-hidden />
               </span>
               <span className="font-orbitron font-bold text-sm text-haze tracking-wider">
-                WHO'S ONLINE
+                WHO&apos;S ONLINE
               </span>
-              <span className="ml-auto font-share-mono text-[10px] text-haze-3">
+              <span className="ml-auto font-space-mono text-[10px] text-haze-3">
                 {ONLINE_PLAYERS.length} LIVE
               </span>
             </div>
@@ -204,7 +204,7 @@ export default function DashboardPage() {
             </h3>
             <Link
               href="/profile/me"
-              className="font-share-mono text-[10px] text-haze-3 hover:text-ignite transition-colors tracking-widest"
+              className="cursor-target font-space-mono text-[10px] text-haze-3 hover:text-void transition-colors tracking-widest"
             >
               VIEW ALL →
             </Link>
@@ -239,7 +239,7 @@ function OnlinePlayerRow({ player }: { player: typeof ONLINE_PLAYERS[0] }) {
         <p className="font-rajdhani font-semibold text-sm text-haze leading-none truncate">
           @{player.name}
         </p>
-        <p className="font-share-mono text-[9px] mt-0.5" style={{ color: player.rankColor }}>
+        <p className="font-space-mono text-[9px] mt-0.5" style={{ color: player.rankColor }}>
           {player.rank}
         </p>
       </div>
@@ -247,10 +247,10 @@ function OnlinePlayerRow({ player }: { player: typeof ONLINE_PLAYERS[0] }) {
       {/* Invite button */}
       <button
         onClick={() => { setInvited(true); setTimeout(() => setInvited(false), 2000); }}
-        className={`shrink-0 font-share-mono text-[10px] px-3 py-1 border transition-all ${
+        className={`cursor-target shrink-0 font-space-mono text-[10px] px-3 py-1 border transition-all ${
           invited
             ? "border-success/50 text-success bg-success/10"
-            : "border-cosmos-4 text-haze-3 opacity-0 group-hover:opacity-100 hover:border-ignite/50 hover:text-ignite"
+            : "border-cosmos-4 text-haze-3 opacity-0 group-hover:opacity-100 hover:border-void/50 hover:text-void"
         }`}
       >
         {invited ? "SENT ✓" : "INVITE"}
@@ -273,23 +273,23 @@ function RoomRow({ room, even }: { room: typeof RECENT_ROOMS[0]; even: boolean }
 
       {/* Category badge */}
       <span
-        className="font-share-mono text-[10px] px-2 py-0.5 border shrink-0"
+        className="font-space-mono text-[10px] px-2 py-0.5 border shrink-0"
         style={{ color: catColor, borderColor: `${catColor}40`, background: `${catColor}10` }}
       >
         {room.category}
       </span>
 
       {/* Players */}
-      <span className="font-share-mono text-[10px] text-haze-3 shrink-0">{room.players}</span>
+      <span className="font-space-mono text-[10px] text-haze-3 shrink-0">{room.players}</span>
 
       {/* Status */}
       {room.status === "LIVE" ? (
         <span className="flex items-center gap-1.5 shrink-0">
-          <span className="w-1.5 h-1.5 rounded-full bg-ignite animate-[livepulse_1.5s_ease-in-out_infinite] inline-block" aria-hidden />
-          <span className="font-share-mono text-[10px] text-ignite">LIVE</span>
+          <span className="w-1.5 h-1.5 rounded-full bg-void animate-[livepulse_1.5s_ease-in-out_infinite] inline-block" aria-hidden />
+          <span className="font-space-mono text-[10px] text-void">LIVE</span>
         </span>
       ) : (
-        <span className="font-share-mono text-[10px] text-haze-3 shrink-0">{room.status}</span>
+        <span className="font-space-mono text-[10px] text-haze-3 shrink-0">{room.status}</span>
       )}
 
       {/* Result */}
@@ -301,7 +301,7 @@ function RoomRow({ room, even }: { room: typeof RECENT_ROOMS[0]; even: boolean }
       </span>
 
       {/* Date */}
-      <span className="font-share-mono text-[10px] text-haze-3 shrink-0 w-12 text-right">
+      <span className="font-space-mono text-[10px] text-haze-3 shrink-0 w-12 text-right">
         {room.date}
       </span>
     </div>

@@ -36,7 +36,7 @@ export function Chip({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 border rounded-none font-share-mono",
+        "inline-flex items-center gap-1.5 border rounded-none font-space-mono",
         colorMap[color],
         size === "xs" ? "text-[10px] px-2 py-0.5" : "text-xs px-2.5 py-1",
         className

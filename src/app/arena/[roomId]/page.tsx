@@ -16,8 +16,8 @@ function Timer({ seconds }: { seconds: number }) {
 
   return (
     <motion.span
-      className="font-orbitron font-bold text-3xl tabular-nums"
-      style={{ color: critical ? "var(--danger)" : "var(--ignite)" }}
+      className="font-orbitron font-bold text-2xl tabular-nums"
+      style={{ color: critical ? "var(--danger)" : "var(--void)" }}
       animate={critical ? { scale: [1, 1.05, 1] } : { scale: 1 }}
       transition={{ duration: 1, repeat: critical ? Infinity : 0 }}
       aria-live="polite"
@@ -40,7 +40,7 @@ function ActivityFeed() {
 
   return (
     <div className="bg-cosmos-2 border border-cosmos-4 p-4 h-full">
-      <p className="font-share-mono text-[10px] text-ignite tracking-widest mb-4 uppercase">
+      <p className="font-space-mono text-[10px] text-void tracking-widest mb-4 uppercase">
         Arena Activity
       </p>
       <AnimatePresence initial={false}>
@@ -52,13 +52,13 @@ function ActivityFeed() {
             className="flex items-start gap-2 mb-3"
           >
             <span
-              className={`font-share-mono text-[10px] shrink-0 ${
+              className={`font-space-mono text-[10px] shrink-0 ${
                 item.type === "submitted" ? "text-crown" : item.type === "failed" ? "text-danger" : "text-haze-3"
               }`}
             >
               {item.type === "submitted" ? "✓" : item.type === "failed" ? "✗" : "●"}
             </span>
-            <p className="font-share-mono text-[10px] text-haze-2 leading-relaxed">
+            <p className="font-space-mono text-[10px] text-haze-2 leading-relaxed">
               <span className="text-haze">@{item.player}</span> {item.text}
             </p>
           </motion.div>
@@ -81,7 +81,7 @@ function CodeEditor({ onRun, onSubmit }: { onRun: () => void; onSubmit: () => vo
     <div className="flex flex-col h-full">
       {/* Tab */}
       <div className="flex items-center border-b border-cosmos-4 bg-cosmos-3">
-        <span className="font-share-mono text-xs text-haze px-4 py-2 border-b-2 border-ignite">
+        <span className="font-space-mono text-xs text-haze px-4 py-2 border-b-2 border-void">
           solution.js
         </span>
       </div>
@@ -89,15 +89,15 @@ function CodeEditor({ onRun, onSubmit }: { onRun: () => void; onSubmit: () => vo
       <textarea
         value={code}
         onChange={(e) => setCode(e.target.value)}
-        className="flex-1 p-4 bg-[#080612] text-haze font-share-mono text-sm resize-none
+        className="flex-1 p-4 bg-[#080612] text-haze font-space-mono text-sm resize-none
                    focus:outline-none leading-relaxed"
-        style={{ minHeight: 280, caretColor: "var(--ignite)" }}
+        style={{ minHeight: 280, caretColor: "var(--void)" }}
         spellCheck={false}
         aria-label="Code editor"
       />
       {/* Action bar */}
       <div className="flex items-center justify-between px-4 py-3 bg-cosmos-3 border-t border-cosmos-4">
-        <p className="font-share-mono text-[10px] text-haze-3">
+        <p className="font-space-mono text-[10px] text-haze-3">
           Ctrl+Enter to run · Ctrl+Shift+Enter to submit
         </p>
         <div className="flex items-center gap-2">
@@ -125,26 +125,26 @@ const TESTS = [
 function TestResults({ ran }: { ran: boolean }) {
   return (
     <div className="bg-cosmos-2 border border-cosmos-4 p-4">
-      <p className="font-share-mono text-[10px] text-ignite tracking-widest mb-4 uppercase">
+      <p className="font-space-mono text-[10px] text-void tracking-widest mb-4 uppercase">
         Test Results
       </p>
       {TESTS.map((t) => (
         <div key={t.id} className={`flex items-center gap-3 py-2 border-b border-cosmos-4/50 last:border-0 ${t.id % 2 === 0 ? "bg-cosmos/30" : ""}`}>
           <span
-            className={`font-share-mono text-xs w-4 text-center ${
+            className={`font-space-mono text-xs w-4 text-center ${
               t.status === "pass" ? "text-success" : t.status === "fail" ? "text-danger" : "text-haze-3"
             }`}
             aria-label={t.status}
           >
             {t.status === "pass" ? "✓" : t.status === "fail" ? "✗" : "○"}
           </span>
-          <div className="flex-1 font-share-mono text-[10px] text-haze-2 min-w-0 truncate">
+          <div className="flex-1 font-space-mono text-[10px] text-haze-2 min-w-0 truncate">
             {t.input} → {t.expected}
           </div>
         </div>
       ))}
       {ran && (
-        <p className="font-share-mono text-[10px] text-haze-3 mt-3">
+        <p className="font-space-mono text-[10px] text-haze-3 mt-3">
           Submit to run against 20 hidden tests
         </p>
       )}
@@ -195,7 +195,7 @@ export default function ArenaPage() {
         <Timer seconds={timeLeft} />
         <div className="flex items-center gap-2">
           <Users size={14} className="text-haze-3" aria-hidden="true" />
-          <span className="font-share-mono text-xs text-haze-3">4/4</span>
+          <span className="font-space-mono text-xs text-haze-3">4/4</span>
         </div>
       </div>
 
@@ -203,14 +203,14 @@ export default function ArenaPage() {
       <div className="flex flex-1 pt-14">
         {/* Challenge panel */}
         <div className="w-full lg:w-[30%] lg:max-w-xs border-r border-cosmos-4 bg-cosmos-2 p-5 overflow-y-auto">
-          <p className="font-share-mono text-[10px] text-ignite tracking-widest mb-3 uppercase">
+          <p className="font-space-mono text-[10px] text-void tracking-widest mb-3 uppercase">
             Challenge Brief
           </p>
           <p className="font-rajdhani text-base text-haze leading-relaxed mb-4">
             Write a function{" "}
-            <code className="text-ignite bg-cosmos px-1 font-share-mono text-sm">reverseString(s)</code>{" "}
+            <code className="text-void bg-cosmos px-1 font-space-mono text-sm">reverseString(s)</code>{" "}
             that takes a string{" "}
-            <code className="text-ignite bg-cosmos px-1 font-share-mono text-sm">s</code>{" "}
+            <code className="text-void bg-cosmos px-1 font-space-mono text-sm">s</code>{" "}
             and returns it reversed. Handle empty strings and single-character strings correctly.
           </p>
           <div className="flex flex-wrap gap-2">

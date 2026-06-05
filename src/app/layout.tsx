@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import { Orbitron, Rajdhani, Share_Tech_Mono } from "next/font/google";
+import { Orbitron, Rajdhani, Space_Mono, Zen_Dots } from "next/font/google";
 import "./globals.css";
 import { LenisProvider } from "@/components/providers/LenisProvider";
 import { ToastProvider } from "@/components/ui/Toast";
+import { TargetCursorWrapper } from "@/components/ui/TargetCursor";
 
 const orbitron = Orbitron({
   variable: "--font-orbitron",
@@ -18,8 +19,15 @@ const rajdhani = Rajdhani({
   display: "swap",
 });
 
-const shareMonoFont = Share_Tech_Mono({
-  variable: "--font-share-mono",
+const spaceMono = Space_Mono({
+  variable: "--font-space-mono",
+  subsets: ["latin"],
+  weight: ["400", "700"],
+  display: "swap",
+});
+
+const zenDots = Zen_Dots({
+  variable: "--font-zen-dots",
   subsets: ["latin"],
   weight: "400",
   display: "swap",
@@ -46,11 +54,12 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${orbitron.variable} ${rajdhani.variable} ${shareMonoFont.variable} h-full`}
+      className={`${orbitron.variable} ${rajdhani.variable} ${spaceMono.variable} ${zenDots.variable} h-full`}
     >
       <body className="min-h-full bg-cosmos text-haze overflow-x-hidden">
         <LenisProvider>
           <ToastProvider>
+            <TargetCursorWrapper />
             {children}
           </ToastProvider>
         </LenisProvider>

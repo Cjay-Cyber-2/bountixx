@@ -34,9 +34,9 @@ const ranks = [
     name: "CHAMPION",
     xp: "7,500 XP",
     desc: "Feared",
-    color: "#9B6BFF",
-    gradFrom: "#9B6BFF",
-    gradTo: "#C77DFF",
+    color: "#a855f7",
+    gradFrom: "#8660fa",
+    gradTo: "#a855f7",
   },
   {
     name: "LEGENDARY",
@@ -58,19 +58,14 @@ function RankBadge({ color, name, gradient }: { color: string; name: string; gra
         </linearGradient>
       </defs>
       {name === "LEGENDARY" ? (
-        /* Crown shape for legendary */
         <path d="M24 4L30 18L44 14L36 28L44 44H4L12 28L4 14L18 18L24 4Z" fill={`url(#rg-${name})`} />
       ) : name === "CHAMPION" ? (
-        /* Shield for champion */
         <path d="M24 4L44 12V28C44 38 24 44 24 44C24 44 4 38 4 28V12L24 4Z" fill={`url(#rg-${name})`} />
       ) : name === "ELITE" ? (
-        /* Star for elite */
         <path d="M24 4L28.9 17.6H43.3L31.7 26.2L36.6 39.8L24 31.2L11.4 39.8L16.3 26.2L4.7 17.6H19.1L24 4Z" fill={`url(#rg-${name})`} />
       ) : name === "CHALLENGER" ? (
-        /* Diamond for challenger */
         <path d="M24 4L44 24L24 44L4 24L24 4Z" fill={`url(#rg-${name})`} />
       ) : (
-        /* Hexagon for recruit */
         <path d="M24 4L42 14V34L24 44L6 34V14L24 4Z" fill={`url(#rg-${name})`} />
       )}
       <text x="50%" y="55%" dominantBaseline="middle" textAnchor="middle" fill="white" fontSize="9" fontWeight="bold" fontFamily="monospace">
@@ -87,10 +82,10 @@ export function RankShowcase() {
   return (
     <section id="ranks" className="py-36 px-6 lg:px-14 bg-cosmos-2 border-y border-cosmos-4" ref={ref}>
       <div className="max-w-[1400px] mx-auto">
-        <p className="font-share-mono text-xs text-ignite tracking-[6px] mb-4 uppercase">
+        <p className="font-space-mono text-xs text-void tracking-[6px] mb-4 uppercase">
           Progression System
         </p>
-        <h2 className="font-orbitron font-bold text-4xl lg:text-5xl text-haze mb-16">
+        <h2 className="font-zen-dots text-3xl lg:text-4xl text-haze mb-16">
           RISE THROUGH THE RANKS
         </h2>
 
@@ -120,7 +115,7 @@ export function RankShowcase() {
               <p className="font-orbitron font-bold text-sm text-haze tracking-wide mb-0.5">
                 {rank.name}
               </p>
-              <p className="font-share-mono text-[10px] mb-2" style={{ color: rank.color }}>
+              <p className="font-space-mono text-[10px] mb-2" style={{ color: rank.color }}>
                 {rank.xp}
               </p>
               <p className="font-rajdhani text-xs text-haze-3 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -137,7 +132,7 @@ export function RankShowcase() {
           transition={{ delay: 0.6, duration: 0.5 }}
           className="mt-12 bg-cosmos border border-cosmos-4 p-6 max-w-xl"
         >
-          <p className="font-share-mono text-[10px] text-ignite tracking-widest mb-3 uppercase">
+          <p className="font-space-mono text-[10px] text-void tracking-widest mb-3 uppercase">
             Champion · 6,820 / 10,000 XP
           </p>
           <XPBar current={6820} max={10000} thick color="void" />

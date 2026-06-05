@@ -32,18 +32,18 @@ export function Stats() {
               className="bg-cosmos-2 border border-cosmos-4 p-6 clip-arena"
             >
               {stat.special ? (
-                <p className="font-orbitron font-black text-5xl text-ignite mb-2">
+                <p className="font-orbitron font-black text-4xl text-void mb-2">
                   {stat.special}
                 </p>
               ) : (
                 <AnimatedNumber
                   value={stat.value}
-                  className="font-orbitron font-black text-5xl text-ignite block mb-2"
+                  className="font-orbitron font-black text-3xl md:text-4xl text-void block mb-2"
                   prefix={stat.prefix}
                   suffix={stat.suffix}
                 />
               )}
-              <p className="font-share-mono text-[10px] text-haze-2 tracking-[3px] uppercase">
+              <p className="font-space-mono text-[10px] text-haze-2 tracking-[3px] uppercase">
                 {stat.label}
               </p>
             </motion.div>

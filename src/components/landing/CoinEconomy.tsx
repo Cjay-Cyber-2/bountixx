@@ -99,10 +99,10 @@ export function CoinEconomy() {
 
           {/* Right: features */}
           <div>
-            <p className="font-share-mono text-xs text-ignite tracking-[6px] mb-4 uppercase">
+            <p className="font-space-mono text-xs text-void tracking-[6px] mb-4 uppercase">
               Economy
             </p>
-            <h2 className="font-orbitron font-bold text-4xl lg:text-5xl text-haze mb-12">
+            <h2 className="font-zen-dots text-3xl lg:text-4xl text-haze mb-12">
               THE BOUNTIXX ECONOMY
             </h2>
             <motion.ul
@@ -117,7 +117,7 @@ export function CoinEconomy() {
                   variants={slideUp}
                   className="flex items-start gap-3 font-rajdhani font-semibold text-lg text-haze"
                 >
-                  <span className="font-share-mono text-crown text-sm mt-0.5 shrink-0">✦</span>
+                  <span className="font-space-mono text-crown text-sm mt-0.5 shrink-0">✦</span>
                   {feat}
                 </motion.li>
               ))}
@@ -131,7 +131,7 @@ export function CoinEconomy() {
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ delay: 0.4, duration: 0.6 }}
         >
-          <p className="font-share-mono text-xs text-haze-3 tracking-widest mb-6 uppercase">
+          <p className="font-space-mono text-xs text-haze-3 tracking-widest mb-6 uppercase">
             Coin Bundles
           </p>
           <div className="flex gap-3 overflow-x-auto pb-2" style={{ scrollbarWidth: "none" }}>
@@ -139,13 +139,13 @@ export function CoinEconomy() {
               <div
                 key={b.label}
                 className={`relative shrink-0 w-36 bg-cosmos border p-4 clip-arena-sm transition-all hover:-translate-y-1 ${
-                  b.popular ? "border-ignite" : "border-cosmos-4 hover:border-ignite/50"
+                  b.popular ? "border-void" : "border-cosmos-4 hover:border-void/50"
                 }`}
-                style={b.popular ? { background: "rgba(255,107,26,0.06)" } : {}}
+                style={b.popular ? { background: "rgba(168,85,247,0.06)" } : {}}
               >
                 {b.popular && (
                   <div className="absolute -top-px left-1/2 -translate-x-1/2">
-                    <span className="font-share-mono text-[8px] text-cosmos bg-ignite px-2 py-0.5 tracking-widest">
+                    <span className="font-space-mono text-[8px] text-cosmos bg-void px-2 py-0.5 tracking-widest">
                       POPULAR
                     </span>
                   </div>
@@ -153,9 +153,9 @@ export function CoinEconomy() {
                 <p className="font-orbitron font-bold text-2xl text-crown mb-1">
                   {b.coins.toLocaleString()}
                 </p>
-                <p className="font-share-mono text-[9px] text-haze-3 mb-2">COINS</p>
+                <p className="font-space-mono text-[9px] text-haze-3 mb-2">COINS</p>
                 <p className="font-rajdhani font-bold text-lg text-haze">{b.price}</p>
-                <p className="font-share-mono text-[9px] text-haze-3 mt-0.5">{b.label}</p>
+                <p className="font-space-mono text-[9px] text-haze-3 mt-0.5">{b.label}</p>
               </div>
             ))}
           </div>

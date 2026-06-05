@@ -32,8 +32,8 @@ export function MobileNav() {
               href={tab.href}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex-1 flex flex-col items-center justify-center gap-1 h-full transition-colors",
-                active ? "text-ignite" : "text-haze-3 hover:text-haze-2",
+                "cursor-target flex-1 flex flex-col items-center justify-center gap-1 h-full transition-colors",
+                active ? "text-void" : "text-haze-3 hover:text-haze-2",
                 tab.phase2 && "opacity-40 pointer-events-none"
               )}
             >

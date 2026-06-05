@@ -19,10 +19,10 @@ export function FinalCTA() {
           initial={{ opacity: 0, y: 40 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className="font-orbitron font-black text-5xl lg:text-7xl text-haze mb-8"
+          className="font-zen-dots text-4xl lg:text-5xl text-haze mb-8"
         >
           READY TO ENTER THE{" "}
-          <span style={{ color: "var(--ignite)" }}>ARENA?</span>
+          <span className="text-gradient-void">ARENA?</span>
         </motion.h2>
 
         <motion.p

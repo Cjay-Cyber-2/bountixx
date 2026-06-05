@@ -17,7 +17,7 @@ export default function LoginPage() {
       <div className="hidden lg:flex flex-col items-center justify-center bg-cosmos-2 border-r border-cosmos-4 px-12 py-16 relative overflow-hidden scanline-fx">
         <div
           className="absolute inset-0 pointer-events-none"
-          style={{ background: "radial-gradient(ellipse 60% 50% at 50% 40%, rgba(255,107,26,0.06), transparent)" }}
+          style={{ background: "radial-gradient(ellipse 60% 50% at 50% 40%, rgba(168,85,247,0.06), transparent)" }}
           aria-hidden="true"
         />
         <motion.div
@@ -29,7 +29,7 @@ export default function LoginPage() {
           <motion.div animate={{ rotate: 360 }} transition={{ duration: 60, ease: "linear", repeat: Infinity }}>
             <BountixxLogo size={160} />
           </motion.div>
-          <p className="font-orbitron font-bold text-2xl text-ignite tracking-wide">
+          <p className="font-zen-dots text-xl text-void">
             Welcome Back, Champion
           </p>
           <p className="font-rajdhani text-lg text-haze-2 max-w-xs">
@@ -51,7 +51,7 @@ export default function LoginPage() {
           </motion.div>
 
           <motion.div variants={slideUp}>
-            <h1 className="font-orbitron font-bold text-3xl text-haze mb-2">SIGN IN</h1>
+            <h1 className="font-zen-dots text-2xl text-haze mb-2">SIGN IN</h1>
             <p className="font-rajdhani text-sm text-haze-2 mb-10">
               Your rivalry awaits
             </p>
@@ -59,20 +59,20 @@ export default function LoginPage() {
 
           <motion.form variants={slideUp} className="flex flex-col gap-5" noValidate>
             <div>
-              <label className="block font-share-mono text-[11px] text-ignite tracking-[3px] mb-2 uppercase">
+              <label className="block font-space-mono text-[11px] text-void tracking-[3px] mb-2 uppercase">
                 Email or Username
               </label>
               <input
                 type="text"
                 placeholder="you@arena.com"
                 className="w-full h-12 px-4 bg-cosmos-2 border border-cosmos-4 text-haze font-rajdhani text-base
-                           placeholder:text-haze-3 focus:outline-none focus:border-ignite
-                           focus:shadow-[0_0_0_2px_rgba(255,107,26,0.2)] transition-all"
+                           placeholder:text-haze-3 focus:outline-none focus:border-void
+                           focus:shadow-[0_0_0_2px_rgba(168,85,247,0.2)] transition-all"
                 style={{ borderRadius: 0 }}
               />
             </div>
             <div>
-              <label className="block font-share-mono text-[11px] text-ignite tracking-[3px] mb-2 uppercase">
+              <label className="block font-space-mono text-[11px] text-void tracking-[3px] mb-2 uppercase">
                 Password
               </label>
               <div className="relative">
@@ -80,8 +80,8 @@ export default function LoginPage() {
                   type={show ? "text" : "password"}
                   placeholder="••••••••"
                   className="w-full h-12 px-4 pr-12 bg-cosmos-2 border border-cosmos-4 text-haze font-rajdhani text-base
-                             placeholder:text-haze-3 focus:outline-none focus:border-ignite
-                             focus:shadow-[0_0_0_2px_rgba(255,107,26,0.2)] transition-all"
+                             placeholder:text-haze-3 focus:outline-none focus:border-void
+                             focus:shadow-[0_0_0_2px_rgba(168,85,247,0.2)] transition-all"
                   style={{ borderRadius: 0 }}
                 />
                 <button
@@ -96,7 +96,7 @@ export default function LoginPage() {
             </div>
 
             <div className="flex justify-end">
-              <Link href="#" className="font-share-mono text-[11px] text-void hover:underline">
+              <Link href="#" className="cursor-target font-space-mono text-[11px] text-void hover:underline">
                 Forgot password?
               </Link>
             </div>
@@ -107,13 +107,13 @@ export default function LoginPage() {
 
             <div className="flex items-center gap-3">
               <span className="flex-1 h-px bg-cosmos-4" />
-              <span className="font-share-mono text-[10px] text-haze-3">OR</span>
+              <span className="font-space-mono text-[10px] text-haze-3">OR</span>
               <span className="flex-1 h-px bg-cosmos-4" />
             </div>
 
             <button
               type="button"
-              className="flex items-center justify-center gap-3 h-12 border border-cosmos-4 text-haze-2
+              className="cursor-target flex items-center justify-center gap-3 h-12 border border-cosmos-4 text-haze-2
                          font-rajdhani font-semibold text-sm tracking-wide hover:border-haze-3 hover:text-haze transition-colors"
             >
               <GoogleIcon />
@@ -123,7 +123,7 @@ export default function LoginPage() {
 
           <motion.p variants={slideUp} className="font-rajdhani text-sm text-haze-3 text-center mt-8">
             No account yet?{" "}
-            <Link href="/signup" className="text-void hover:underline">
+            <Link href="/signup" className="cursor-target text-void hover:underline">
               Create one free
             </Link>
           </motion.p>
