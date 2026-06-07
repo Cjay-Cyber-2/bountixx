@@ -2,96 +2,137 @@
 
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
-import { Code2, HelpCircle, Brain, Calculator, FileText, Palette } from "lucide-react";
-import { staggerContainer, slideUp } from "@/lib/animations";
 
-const categories = [
+const PHASE1_CATEGORIES = [
   {
-    icon: Code2, label: "Coding", color: "#FF6B1A",
-    desc: "Functions, algorithms, data structures",
-    phase2: false,
+    label: "Coding",
+    accent: "#a855f7",
+    tag: "01",
+    desc: "Functions, algorithms, data structures. Write directly in the sandboxed editor with support for JavaScript and Python.",
+    sample: "fn reverse(s) → s[::-1]",
+    rule: "First to pass all 20 hidden tests",
+    partial: "Partial: % of test cases passed",
   },
   {
-    icon: HelpCircle, label: "Trivia", color: "#F0A500",
-    desc: "Knowledge, pop culture, history",
-    phase2: false,
+    label: "Trivia",
+    accent: "#a855f7",
+    tag: "02",
+    desc: "General knowledge, pop culture, and history. The canonical correct answer is hashed and locked before anyone enters.",
+    sample: "In what year did…?",
+    rule: "First correct submission wins",
+    partial: "Partial: N/A (correct or incorrect)",
   },
   {
-    icon: Brain, label: "Logic", color: "#a855f7",
-    desc: "Puzzles, riddles, lateral thinking",
-    phase2: false,
+    label: "Logic",
+    accent: "#a855f7",
+    tag: "03",
+    desc: "Puzzles, riddles, and lateral thinking. Read carefully — the answer is objective but the trap is usually the obvious choice.",
+    sample: "If A < B and B < C…",
+    rule: "First correct submission wins",
+    partial: "Partial: Closest numeric or text match",
   },
   {
-    icon: Calculator, label: "Math", color: "#00D68F",
-    desc: "Speed math, equations, proofs",
-    phase2: false,
+    label: "Math",
+    accent: "#a855f7",
+    tag: "04",
+    desc: "Speed arithmetic, equations, and proofs. Pure speed and calculations against opponents who are just as fast.",
+    sample: "∑ x² + y , x∈[1,n]",
+    rule: "First correct submission wins",
+    partial: "Partial: Closest numeric value on timeout",
   },
-  {
-    icon: FileText, label: "Writing", color: "#FF6B9D",
-    desc: "Prompts, stories, copy",
-    phase2: true,
-  },
-  {
-    icon: Palette, label: "Design", color: "#4ECDC4",
-    desc: "Visual challenges",
-    phase2: true,
-  },
-];
+] as const;
 
 export function Categories() {
   const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-8% 0px" });
+  const inView = useInView(ref, { once: true, margin: "-10% 0px" });
 
   return (
-    <section id="categories" className="py-36 px-6 lg:px-14" ref={ref}>
-      <div className="max-w-[1400px] mx-auto">
-      <p className="font-space-mono text-xs text-void tracking-[6px] mb-4 uppercase">
-        Challenge Types
-      </p>
-      <h2 className="font-zen-dots text-3xl lg:text-4xl text-haze mb-16">
-        WHAT CAN YOU CHALLENGE?
-      </h2>
+    <section
+      id="categories"
+      ref={ref}
+      className="relative py-36 md:py-48 px-6 lg:px-14 bg-cosmos-2 border-y border-cosmos-4 overflow-hidden"
+    >
+      {/* Background radial glow */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(ellipse 60% 50% at 90% 80%, rgba(155,107,255,0.06) 0%, transparent 65%)",
+        }}
+        aria-hidden
+      />
 
-      <motion.div
-        variants={staggerContainer}
-        initial="hidden"
-        animate={inView ? "show" : "hidden"}
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-      >
-        {categories.map((cat) => {
-          const Icon = cat.icon;
-          return (
+      <div className="max-w-[1280px] mx-auto relative">
+        {/* Spacious Top Row */}
+        <div className="mb-24">
+          <p className="font-space-mono text-[10px] tracking-[5px] uppercase text-[#a855f7] mb-5">
+            Arena Formats
+          </p>
+          <h2 className="font-zen-dots text-[clamp(2.2rem,5vw,3.8rem)] text-haze leading-[1.08]">
+            What can you{" "}
+            <span
+              style={{
+                background: "linear-gradient(110deg,#a855f7 0%,#c084fc 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+              }}
+            >
+              challenge?
+            </span>
+          </h2>
+        </div>
+
+        {/* Phase 1 Grid - Spacious boxes with extra padding */}
+        <motion.div
+          initial="hidden"
+          animate={inView ? "show" : "hidden"}
+          variants={{ show: { transition: { staggerChildren: 0.1 } } }}
+          className="grid grid-cols-1 md:grid-cols-2 gap-8"
+        >
+          {PHASE1_CATEGORIES.map((cat) => (
             <motion.div
               key={cat.label}
-              variants={slideUp}
-              className="relative group bg-cosmos-2 border border-cosmos-4 p-6 cursor-pointer
-                         hover:-translate-y-1 hover:border-opacity-100 transition-all duration-200"
-              style={{ borderTop: `2px solid ${cat.color}` }}
+              variants={{
+                hidden: { opacity: 0, y: 32 },
+                show: { opacity: 1, y: 0, transition: { duration: 0.65, ease: [0.16, 1, 0.3, 1] } },
+              }}
+              className="group relative bg-cosmos p-10 md:p-12 flex flex-col gap-8 border border-cosmos-4 hover:border-void-light/30 transition-all duration-300 rounded-lg"
             >
-              {cat.phase2 && (
-                <div className="absolute inset-0 bg-cosmos-2/60 flex items-center justify-center z-10">
-                  <span className="font-space-mono text-xs text-haze-3 border border-haze-3/40 px-3 py-1 bg-cosmos-2">
-                    COMING SOON
-                  </span>
-                </div>
-              )}
+              {/* Header row */}
+              <div className="flex items-baseline justify-between border-b border-cosmos-4 pb-5">
+                <span className="font-space-mono text-xs text-haze-3 tracking-[3px]">
+                  {cat.tag}
+                </span>
+                <h3 className="font-zen-dots text-2xl text-haze">{cat.label}</h3>
+              </div>
 
-              <Icon size={28} className="mb-4" style={{ color: cat.color }} aria-hidden="true" />
-              <h3 className="font-rajdhani font-bold text-lg text-haze mb-1 tracking-wide">
-                {cat.label}
-              </h3>
-              <p className="font-rajdhani text-sm text-haze-2">{cat.desc}</p>
+              {/* Description */}
+              <p className="font-rajdhani text-lg text-haze-2 leading-relaxed min-h-[72px]">
+                {cat.desc}
+              </p>
 
-              {/* Corner pulse rings on hover */}
-              <span
-                className="absolute top-3 right-3 w-1.5 h-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                style={{ background: cat.color }}
-                aria-hidden="true"
-              />
+              {/* Console preview */}
+              <div
+                className="flex items-center gap-3 px-5 py-3.5 font-space-mono text-xs rounded"
+                style={{
+                  background: "rgba(14,8,24,0.7)",
+                  border: "1px solid rgba(45,27,105,0.8)",
+                }}
+              >
+                <span className="text-[#a855f7]">›</span>
+                <span className="text-haze-2 truncate">{cat.sample}</span>
+              </div>
+
+              {/* Bottom rule info */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-4 border-t border-cosmos-4 text-[10px] font-space-mono text-haze-3 uppercase tracking-wider">
+                <span>{cat.rule}</span>
+                <span className="text-void">{cat.partial}</span>
+              </div>
             </motion.div>
-          );
-        })}
-      </motion.div>
+          ))}
+        </motion.div>
+
       </div>
     </section>
   );
