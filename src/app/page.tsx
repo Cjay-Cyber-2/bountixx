@@ -5,7 +5,6 @@ import { Categories } from "@/components/landing/Categories";
 import { AIEngine } from "@/components/landing/AIEngine";
 import { RankShowcase } from "@/components/landing/RankShowcase";
 import { CoinEconomy } from "@/components/landing/CoinEconomy";
-import { Stats } from "@/components/landing/Stats";
 import { FinalCTA } from "@/components/landing/FinalCTA";
 import { Footer } from "@/components/landing/Footer";
 
@@ -19,7 +18,6 @@ export default function LandingPage() {
       <AIEngine />
       <RankShowcase />
       <CoinEconomy />
-      <Stats />
       <FinalCTA />
       <Footer />
     </main>

@@ -1,5 +1,6 @@
 "use client";
 
+import type React from "react";
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import Link from "next/link";
@@ -114,17 +115,16 @@ export function FinalCTA() {
 
         {/* Trust strip */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={inView ? { opacity: 1 } : {}}
+          initial={{ opacity: 0, y: 8 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ delay: 0.5 }}
-          className="flex items-center justify-center gap-6 mt-14 font-space-mono text-[9px] text-haze-3 tracking-[3px] uppercase"
+          className="flex flex-col items-center gap-2 mt-14 font-space-mono text-[9px] text-haze-3 tracking-[3px] uppercase"
         >
-          {["No subscription", "Anti-cheat AI", "Coins land instantly"].map((item, i) => (
-            <span key={item} className="flex items-center gap-3">
-              {i > 0 && <span aria-hidden className="w-0.5 h-0.5 rounded-full bg-cosmos-4" />}
-              {item}
-            </span>
-          ))}
+          <span>No subscription</span>
+          <span aria-hidden>·</span>
+          <span>Anti-cheat AI</span>
+          <span aria-hidden>·</span>
+          <span>Coins land instantly</span>
         </motion.div>
       </div>
     </section>
