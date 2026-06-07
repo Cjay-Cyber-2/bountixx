@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Orbitron, Rajdhani, Space_Mono, Zen_Dots } from "next/font/google";
 import "./globals.css";
+import { ClerkProvider } from "@clerk/nextjs";
 import { LenisProvider } from "@/components/providers/LenisProvider";
 import { ToastProvider } from "@/components/ui/Toast";
 import { TargetCursorWrapper } from "@/components/ui/TargetCursor";
@@ -57,12 +58,14 @@ export default function RootLayout({
       className={`${orbitron.variable} ${rajdhani.variable} ${spaceMono.variable} ${zenDots.variable} h-full`}
     >
       <body className="min-h-full bg-cosmos text-haze overflow-x-hidden">
-        <LenisProvider>
-          <ToastProvider>
-            <TargetCursorWrapper />
-            {children}
-          </ToastProvider>
-        </LenisProvider>
+        <ClerkProvider>
+          <LenisProvider>
+            <ToastProvider>
+              <TargetCursorWrapper />
+              {children}
+            </ToastProvider>
+          </LenisProvider>
+        </ClerkProvider>
       </body>
     </html>
   );
