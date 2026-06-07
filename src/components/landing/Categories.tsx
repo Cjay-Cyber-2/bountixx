@@ -42,6 +42,12 @@ const PHASE1_CATEGORIES = [
   },
 ] as const;
 
+const PHASE2_CATEGORIES = [
+  { label: "Design", desc: "UI mockups, graphics, and visual layouts judged via peer voting and AI evaluation." },
+  { label: "Writing", desc: "Creative copy, stories, and prompts evaluated through blind community voting." },
+  { label: "Meme / Creative", desc: "Humorous edits and creative concepts with 100% blind peer choice." },
+] as const;
+
 export function Categories() {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-10% 0px" });
@@ -64,23 +70,28 @@ export function Categories() {
 
       <div className="max-w-[1280px] mx-auto relative">
         {/* Spacious Top Row */}
-        <div className="mb-24">
-          <p className="font-space-mono text-[10px] tracking-[5px] uppercase text-[#a855f7] mb-5">
-            Arena Formats
+        <div className="mb-24 grid lg:grid-cols-2 gap-12 items-start">
+          <div>
+            <p className="font-space-mono text-[10px] tracking-[5px] uppercase text-[#a855f7] mb-5">
+              Arena Formats
+            </p>
+            <h2 className="font-zen-dots text-[clamp(2.2rem,5vw,3.8rem)] text-haze leading-[1.08]">
+              What can you{" "}
+              <span
+                style={{
+                  background: "linear-gradient(110deg,#a855f7 0%,#c084fc 100%)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                }}
+              >
+                challenge?
+              </span>
+            </h2>
+          </div>
+          <p className="font-rajdhani text-lg md:text-xl text-haze-2 leading-relaxed lg:pl-10">
+            Bountixx turns any problem statement into a real-time multiplayer arena. The AI engine parses input parameters instantly, leaving only the question of who solves it first.
           </p>
-          <h2 className="font-zen-dots text-[clamp(2.2rem,5vw,3.8rem)] text-haze leading-[1.08]">
-            What can you{" "}
-            <span
-              style={{
-                background: "linear-gradient(110deg,#a855f7 0%,#c084fc 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-              }}
-            >
-              challenge?
-            </span>
-          </h2>
         </div>
 
         {/* Phase 1 Grid - Spacious boxes with extra padding */}
@@ -88,7 +99,7 @@ export function Categories() {
           initial="hidden"
           animate={inView ? "show" : "hidden"}
           variants={{ show: { transition: { staggerChildren: 0.1 } } }}
-          className="grid grid-cols-1 md:grid-cols-2 gap-8"
+          className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-24"
         >
           {PHASE1_CATEGORIES.map((cat) => (
             <motion.div
@@ -132,6 +143,26 @@ export function Categories() {
             </motion.div>
           ))}
         </motion.div>
+
+        {/* Phase 2 Preview Block */}
+        <div className="border-t border-cosmos-4 pt-16">
+          <p className="font-space-mono text-[10px] tracking-[4px] uppercase text-haze-3 mb-10">
+            Coming in Phase 2 · Subjective Formats
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {PHASE2_CATEGORIES.map((cat) => (
+              <div
+                key={cat.label}
+                className="p-8 bg-cosmos-3/30 border border-cosmos-4 rounded-lg flex flex-col gap-3"
+              >
+                <h4 className="font-zen-dots text-lg text-haze-2">{cat.label}</h4>
+                <p className="font-rajdhani text-base text-haze-3 leading-relaxed">
+                  {cat.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
 
       </div>
     </section>
