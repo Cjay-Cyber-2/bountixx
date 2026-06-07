@@ -3,90 +3,67 @@
 import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { BountixxLogo } from "@/components/BountixxLogo";
 import { Button } from "@/components/ui/Button";
+import { AuthBrandPanel } from "@/components/landing/AuthBrandPanel";
 import { staggerContainer, slideUp } from "@/lib/animations";
-
-const quotes = [
-  { rank: "Elite", handle: "@dev_kemi", text: "I won 450 coins at 2am. Worth it." },
-  { rank: "Champion", handle: "@tunde_logic", text: "Nothing hits like the win sound." },
-  { rank: "Legendary", handle: "@chisom_x", text: "5 arenas, 5 wins. Let's go." },
-];
 
 export default function SignupPage() {
   const [show, setShow] = useState(false);
-  const [quoteIdx] = useState(0);
-  const q = quotes[quoteIdx];
 
   return (
-    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-cosmos">
+    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-cosmos relative">
+      {/* Back Button */}
+      <Link
+        href="/"
+        className="cursor-target absolute top-6 left-6 lg:left-8 flex items-center gap-2 text-haze-2 hover:text-haze font-space-mono text-xs tracking-wider z-30 transition-colors"
+      >
+        <ArrowLeft size={14} />
+        BACK
+      </Link>
+
       {/* ── Left: Brand panel ── */}
-      <div className="hidden lg:flex flex-col items-center justify-center bg-cosmos-2 border-r border-cosmos-4 px-12 py-16 relative overflow-hidden scanline-fx">
-        {/* Background glow */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{ background: "radial-gradient(ellipse 60% 50% at 50% 40%, rgba(168,85,247,0.08), transparent)" }}
-          aria-hidden="true"
-        />
-
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          className="relative z-10 flex flex-col items-center text-center"
-        >
-          {/* Rotating logo */}
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 60, ease: "linear", repeat: Infinity }}
-            className="mb-8"
-          >
-            <BountixxLogo size={160} />
-          </motion.div>
-
-          {/* Tagline */}
-          <p className="font-zen-dots text-xl text-void mb-10">
-            Compete. Conquer. Collect.
-          </p>
-
-          {/* Quote card */}
-          <motion.div
-            key={quoteIdx}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="bg-cosmos border border-cosmos-4 p-6 max-w-xs text-left clip-arena-sm"
-          >
-            <p className="font-space-mono text-[10px] text-void tracking-widest mb-3">
-              ✦ {q.rank.toUpperCase()} · {q.handle}
-            </p>
-            <p className="font-rajdhani text-lg text-haze-2 italic leading-relaxed">
-              &ldquo;{q.text}&rdquo;
-            </p>
-          </motion.div>
-        </motion.div>
-      </div>
+      <AuthBrandPanel />
 
       {/* ── Right: Form panel ── */}
-      <div className="flex items-center justify-center px-6 py-16 bg-cosmos">
+      <div className="flex items-center justify-center px-6 py-16 bg-cosmos relative">
+        {/* Subtle ambient glow behind the form */}
+        <div
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] pointer-events-none opacity-30"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(255,85,51,0.10) 0%, transparent 65%)",
+          }}
+          aria-hidden
+        />
+
         <motion.div
           variants={staggerContainer}
           initial="hidden"
           animate="show"
-          className="w-full max-w-[440px]"
+          className="w-full max-w-[440px] relative z-10"
         >
-          {/* Mobile logo */}
-          <motion.div variants={slideUp} className="lg:hidden flex justify-center mb-8">
-            <BountixxLogo size={48} showWordmark />
+          {/* Bountixx Logo */}
+          <motion.div variants={slideUp} className="flex justify-start mb-6">
+            <BountixxLogo size={36} showWordmark />
           </motion.div>
 
+
+          {/* Pre-heading */}
+          <motion.p
+            variants={slideUp}
+            className="font-space-mono text-[10px] text-void tracking-[6px] mb-3 uppercase"
+          >
+            INITIATE · PLAYER
+          </motion.p>
+
           <motion.div variants={slideUp}>
-            <h1 className="font-zen-dots text-2xl text-haze mb-2">
+            <h1 className="font-zen-dots text-3xl text-haze mb-2 leading-tight">
               CREATE ACCOUNT
             </h1>
-            <p className="font-rajdhani text-sm text-haze-2 mb-10">
-              Start with 10 free arena creations
+            <p className="font-rajdhani text-base text-haze-2 mb-10">
+              Start with 10 free arena creations. No card needed.
             </p>
           </motion.div>
 
@@ -102,7 +79,7 @@ export default function SignupPage() {
             {/* Divider */}
             <div className="flex items-center gap-3">
               <span className="flex-1 h-px bg-cosmos-4" />
-              <span className="font-space-mono text-[10px] text-haze-3">OR</span>
+              <span className="font-space-mono text-[10px] text-haze-3 tracking-widest">OR</span>
               <span className="flex-1 h-px bg-cosmos-4" />
             </div>
 
@@ -110,19 +87,36 @@ export default function SignupPage() {
             <button
               type="button"
               className="cursor-target flex items-center justify-center gap-3 h-12 border border-cosmos-4 text-haze-2
-                         font-rajdhani font-semibold text-sm tracking-wide hover:border-haze-3 hover:text-haze transition-colors"
+                         font-rajdhani font-semibold text-sm tracking-wide hover:border-haze-3 hover:text-haze hover:bg-cosmos-2/40 transition-all"
             >
               <GoogleIcon />
               CONTINUE WITH GOOGLE
             </button>
           </motion.form>
 
+          {/* Trust strip */}
+          <motion.div
+            variants={slideUp}
+            className="flex items-center justify-center gap-4 mt-6 font-space-mono text-[9px] text-haze-3 tracking-[2px] uppercase"
+          >
+            <span className="flex items-center gap-1.5">
+              <span className="w-1 h-1 rounded-full bg-success" /> Encrypted
+            </span>
+            <span aria-hidden>·</span>
+            <span>No card</span>
+            <span aria-hidden>·</span>
+            <span>Cancel anytime</span>
+          </motion.div>
+
           <motion.p
             variants={slideUp}
-            className="font-rajdhani text-sm text-haze-3 text-center mt-8"
+            className="font-rajdhani text-sm text-haze-3 text-center mt-6"
           >
             Already have an account?{" "}
-            <Link href="/login" className="cursor-target text-void hover:underline">
+            <Link
+              href="/login"
+              className="cursor-target text-void hover:underline font-semibold"
+            >
               Sign in
             </Link>
           </motion.p>

@@ -200,9 +200,9 @@ export default function ArenaPage() {
       </div>
 
       {/* ── Content ── */}
-      <div className="flex flex-1 pt-14">
+      <div className="flex flex-col lg:flex-row flex-1 pt-14">
         {/* Challenge panel */}
-        <div className="w-full lg:w-[30%] lg:max-w-xs border-r border-cosmos-4 bg-cosmos-2 p-5 overflow-y-auto">
+        <div className="w-full lg:w-[30%] lg:max-w-xs border-b lg:border-b-0 lg:border-r border-cosmos-4 bg-cosmos-2 p-5 overflow-y-auto">
           <p className="font-space-mono text-[10px] text-void tracking-widest mb-3 uppercase">
             Challenge Brief
           </p>
@@ -223,7 +223,7 @@ export default function ArenaPage() {
         {/* Editor + results */}
         <div className="flex-1 flex flex-col lg:flex-row min-w-0">
           {/* Code editor */}
-          <div className="flex-1 flex flex-col border-r border-cosmos-4">
+          <div className="flex-1 flex flex-col border-b lg:border-b-0 lg:border-r border-cosmos-4">
             <CodeEditor onRun={() => setRan(true)} onSubmit={() => {}} />
           </div>
 

@@ -3,57 +3,67 @@
 import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { BountixxLogo } from "@/components/BountixxLogo";
 import { Button } from "@/components/ui/Button";
+import { AuthBrandPanel } from "@/components/landing/AuthBrandPanel";
 import { staggerContainer, slideUp } from "@/lib/animations";
 
 export default function LoginPage() {
   const [show, setShow] = useState(false);
 
   return (
-    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-cosmos">
-      {/* Brand panel */}
-      <div className="hidden lg:flex flex-col items-center justify-center bg-cosmos-2 border-r border-cosmos-4 px-12 py-16 relative overflow-hidden scanline-fx">
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{ background: "radial-gradient(ellipse 60% 50% at 50% 40%, rgba(168,85,247,0.06), transparent)" }}
-          aria-hidden="true"
-        />
-        <motion.div
-          initial={{ opacity: 0, scale: 0.85 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          className="relative z-10 flex flex-col items-center text-center gap-8"
-        >
-          <motion.div animate={{ rotate: 360 }} transition={{ duration: 60, ease: "linear", repeat: Infinity }}>
-            <BountixxLogo size={160} />
-          </motion.div>
-          <p className="font-zen-dots text-xl text-void">
-            Welcome Back, Champion
-          </p>
-          <p className="font-rajdhani text-lg text-haze-2 max-w-xs">
-            The arena never sleeps. Neither do winners.
-          </p>
-        </motion.div>
-      </div>
+    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-cosmos relative">
+      {/* Back Button */}
+      <Link
+        href="/"
+        className="cursor-target absolute top-6 left-6 lg:left-8 flex items-center gap-2 text-haze-2 hover:text-haze font-space-mono text-xs tracking-wider z-30 transition-colors"
+      >
+        <ArrowLeft size={14} />
+        BACK
+      </Link>
 
-      {/* Form panel */}
-      <div className="flex items-center justify-center px-6 py-16">
+      {/* ── Left: Brand panel ── */}
+      <AuthBrandPanel />
+
+      {/* ── Right: Form panel ── */}
+      <div className="flex items-center justify-center px-6 py-16 bg-cosmos relative">
+        {/* Subtle ambient glow behind the form */}
+        <div
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] pointer-events-none opacity-30"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(168,85,247,0.10) 0%, transparent 65%)",
+          }}
+          aria-hidden
+        />
+
         <motion.div
           variants={staggerContainer}
           initial="hidden"
           animate="show"
-          className="w-full max-w-[440px]"
+          className="w-full max-w-[440px] relative z-10"
         >
-          <motion.div variants={slideUp} className="lg:hidden flex justify-center mb-8">
-            <BountixxLogo size={48} showWordmark />
+          {/* Bountixx Logo */}
+          <motion.div variants={slideUp} className="flex justify-start mb-6">
+            <BountixxLogo size={36} showWordmark />
           </motion.div>
 
+
+          {/* Pre-heading */}
+          <motion.p
+            variants={slideUp}
+            className="font-space-mono text-[10px] text-void tracking-[6px] mb-3 uppercase"
+          >
+            ACCESS · TERMINAL
+          </motion.p>
+
           <motion.div variants={slideUp}>
-            <h1 className="font-zen-dots text-2xl text-haze mb-2">SIGN IN</h1>
-            <p className="font-rajdhani text-sm text-haze-2 mb-10">
-              Your rivalry awaits
+            <h1 className="font-zen-dots text-3xl text-haze mb-2 leading-tight">
+              SIGN IN
+            </h1>
+            <p className="font-rajdhani text-base text-haze-2 mb-10">
+              Your rivalry awaits.
             </p>
           </motion.div>
 
@@ -96,7 +106,10 @@ export default function LoginPage() {
             </div>
 
             <div className="flex justify-end">
-              <Link href="#" className="cursor-target font-space-mono text-[11px] text-void hover:underline">
+              <Link
+                href="#"
+                className="cursor-target font-space-mono text-[11px] text-void hover:underline"
+              >
                 Forgot password?
               </Link>
             </div>
@@ -107,23 +120,29 @@ export default function LoginPage() {
 
             <div className="flex items-center gap-3">
               <span className="flex-1 h-px bg-cosmos-4" />
-              <span className="font-space-mono text-[10px] text-haze-3">OR</span>
+              <span className="font-space-mono text-[10px] text-haze-3 tracking-widest">OR</span>
               <span className="flex-1 h-px bg-cosmos-4" />
             </div>
 
             <button
               type="button"
               className="cursor-target flex items-center justify-center gap-3 h-12 border border-cosmos-4 text-haze-2
-                         font-rajdhani font-semibold text-sm tracking-wide hover:border-haze-3 hover:text-haze transition-colors"
+                         font-rajdhani font-semibold text-sm tracking-wide hover:border-haze-3 hover:text-haze hover:bg-cosmos-2/40 transition-all"
             >
               <GoogleIcon />
               CONTINUE WITH GOOGLE
             </button>
           </motion.form>
 
-          <motion.p variants={slideUp} className="font-rajdhani text-sm text-haze-3 text-center mt-8">
+          <motion.p
+            variants={slideUp}
+            className="font-rajdhani text-sm text-haze-3 text-center mt-8"
+          >
             No account yet?{" "}
-            <Link href="/signup" className="cursor-target text-void hover:underline">
+            <Link
+              href="/signup"
+              className="cursor-target text-void hover:underline font-semibold"
+            >
               Create one free
             </Link>
           </motion.p>

@@ -69,7 +69,7 @@ function StepIndicator({ step }: { step: Step }) {
           </div>
           {i < steps.length - 1 && (
             <div
-              className={`w-16 h-px mx-3 transition-all ${i < activeIdx ? "bg-success" : "bg-cosmos-4"}`}
+              className={`w-8 sm:w-16 h-px mx-2 sm:mx-3 transition-all ${i < activeIdx ? "bg-success" : "bg-cosmos-4"}`}
               style={{
                 background: i < activeIdx ? "var(--success)" : i === activeIdx ? "var(--void)" : undefined,
               }}
@@ -234,7 +234,7 @@ function ReviewStep({ onLaunch }: { onLaunch: () => void }) {
       className="flex flex-col gap-6"
     >
       {/* AI result card */}
-      <div className="bg-cosmos-2 border-l-[3px] border-void p-6">
+      <div className="bg-cosmos-2 clip-arena p-6" style={{ border: "1px solid rgba(155,107,255,0.3)" }}>
         <span className="font-space-mono text-[10px] text-void tracking-widest uppercase bg-void/10 border border-void/30 px-3 py-1 inline-block mb-5">
           AI ANALYSIS
         </span>
@@ -259,12 +259,12 @@ function ReviewStep({ onLaunch }: { onLaunch: () => void }) {
       {/* Bounty tier */}
       <div>
         <p className="font-space-mono text-[10px] text-haze-3 tracking-widest mb-3 uppercase">Bounty Tier</p>
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {["Bronze", "Silver", "Gold", "Mythic"].map((tier, i) => (
             <button
               key={tier}
-              className={`cursor-target p-3 border text-center transition-all ${
-                i === 0 ? "border-void bg-void/10 scale-[1.02]" : "border-cosmos-4 hover:border-void/50"
+              className={`cursor-target p-3 border text-center transition-all clip-arena-sm ${
+                i === 0 ? "border-void bg-void/10" : "border-cosmos-4 hover:border-void/50"
               }`}
             >
               <p className="font-orbitron font-bold text-sm text-haze">{tier}</p>
@@ -297,9 +297,10 @@ export default function CreatePage() {
 
   return (
     <AppLayout>
-      <div className="px-6 lg:px-10 py-12 max-w-2xl">
-        <h1 className="font-zen-dots text-3xl text-haze mb-2">CREATE YOUR ARENA</h1>
-        <p className="font-rajdhani text-base text-haze-2 mb-10">Drop any challenge. AI does the rest.</p>
+      <div className="px-5 md:px-8 lg:px-10 py-8 md:py-12 max-w-2xl mx-auto">
+        <p className="font-space-mono text-[11px] text-void tracking-[3px] uppercase mb-2">New arena</p>
+        <h1 className="font-zen-dots text-2xl md:text-3xl text-haze mb-2">Create your arena</h1>
+        <p className="font-rajdhani text-base text-haze-2 mb-10">Drop any challenge. The AI builds the rest.</p>
 
         <StepIndicator step={step} />
 

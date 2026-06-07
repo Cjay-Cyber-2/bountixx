@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Orbitron, Rajdhani, Space_Mono, Zen_Dots } from "next/font/google";
+import { Orbitron, Rajdhani, Space_Mono, Zen_Dots, Nunito } from "next/font/google";
 import "./globals.css";
 import { LenisProvider } from "@/components/providers/LenisProvider";
 import { ToastProvider } from "@/components/ui/Toast";
@@ -33,6 +33,13 @@ const zenDots = Zen_Dots({
   display: "swap",
 });
 
+const nunito = Nunito({
+  variable: "--font-nunito",
+  subsets: ["latin"],
+  weight: ["400", "700", "800", "900"],
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "Bountixx — Compete. Conquer. Collect.",
   description:
@@ -54,7 +61,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${orbitron.variable} ${rajdhani.variable} ${spaceMono.variable} ${zenDots.variable} h-full`}
+      className={`${orbitron.variable} ${rajdhani.variable} ${spaceMono.variable} ${zenDots.variable} ${nunito.variable} h-full`}
     >
       <body className="min-h-full bg-cosmos text-haze overflow-x-hidden">
         <LenisProvider>
