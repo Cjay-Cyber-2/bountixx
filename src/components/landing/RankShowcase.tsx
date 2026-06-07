@@ -2,140 +2,117 @@
 
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
-import { staggerContainer, slideUp } from "@/lib/animations";
 import { XPBar } from "@/components/ui/XPBar";
 
-const ranks = [
-  {
-    name: "RECRUIT",
-    xp: "0 XP",
-    desc: "The beginning",
-    color: "#6B7280",
-    gradFrom: "#374151",
-    gradTo: "#6B7280",
-  },
-  {
-    name: "CHALLENGER",
-    xp: "500 XP",
-    desc: "Warming up",
-    color: "#FF6B1A",
-    gradFrom: "#FF6B1A",
-    gradTo: "#F97316",
-  },
-  {
-    name: "ELITE",
-    xp: "2,000 XP",
-    desc: "Formidable",
-    color: "#F0A500",
-    gradFrom: "#F0A500",
-    gradTo: "#FBBF24",
-  },
-  {
-    name: "CHAMPION",
-    xp: "7,500 XP",
-    desc: "Feared",
-    color: "#a855f7",
-    gradFrom: "#8660fa",
-    gradTo: "#a855f7",
-  },
-  {
-    name: "LEGENDARY",
-    xp: "20,000 XP",
-    desc: "Untouchable",
-    color: "#F0A500",
-    gradFrom: "#FF6B1A",
-    gradTo: "#F0A500",
-  },
-];
-
-function RankBadge({ color, name, gradient }: { color: string; name: string; gradient: string[] }) {
-  return (
-    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" aria-hidden="true">
-      <defs>
-        <linearGradient id={`rg-${name}`} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor={gradient[0]} />
-          <stop offset="100%" stopColor={gradient[1]} />
-        </linearGradient>
-      </defs>
-      {name === "LEGENDARY" ? (
-        <path d="M24 4L30 18L44 14L36 28L44 44H4L12 28L4 14L18 18L24 4Z" fill={`url(#rg-${name})`} />
-      ) : name === "CHAMPION" ? (
-        <path d="M24 4L44 12V28C44 38 24 44 24 44C24 44 4 38 4 28V12L24 4Z" fill={`url(#rg-${name})`} />
-      ) : name === "ELITE" ? (
-        <path d="M24 4L28.9 17.6H43.3L31.7 26.2L36.6 39.8L24 31.2L11.4 39.8L16.3 26.2L4.7 17.6H19.1L24 4Z" fill={`url(#rg-${name})`} />
-      ) : name === "CHALLENGER" ? (
-        <path d="M24 4L44 24L24 44L4 24L24 4Z" fill={`url(#rg-${name})`} />
-      ) : (
-        <path d="M24 4L42 14V34L24 44L6 34V14L24 4Z" fill={`url(#rg-${name})`} />
-      )}
-      <text x="50%" y="55%" dominantBaseline="middle" textAnchor="middle" fill="white" fontSize="9" fontWeight="bold" fontFamily="monospace">
-        {name.slice(0, 3)}
-      </text>
-    </svg>
-  );
-}
+const RANKS = [
+  { num: "01", name: "RECRUIT",    xp: "0",      reward: null,     unlock: "Standard rooms" },
+  { num: "02", name: "CHALLENGER", xp: "500",    reward: "+100",   unlock: "Silver bounty rooms" },
+  { num: "03", name: "ELITE",      xp: "2,000",  reward: "+250",   unlock: "Gold rooms · profile badge" },
+  { num: "04", name: "CHAMPION",   xp: "7,500",  reward: "+500",   unlock: "Mythic rooms · avatar frame" },
+  { num: "05", name: "LEGENDARY",  xp: "20,000", reward: "+1,500", unlock: "Legendary badge · exclusive sticker" },
+] as const;
 
 export function RankShowcase() {
   const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-8% 0px" });
+  const inView = useInView(ref, { once: true, margin: "-10% 0px" });
 
   return (
-    <section id="ranks" className="py-36 px-6 lg:px-14 bg-cosmos-2 border-y border-cosmos-4" ref={ref}>
-      <div className="max-w-[1400px] mx-auto">
-        <p className="font-space-mono text-xs text-void tracking-[6px] mb-4 uppercase">
-          Progression System
-        </p>
-        <h2 className="font-zen-dots text-3xl lg:text-4xl text-haze mb-16">
-          RISE THROUGH THE RANKS
-        </h2>
+    <section
+      id="ranks"
+      ref={ref}
+      className="py-28 md:py-36 px-6 lg:px-14 bg-cosmos-2 border-y border-cosmos-4 overflow-hidden"
+    >
+      <div className="max-w-[1280px] mx-auto">
+        {/* Heading */}
+        <div className="mb-16 md:mb-20 max-w-2xl">
+          <p className="font-space-mono text-[10px] tracking-[5px] uppercase text-haze-3 mb-5">
+            XP · Every room moves the needle
+          </p>
+          <h2 className="font-zen-dots text-[clamp(2rem,4.5vw,3.5rem)] text-haze leading-[1.05]">
+            Rise through{" "}
+            <span
+              style={{
+                background: "linear-gradient(110deg,#a855f7 0%,#c084fc 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+              }}
+            >
+              the ranks
+            </span>
+          </h2>
+          <p className="font-rajdhani text-lg text-haze-2 mt-5 leading-relaxed">
+            Win, place, or just show up — XP accrues either way. Each rank unlocks bigger bounty tiers and a payout the moment you cross it.
+          </p>
+        </div>
 
-        {/* Rank cards */}
+        {/* Rank table — horizontal rule layout, no colored badges */}
         <motion.div
-          variants={staggerContainer}
           initial="hidden"
           animate={inView ? "show" : "hidden"}
-          className="flex gap-4 overflow-x-auto pb-4 lg:grid lg:grid-cols-5"
-          style={{ scrollbarWidth: "none" }}
+          variants={{ show: { transition: { staggerChildren: 0.08 } } }}
+          className="border-t border-cosmos-4 divide-y divide-cosmos-4"
         >
-          {ranks.map((rank) => (
+          {RANKS.map((rank) => (
             <motion.div
               key={rank.name}
-              variants={slideUp}
-              className="group relative bg-cosmos border border-cosmos-4 p-5 min-w-[160px] lg:min-w-0 cursor-default
-                         hover:scale-[1.04] hover:border-opacity-60 transition-all duration-200 clip-arena-sm"
-              style={{ borderTop: `2px solid ${rank.color}` }}
+              variants={{
+                hidden: { opacity: 0, y: 16 },
+                show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } },
+              }}
+              className="group grid grid-cols-[auto_1fr_auto_auto] md:grid-cols-[40px_auto_1fr_140px_100px] items-center gap-5 md:gap-8 py-5 hover:bg-cosmos-3 transition-colors duration-200 px-2"
             >
-              <motion.div
-                className="mb-3"
-                whileHover={{ rotate: 15 }}
-                transition={{ type: "spring", damping: 12 }}
-              >
-                <RankBadge color={rank.color} name={rank.name} gradient={[rank.gradFrom, rank.gradTo]} />
-              </motion.div>
-              <p className="font-orbitron font-bold text-sm text-haze tracking-wide mb-0.5">
+              {/* Index */}
+              <span className="font-space-mono text-[10px] text-haze-3 tabular-nums hidden md:block">
+                {rank.num}
+              </span>
+
+              {/* Rank name */}
+              <span className="font-zen-dots text-lg md:text-xl text-haze tracking-wide">
                 {rank.name}
-              </p>
-              <p className="font-space-mono text-[10px] mb-2" style={{ color: rank.color }}>
-                {rank.xp}
-              </p>
-              <p className="font-rajdhani text-xs text-haze-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                {rank.desc}
-              </p>
+              </span>
+
+              {/* Unlock */}
+              <span className="font-rajdhani text-[14px] text-haze-3 hidden md:block">
+                {rank.unlock}
+              </span>
+
+              {/* XP threshold */}
+              <span className="font-space-mono text-[11px] text-haze-3 tabular-nums text-right hidden md:block">
+                {rank.xp} XP
+              </span>
+
+              {/* Reward */}
+              <span
+                className="font-space-mono text-[13px] tabular-nums text-right"
+                style={{ color: rank.reward ? "#F0A500" : "rgba(74,63,112,0.6)" }}
+              >
+                {rank.reward ? `${rank.reward} ◈` : "—"}
+              </span>
             </motion.div>
           ))}
         </motion.div>
 
-        {/* XP bar demo */}
+        {/* XP progress demo */}
         <motion.div
-          initial={{ opacity: 0, y: 24 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ delay: 0.6, duration: 0.5 }}
-          className="mt-12 bg-cosmos border border-cosmos-4 p-6 max-w-xl"
+          transition={{ delay: 0.55, duration: 0.55 }}
+          className="mt-14 max-w-xl"
+          style={{
+            background: "rgba(14,8,24,0.5)",
+            border: "1px solid rgba(45,27,105,0.7)",
+            padding: "28px 32px",
+          }}
         >
-          <p className="font-space-mono text-[10px] text-void tracking-widest mb-3 uppercase">
-            Champion · 6,820 / 10,000 XP
-          </p>
+          <div className="flex items-center justify-between mb-4">
+            <span className="font-zen-dots text-sm text-haze tracking-wide">CHAMPION</span>
+            <span className="font-space-mono text-[11px] text-haze-3">6,820 / 10,000 XP</span>
+          </div>
           <XPBar current={6820} max={10000} thick color="void" />
+          <p className="font-space-mono text-[10px] text-haze-3 mt-3 tracking-[1px]">
+            3,180 XP to Legendary — about 16 wins away.
+          </p>
         </motion.div>
       </div>
     </section>

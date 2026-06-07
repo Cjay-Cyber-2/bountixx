@@ -6,79 +6,71 @@ import { Plus, Minus, ShoppingBag } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/Button";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
-import { staggerContainer, slideUp } from "@/lib/animations";
+import { CrownMark } from "@/components/BountixxLogo";
 
 type FilterTab = "ALL" | "EARNED" | "SPENT" | "PURCHASED";
 
 const TRANSACTIONS = [
-  { type: "earned",    desc: "Won String Reversal Clash",   amount: +300, date: "Jun 4, 2025" },
-  { type: "spent",     desc: "Created arena (deducted)",    amount: -0,   date: "Jun 4, 2025" },
-  { type: "earned",    desc: "Won Regex Warfare",           amount: +300, date: "Jun 2, 2025" },
-  { type: "purchased", desc: "Elite bundle — 750 coins",    amount: +750, date: "May 30, 2025" },
-  { type: "spent",     desc: "Created 3 arenas",            amount: -0,   date: "May 28, 2025" },
-  { type: "earned",    desc: "Placed 2nd in Math Sprint",   amount: +150, date: "May 25, 2025" },
+  { type: "earned", desc: "Won String Reversal Clash", amount: +300, date: "Jun 4" },
+  { type: "spent", desc: "Created arena", amount: -0, date: "Jun 4" },
+  { type: "earned", desc: "Won Regex Warfare", amount: +300, date: "Jun 2" },
+  { type: "purchased", desc: "Elite bundle — 750 coins", amount: +750, date: "May 30" },
+  { type: "spent", desc: "Created 3 arenas", amount: -0, date: "May 28" },
+  { type: "earned", desc: "Placed 2nd in Math Sprint", amount: +150, date: "May 25" },
 ];
 
 const BUNDLES = [
-  { label: "Starter",    coins: 100,  price: "$0.99",  popular: false },
-  { label: "Challenger", coins: 300,  price: "$2.49",  popular: false },
-  { label: "Elite",      coins: 750,  price: "$4.99",  popular: true  },
-  { label: "Champion",   coins: 2000, price: "$11.99", popular: false },
-  { label: "Legendary",  coins: 5500, price: "$27.99", popular: false },
+  { label: "Starter", coins: 100, price: "$0.99", popular: false },
+  { label: "Challenger", coins: 300, price: "$2.49", popular: false },
+  { label: "Elite", coins: 750, price: "$4.99", popular: true },
+  { label: "Champion", coins: 2000, price: "$11.99", popular: false },
+  { label: "Legendary", coins: 5500, price: "$27.99", popular: false },
 ];
 
 export default function WalletPage() {
   const [filter, setFilter] = useState<FilterTab>("ALL");
-  const [selected, setSelected] = useState(2); // Elite by default
+  const [selected, setSelected] = useState(2);
 
-  const filtered = filter === "ALL"
-    ? TRANSACTIONS
-    : TRANSACTIONS.filter((t) => t.type === filter.toLowerCase());
+  const filtered = filter === "ALL" ? TRANSACTIONS : TRANSACTIONS.filter((t) => t.type === filter.toLowerCase());
 
   return (
     <AppLayout>
-      <div className="px-6 lg:px-10 py-8 max-w-5xl">
-        <h1 className="font-zen-dots text-2xl text-haze mb-10">
-          YOUR WALLET
-        </h1>
+      <div className="px-5 md:px-8 lg:px-10 py-8 md:py-10 max-w-5xl mx-auto">
+        <p className="font-space-mono text-[11px] text-crown tracking-[3px] uppercase mb-2">Treasury</p>
+        <h1 className="font-zen-dots text-2xl md:text-3xl text-haze mb-8">Your wallet</h1>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8">
-          {/* ── Left: Balance + history ── */}
-          <div className="flex flex-col gap-8">
-            {/* Large balance */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6 lg:gap-8">
+          {/* Left */}
+          <div className="flex flex-col gap-6">
+            {/* Balance */}
             <motion.div
-              initial={{ opacity: 0, y: 24 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-cosmos-2 border border-cosmos-4 p-8 flex items-center gap-6 clip-arena"
+              className="relative p-6 md:p-8 flex items-center gap-5 md:gap-6 clip-arena overflow-hidden"
+              style={{ background: "rgba(240,165,0,0.05)", border: "1px solid rgba(240,165,0,0.3)" }}
             >
-              {/* Coin illustration */}
               <div
-                className="w-20 h-20 rounded-full border-4 border-crown flex items-center justify-center shrink-0"
-                style={{ background: "radial-gradient(circle at 35% 35%, #FBBF24, #F0A500 60%, #D97706)" }}
-              >
-                <span className="font-orbitron font-bold text-2xl text-amber-900">BX</span>
+                className="absolute -top-10 -right-10 w-44 h-44 rounded-full opacity-40 pointer-events-none"
+                style={{ background: "radial-gradient(circle, rgba(240,165,0,0.35), transparent 70%)" }}
+                aria-hidden
+              />
+              <div className="shrink-0" style={{ filter: "drop-shadow(0 0 16px rgba(240,165,0,0.4))" }}>
+                <CrownMark size={64} crownColor="#F0A500" crownLight="#FFC94D" dotColor="#111B56" id="wallet-balance" />
               </div>
               <div>
-                <p className="font-space-mono text-[10px] text-haze-3 tracking-widest mb-1">
-                  BOUNTIXX COINS
-                </p>
-                <AnimatedNumber
-                  value={450}
-                  className="font-orbitron font-black text-6xl text-crown block"
-                />
+                <p className="font-space-mono text-[10px] text-haze-3 tracking-[2px] mb-1 uppercase">Bountixx coins</p>
+                <AnimatedNumber value={450} className="font-orbitron font-black text-5xl md:text-6xl text-crown block leading-none" />
               </div>
             </motion.div>
 
             {/* Filter tabs */}
-            <div className="flex gap-0 border-b border-cosmos-4">
+            <div className="flex gap-1 border-b border-cosmos-4 overflow-x-auto">
               {(["ALL", "EARNED", "SPENT", "PURCHASED"] as FilterTab[]).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setFilter(tab)}
-                  className={`cursor-target px-4 py-3 font-space-mono text-[10px] tracking-widest border-b-2 transition-all ${
-                    filter === tab
-                      ? "border-void text-void"
-                      : "border-transparent text-haze-3 hover:text-haze-2"
+                  className={`cursor-target px-4 py-3 font-space-mono text-[10px] tracking-[2px] border-b-2 transition-all whitespace-nowrap ${
+                    filter === tab ? "border-void text-void" : "border-transparent text-haze-3 hover:text-haze-2"
                   }`}
                 >
                   {tab}
@@ -86,105 +78,84 @@ export default function WalletPage() {
               ))}
             </div>
 
-            {/* Transaction list */}
-            <div className="flex flex-col gap-0 bg-cosmos-2 border border-cosmos-4 overflow-hidden">
+            {/* Transactions */}
+            <div className="clip-arena overflow-hidden" style={{ border: "1px solid rgba(45,27,105,0.7)" }}>
               {filtered.length === 0 ? (
-                <div className="p-10 text-center">
-                  <p className="font-rajdhani font-bold text-lg text-haze-2">NO TRANSACTIONS</p>
-                  <p className="font-rajdhani text-sm text-haze-3 mt-1">
-                    Win arenas or purchase coins to get started.
-                  </p>
+                <div className="p-10 text-center bg-cosmos-2">
+                  <p className="font-rajdhani font-bold text-lg text-haze-2">No transactions yet</p>
+                  <p className="font-rajdhani text-sm text-haze-3 mt-1">Win arenas or buy coins to get started.</p>
                 </div>
               ) : (
                 filtered.map((t, i) => (
                   <div
                     key={i}
-                    className={`flex items-center gap-4 px-5 py-4 border-b border-cosmos-4 last:border-0 hover:bg-cosmos-3 transition-colors ${
-                      i % 2 === 0 ? "" : "bg-cosmos/30"
-                    }`}
+                    className="flex items-center gap-3.5 px-4 md:px-5 py-3.5 bg-cosmos-2 border-b border-cosmos-4 last:border-0 hover:bg-cosmos-3 transition-colors"
                   >
                     <div
-                      className={`w-8 h-8 rounded-none flex items-center justify-center shrink-0 ${
-                        t.amount > 0 ? "bg-success/10" : "bg-danger/10"
-                      }`}
+                      className="w-8 h-8 flex items-center justify-center shrink-0 clip-arena-sm"
+                      style={{ background: t.amount > 0 ? "rgba(0,214,143,0.12)" : "rgba(255,45,85,0.12)" }}
                     >
                       {t.amount > 0 ? (
-                        <Plus size={14} className="text-success" aria-hidden="true" />
+                        <Plus size={14} className="text-success" aria-hidden />
                       ) : (
-                        <Minus size={14} className="text-danger" aria-hidden="true" />
+                        <Minus size={14} className="text-danger" aria-hidden />
                       )}
                     </div>
-                    <p className="flex-1 font-rajdhani font-semibold text-sm text-haze truncate">
-                      {t.desc}
-                    </p>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-rajdhani font-semibold text-sm text-haze truncate">{t.desc}</p>
+                      <p className="font-space-mono text-[10px] text-haze-3 mt-0.5 sm:hidden">{t.date}</p>
+                    </div>
                     <span
-                      className={`font-orbitron font-bold text-sm shrink-0 ${
-                        t.amount > 0 ? "text-success" : "text-danger"
-                      }`}
+                      className="font-orbitron font-bold text-sm shrink-0"
+                      style={{ color: t.amount > 0 ? "#00D68F" : t.amount === 0 ? "var(--haze-3)" : "#FF2D55" }}
                     >
                       {t.amount > 0 ? `+${t.amount}` : t.amount === 0 ? "FREE" : t.amount}
                     </span>
-                    <span className="font-space-mono text-[10px] text-haze-3 shrink-0">{t.date}</span>
+                    <span className="hidden sm:inline font-space-mono text-[10px] text-haze-3 shrink-0 w-12 text-right">{t.date}</span>
                   </div>
                 ))
               )}
             </div>
           </div>
 
-          {/* ── Right: Buy coins ── */}
-          <motion.div
-            variants={staggerContainer}
-            initial="hidden"
-            animate="show"
-            className="flex flex-col gap-5"
-          >
-            <motion.div variants={slideUp}>
-              <p className="font-space-mono text-[10px] text-haze-3 tracking-widest mb-1 uppercase">
-                Purchase
-              </p>
-              <h2 className="font-zen-dots text-xl text-haze">BUY COINS</h2>
-            </motion.div>
+          {/* Right: bundles */}
+          <div className="flex flex-col gap-3">
+            <div className="mb-1">
+              <p className="font-space-mono text-[10px] text-haze-3 tracking-[2px] mb-1 uppercase">Top up</p>
+              <h2 className="font-zen-dots text-xl text-haze">Buy coins</h2>
+            </div>
 
             {BUNDLES.map((b, i) => (
-              <motion.button
+              <button
                 key={b.label}
-                variants={slideUp}
                 onClick={() => setSelected(i)}
                 className={`cursor-target relative text-left p-4 border transition-all hover:-translate-y-0.5 clip-arena-sm ${
-                  selected === i
-                    ? "border-void bg-void/8"
-                    : "border-cosmos-4 bg-cosmos-2 hover:border-void/50"
+                  selected === i ? "border-void bg-void/10" : "border-cosmos-4 bg-cosmos-2 hover:border-void/50"
                 }`}
               >
                 {b.popular && (
-                  <span className="absolute top-2 right-2 font-space-mono text-[8px] text-cosmos bg-void px-2 py-0.5 tracking-widest">
-                    MOST POPULAR
+                  <span className="absolute top-2 right-2 font-space-mono text-[8px] text-cosmos bg-void px-2 py-0.5 tracking-[1px]">
+                    POPULAR
                   </span>
                 )}
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-orbitron font-bold text-2xl text-crown">
-                      {b.coins.toLocaleString()}
-                    </p>
-                    <p className="font-space-mono text-[9px] text-haze-3 mt-0.5 uppercase">
-                      {b.label}
-                    </p>
+                    <p className="font-orbitron font-bold text-2xl text-crown leading-none">{b.coins.toLocaleString()}</p>
+                    <p className="font-space-mono text-[9px] text-haze-3 mt-1.5 uppercase tracking-wider">{b.label}</p>
                   </div>
                   <p className="font-rajdhani font-bold text-xl text-haze">{b.price}</p>
                 </div>
-              </motion.button>
+              </button>
             ))}
 
             <Button variant="primary" fullWidth size="lg" magnetic className="mt-2">
-              <ShoppingBag size={16} aria-hidden="true" />
+              <ShoppingBag size={16} aria-hidden />
               PROCEED TO PAYMENT
             </Button>
-
-            {/* Trust signals */}
-            <p className="font-space-mono text-[9px] text-haze-3 text-center tracking-wider">
-              Secure payment · Instant delivery · No subscription
+            <p className="font-space-mono text-[9px] text-haze-3 text-center tracking-wider leading-relaxed">
+              Secure checkout · Coins are non-refundable · Not redeemable for cash
             </p>
-          </motion.div>
+          </div>
         </div>
       </div>
     </AppLayout>

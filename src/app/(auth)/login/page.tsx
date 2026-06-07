@@ -19,6 +19,7 @@ import { auth, googleProvider, githubProvider } from "@/lib/firebase";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { BountixxLogo } from "@/components/BountixxLogo";
 import { Button } from "@/components/ui/Button";
+import { AuthBrandPanel } from "@/components/landing/AuthBrandPanel";
 import { staggerContainer, slideUp } from "@/lib/animations";
 
 type Method = "email-password" | "email-link" | "phone-otp";
@@ -173,6 +174,15 @@ export default function LoginPage() {
           <motion.div variants={slideUp} className="lg:hidden flex justify-center mb-8">
             <BountixxLogo size={48} showWordmark />
           </motion.div>
+
+
+          {/* Pre-heading */}
+          <motion.p
+            variants={slideUp}
+            className="font-space-mono text-[10px] text-void tracking-[6px] mb-3 uppercase"
+          >
+            ACCESS · TERMINAL
+          </motion.p>
 
           <motion.div variants={slideUp}>
             <h1 className="font-zen-dots text-2xl text-haze mb-2">SIGN IN</h1>
