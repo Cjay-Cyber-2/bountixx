@@ -164,24 +164,15 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-cosmos">
-      <div className="hidden lg:flex flex-col items-center justify-center bg-cosmos-2 border-r border-cosmos-4 px-12 py-16 relative overflow-hidden scanline-fx">
-        <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse 60% 50% at 50% 40%, rgba(168,85,247,0.06), transparent)" }} aria-hidden="true" />
-        <motion.div initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }} className="relative z-10 flex flex-col items-center text-center gap-8">
-          <motion.div animate={{ rotate: 360 }} transition={{ duration: 60, ease: "linear", repeat: Infinity }}>
-            <BountixxLogo size={160} />
-          </motion.div>
-          <p className="font-zen-dots text-xl text-void">Welcome Back, Champion</p>
-          <p className="font-rajdhani text-lg text-haze-2 max-w-xs">The arena never sleeps. Neither do winners.</p>
-        </motion.div>
-      </div>
+      <AuthBrandPanel />
 
       <div className="flex items-center justify-center px-6 py-16 relative">
         {/* Back button */}
         <Link
           href="/"
-          className="absolute top-6 left-6 flex items-center gap-1.5 font-space-mono text-[11px] text-haze-3 hover:text-void tracking-widest transition-colors group"
+          className="absolute top-6 left-6 flex items-center gap-2 font-space-mono text-[11px] text-haze-2 hover:text-void tracking-widest transition-colors group border border-cosmos-4 hover:border-void/50 px-3 py-2 bg-cosmos-2 hover:bg-void/5"
         >
-          <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
+          <ArrowLeft size={13} className="group-hover:-translate-x-0.5 transition-transform" />
           BACK
         </Link>
 

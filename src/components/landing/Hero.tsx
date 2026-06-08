@@ -54,27 +54,36 @@ export function Hero() {
       aria-label="Bountixx — Drop a challenge, claim the bounty"
     >
       {/* ── Full-bleed Lottie Centerpiece ── */}
+      {/* Static ambient glow shows immediately while Lottie loads */}
+      <div
+        className="absolute inset-0 z-0 pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(ellipse 80% 55% at 50% 38%, rgba(155,107,255,0.18) 0%, transparent 68%)," +
+            "radial-gradient(ellipse 60% 40% at 50% 75%, rgba(255,107,26,0.10) 0%, transparent 70%)",
+        }}
+        aria-hidden
+      />
+
       <motion.div
         className="absolute inset-0 z-0 pointer-events-none overflow-hidden"
         style={{ scale: reduceMotion ? 1 : animScale }}
       >
-        {animationData ? (
-          <Lottie
-            animationData={animationData}
-            loop
-            autoplay
-            style={{ width: "100%", height: "100%" }}
-            rendererSettings={{ preserveAspectRatio: "xMidYMid slice" }}
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <div className="flex flex-col items-center gap-4">
-              <div className="w-12 h-12 rounded-full border-2 border-void/40 border-t-void animate-spin" />
-              <span className="font-space-mono text-[10px] text-haze-3 tracking-[4px] uppercase">
-                Loading Arena
-              </span>
-            </div>
-          </div>
+        {animationData !== null && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6 }}
+            className="w-full h-full"
+          >
+            <Lottie
+              animationData={animationData as object}
+              loop
+              autoplay
+              style={{ width: "100%", height: "100%" }}
+              rendererSettings={{ preserveAspectRatio: "xMidYMid slice" }}
+            />
+          </motion.div>
         )}
       </motion.div>
 

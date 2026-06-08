@@ -143,10 +143,11 @@ export function TopNav() {
             <button
               onClick={handleLogout}
               disabled={signingOut}
-              className="cursor-target text-haze-3 hover:text-danger transition-colors p-1 disabled:opacity-40"
+              className="cursor-target flex items-center gap-1.5 font-space-mono text-[10px] tracking-widest text-haze-2 hover:text-danger border border-cosmos-4 hover:border-danger/50 px-2.5 py-1.5 transition-all disabled:opacity-40 whitespace-nowrap"
               aria-label="Sign out"
             >
-              <LogOut size={16} />
+              <LogOut size={12} aria-hidden />
+              {signingOut ? "…" : "SIGN OUT"}
             </button>
           </div>
 

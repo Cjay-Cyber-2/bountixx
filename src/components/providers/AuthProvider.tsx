@@ -18,15 +18,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        const idToken = await firebaseUser.getIdToken();
-        await fetch("/api/auth/session", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ idToken }),
-        });
+        // Sync session cookie — wrapped so a network/DB failure never
+        // blocks setUser() and leaves the UI in a perpetual loading state.
+        try {
+          const idToken = await firebaseUser.getIdToken();
+          await fetch("/api/auth/session", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ idToken }),
+          });
+        } catch {
+          // Session sync failed (network error, cold-start DB, etc.)
+          // Firebase auth is still valid — let the user through.
+        }
         setUser(firebaseUser);
       } else {
-        await fetch("/api/auth/session", { method: "DELETE" });
+        try {
+          await fetch("/api/auth/session", { method: "DELETE" });
+        } catch {}
         setUser(null);
       }
       setLoading(false);
