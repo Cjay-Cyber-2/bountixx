@@ -11,33 +11,42 @@ const SESSION_MS = 60 * 60 * 24 * 14 * 1000; // 14 days
 export async function POST(req: Request) {
   try {
     const { idToken } = await req.json();
+
+    // Verify the Firebase ID token — this is the critical auth check
     const decoded = await adminAuth.verifyIdToken(idToken);
 
-    // Sync user to Neon on first sign-in
-    const existing = await db
-      .select({ id: users.id })
-      .from(users)
-      .where(eq(users.id, decoded.uid))
-      .limit(1);
+    // Sync user to Neon — non-fatal: a DB outage should never block login
+    try {
+      const existing = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.id, decoded.uid))
+        .limit(1);
 
-    if (existing.length === 0) {
-      const rawUsername =
-        decoded.name?.replace(/\s+/g, "_").toLowerCase() ??
-        decoded.email?.split("@")[0] ??
-        decoded.uid.slice(0, 16);
+      if (existing.length === 0) {
+        const rawUsername =
+          decoded.name?.replace(/\s+/g, "_").toLowerCase() ??
+          decoded.email?.split("@")[0] ??
+          decoded.uid.slice(0, 16);
 
-      await db.insert(users).values({
-        id: decoded.uid,
-        email: decoded.email ?? null,
-        username: rawUsername,
-        avatarUrl: decoded.picture ?? null,
-        coinsBalance: 500, // welcome bonus
-        xp: 0,
-        rank: "recruit",
-        roomsCreatedCount: 0,
-      });
+        await db.insert(users).values({
+          id: decoded.uid,
+          email: decoded.email ?? null,
+          username: rawUsername,
+          avatarUrl: decoded.picture ?? null,
+          coinsBalance: 500,
+          xp: 0,
+          rank: "recruit",
+          roomsCreatedCount: 0,
+        });
+      }
+    } catch (dbErr) {
+      // DB sync failed (table missing, connection error, etc.)
+      // Auth is still valid — log and continue so the cookie is set
+      console.error("[session/POST] DB sync failed (non-fatal):", dbErr);
     }
 
+    // Create the httpOnly session cookie
     const sessionCookie = await adminAuth.createSessionCookie(idToken, {
       expiresIn: SESSION_MS,
     });

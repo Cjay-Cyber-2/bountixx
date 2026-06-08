@@ -18,6 +18,7 @@ import {
   ConfirmationResult,
 } from "firebase/auth";
 import { auth, googleProvider, githubProvider } from "@/lib/firebase";
+import { createSession } from "@/lib/createSession";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { BountixxLogo } from "@/components/BountixxLogo";
 import { Button } from "@/components/ui/Button";
@@ -57,9 +58,11 @@ export default function LoginPage() {
     const addr = stored ?? window.prompt("Enter your email to confirm:") ?? "";
     if (!addr) return;
     signInWithEmailLink(auth, addr, window.location.href)
-      .then(() => {
+      .then(async (credential) => {
         window.localStorage.removeItem("emailForSignIn");
-        router.replace("/dashboard");
+        const ok = await createSession(credential.user);
+        if (ok) router.replace("/dashboard");
+        else setError("Session creation failed. Please try again.");
       })
       .catch((err) => setError(err.message));
   }, [router]);
@@ -72,14 +75,14 @@ export default function LoginPage() {
     setOtpSent(false);
   }
 
-  // Handle the result when Google/GitHub redirect flow completes
+  // Handle redirect result (fallback for popup-blocked)
   useEffect(() => {
     getRedirectResult(auth)
-      .then((result) => {
-        if (result?.user) {
-          // onAuthStateChanged in AuthProvider will set user + cookie,
-          // then the useEffect above redirects to /dashboard
-        }
+      .then(async (result) => {
+        if (!result?.user) return;
+        const ok = await createSession(result.user);
+        if (ok) router.replace("/dashboard");
+        else setError("Authentication failed. Please try again.");
       })
       .catch((err: unknown) => {
         const code = (err as { code?: string }).code;
@@ -90,24 +93,30 @@ export default function LoginPage() {
         ) return;
         if (err) setError((err as { message: string }).message);
       });
-  }, []);
+  }, [router]);
 
   async function handleOAuth(provider: "google" | "github") {
     setError("");
+    setPending(true);
     const p = provider === "google" ? googleProvider : githubProvider;
     try {
-      // signInWithPopup works when called synchronously from a click handler.
-      // onAuthStateChanged in AuthProvider handles session cookie + redirect.
-      await signInWithPopup(auth, p);
+      const result = await signInWithPopup(auth, p);
+      const ok = await createSession(result.user);
+      if (!ok) throw new Error("Session creation failed. Please try again.");
+      router.replace("/dashboard");
     } catch (err: unknown) {
       const code = (err as { code?: string }).code;
-      if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request" || code === "auth/user-cancelled") return;
+      if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request" || code === "auth/user-cancelled") {
+        setPending(false);
+        return;
+      }
       if (code === "auth/popup-blocked") {
-        // Browser blocked popup — fall back to redirect flow
         signInWithRedirect(auth, p);
+        setPending(false);
         return;
       }
       setError((err as { message: string }).message);
+      setPending(false);
     }
   }
 
@@ -116,11 +125,12 @@ export default function LoginPage() {
     setPending(true);
     setError("");
     try {
-      await signInWithEmailAndPassword(auth, identifier, password);
-      // Redirect handled by onAuthStateChanged → setUser → useEffect
+      const credential = await signInWithEmailAndPassword(auth, identifier, password);
+      const ok = await createSession(credential.user);
+      if (!ok) throw new Error("Session creation failed. Please try again.");
+      router.replace("/dashboard");
     } catch (err: unknown) {
       setError((err as { message: string }).message);
-    } finally {
       setPending(false);
     }
   }
@@ -168,11 +178,12 @@ export default function LoginPage() {
     setPending(true);
     setError("");
     try {
-      await confirmationRef.current.confirm(otp);
-      // Redirect handled by onAuthStateChanged → setUser → useEffect
+      const credential = await confirmationRef.current.confirm(otp);
+      const ok = await createSession(credential.user);
+      if (!ok) throw new Error("Session creation failed. Please try again.");
+      router.replace("/dashboard");
     } catch (err: unknown) {
       setError((err as { message: string }).message);
-    } finally {
       setPending(false);
     }
   }
