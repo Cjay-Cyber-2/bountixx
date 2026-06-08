@@ -1,17 +1,11 @@
 "use client";
 
-/**
- * Hero — the brand animation fills the whole stage (cover), centered and
- * responsive. Soft scrims keep the HUD text legible over it. No grid patterns.
- */
-
 import type React from "react";
-import { useState, useEffect, useRef } from "react";
+import { useRef, useState } from "react";
 import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
 import Link from "next/link";
 import { Zap, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import Lottie from "lottie-react";
 
 const fadeUp = (delay: number) => ({
   initial: { opacity: 0, y: 20 },
@@ -28,17 +22,7 @@ const fadeIn = (delay: number) => ({
 export function Hero() {
   const sectionRef = useRef<HTMLElement>(null);
   const reduceMotion = useReducedMotion();
-  const [animationData, setAnimationData] = useState<unknown>(null);
-
-  useEffect(() => {
-    fetch("/bountixx.json")
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to load bountixx.json");
-        return res.json();
-      })
-      .then(setAnimationData)
-      .catch((err) => console.error("Lottie load error:", err));
-  }, []);
+  const [svgFailed, setSvgFailed] = useState(false);
 
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -53,8 +37,7 @@ export function Hero() {
       className="relative h-[100vw] min-h-[600px] max-h-[1280px] flex flex-col overflow-hidden bg-cosmos"
       aria-label="Bountixx — Drop a challenge, claim the bounty"
     >
-      {/* ── Full-bleed Lottie Centerpiece ── */}
-      {/* Static ambient glow shows immediately while Lottie loads */}
+      {/* ── Ambient glow (always visible) ── */}
       <div
         className="absolute inset-0 z-0 pointer-events-none"
         style={{
@@ -65,25 +48,32 @@ export function Hero() {
         aria-hidden
       />
 
+      {/* ── bountixx.svg / bountixx.json illustration ── */}
       <motion.div
         className="absolute inset-0 z-0 pointer-events-none overflow-hidden"
         style={{ scale: reduceMotion ? 1 : animScale }}
       >
-        {animationData !== null && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6 }}
-            className="w-full h-full"
-          >
-            <Lottie
-              animationData={animationData as object}
-              loop
-              autoplay
-              style={{ width: "100%", height: "100%" }}
-              rendererSettings={{ preserveAspectRatio: "xMidYMid slice" }}
-            />
-          </motion.div>
+        {svgFailed ? (
+          <video
+            src="/bountixx-hero.mp4"
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <object
+            type="image/svg+xml"
+            data="/bountixx.svg"
+            onError={() => setSvgFailed(true)}
+            className="w-full h-full pointer-events-none"
+            style={{
+              display: "block",
+              filter: "drop-shadow(0 0 60px rgba(155,107,255,0.25))",
+            }}
+            aria-label="Bountixx arena animation"
+          />
         )}
       </motion.div>
 

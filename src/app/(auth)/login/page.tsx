@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, Mail, Lock, Phone, ArrowLeft } from "lucide-react";
 import {
+  signInWithPopup,
   signInWithRedirect,
   getRedirectResult,
   signInWithEmailAndPassword,
@@ -71,17 +72,43 @@ export default function LoginPage() {
     setOtpSent(false);
   }
 
+  // Handle the result when Google/GitHub redirect flow completes
   useEffect(() => {
-    getRedirectResult(auth).catch((err: unknown) => {
-      const code = (err as { code?: string }).code;
-      if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") return;
-      if (err) setError((err as { message: string }).message);
-    });
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result?.user) {
+          // onAuthStateChanged in AuthProvider will set user + cookie,
+          // then the useEffect above redirects to /dashboard
+        }
+      })
+      .catch((err: unknown) => {
+        const code = (err as { code?: string }).code;
+        if (
+          code === "auth/popup-closed-by-user" ||
+          code === "auth/cancelled-popup-request" ||
+          code === "auth/user-cancelled"
+        ) return;
+        if (err) setError((err as { message: string }).message);
+      });
   }, []);
 
-  function handleOAuth(provider: "google" | "github") {
+  async function handleOAuth(provider: "google" | "github") {
     setError("");
-    signInWithRedirect(auth, provider === "google" ? googleProvider : githubProvider);
+    const p = provider === "google" ? googleProvider : githubProvider;
+    try {
+      // signInWithPopup works when called synchronously from a click handler.
+      // onAuthStateChanged in AuthProvider handles session cookie + redirect.
+      await signInWithPopup(auth, p);
+    } catch (err: unknown) {
+      const code = (err as { code?: string }).code;
+      if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request" || code === "auth/user-cancelled") return;
+      if (code === "auth/popup-blocked") {
+        // Browser blocked popup — fall back to redirect flow
+        signInWithRedirect(auth, p);
+        return;
+      }
+      setError((err as { message: string }).message);
+    }
   }
 
   async function handleEmailPassword(e: React.FormEvent) {
