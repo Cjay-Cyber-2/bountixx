@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, Mail, Lock, Phone } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, Phone, ArrowLeft } from "lucide-react";
 import {
   signInWithPopup,
   createUserWithEmailAndPassword,
@@ -24,17 +24,9 @@ import { staggerContainer, slideUp } from "@/lib/animations";
 
 type Method = "email-password" | "email-link" | "phone-otp";
 
-const quotes = [
-  { rank: "Elite", handle: "@dev_kemi", text: "I won 450 coins at 2am. Worth it." },
-  { rank: "Champion", handle: "@tunde_logic", text: "Nothing hits like the win sound." },
-  { rank: "Legendary", handle: "@chisom_x", text: "5 arenas, 5 wins. Let's go." },
-];
-
 export default function SignupPage() {
   const router = useRouter();
   const { user, loading } = useAuth();
-  const [quoteIdx] = useState(0);
-  const q = quotes[quoteIdx];
 
   const [method, setMethod] = useState<Method>("email-password");
   const [show, setShow] = useState(false);
@@ -101,11 +93,12 @@ export default function SignupPage() {
     setPending(true);
     setError("");
     try {
-      await sendSignInLinkToEmail(auth, email, {
+      const actionCodeSettings = {
         url: `${window.location.origin}/login`,
         handleCodeInApp: true,
-      });
-      localStorage.setItem("emailForSignIn", email);
+      };
+      await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+      window.localStorage.setItem("emailForSignIn", email);
       setLinkSent(true);
     } catch (err: unknown) {
       setError((err as { message: string }).message);
@@ -158,28 +151,25 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-cosmos">
-      <div className="hidden lg:flex flex-col items-center justify-center bg-cosmos-2 border-r border-cosmos-4 px-12 py-16 relative overflow-hidden scanline-fx">
-        <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse 60% 50% at 50% 40%, rgba(168,85,247,0.08), transparent)" }} aria-hidden="true" />
-        <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }} className="relative z-10 flex flex-col items-center text-center">
-          <motion.div animate={{ rotate: 360 }} transition={{ duration: 60, ease: "linear", repeat: Infinity }} className="mb-8">
-            <BountixxLogo size={160} />
-          </motion.div>
-          <p className="font-zen-dots text-xl text-void mb-10">Compete. Conquer. Collect.</p>
-          <motion.div key={quoteIdx} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="bg-cosmos border border-cosmos-4 p-6 max-w-xs text-left clip-arena-sm">
-            <p className="font-space-mono text-[10px] text-void tracking-widest mb-3">✦ {q.rank.toUpperCase()} · {q.handle}</p>
-            <p className="font-rajdhani text-lg text-haze-2 italic leading-relaxed">&ldquo;{q.text}&rdquo;</p>
-          </motion.div>
-        </motion.div>
-      </div>
+      {/* Left panel — bountixx.svg full-bleed illustration */}
+      <AuthBrandPanel />
 
-      <div className="flex items-center justify-center px-6 py-16 bg-cosmos">
+      {/* Right panel — signup form */}
+      <div className="flex items-center justify-center px-6 py-16 bg-cosmos relative">
+        {/* Back button */}
+        <Link
+          href="/"
+          className="absolute top-6 left-6 flex items-center gap-1.5 font-space-mono text-[11px] text-haze-3 hover:text-void tracking-widest transition-colors group"
+        >
+          <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
+          BACK
+        </Link>
+
         <motion.div variants={staggerContainer} initial="hidden" animate="show" className="w-full max-w-[440px]">
           <motion.div variants={slideUp} className="lg:hidden flex justify-center mb-8">
             <BountixxLogo size={48} showWordmark />
           </motion.div>
 
-
-          {/* Pre-heading */}
           <motion.p
             variants={slideUp}
             className="font-space-mono text-[10px] text-void tracking-[6px] mb-3 uppercase"
@@ -189,7 +179,7 @@ export default function SignupPage() {
 
           <motion.div variants={slideUp}>
             <h1 className="font-zen-dots text-2xl text-haze mb-2">CREATE ACCOUNT</h1>
-            <p className="font-rajdhani text-sm text-haze-2 mb-8">Start with 10 free arena creations</p>
+            <p className="font-rajdhani text-sm text-haze-2 mb-8">Start with 100 free coins welcome bonus</p>
           </motion.div>
 
           <motion.div variants={slideUp} className="flex flex-col gap-3 mb-6">

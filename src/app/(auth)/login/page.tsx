@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, Mail, Lock, Phone } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, Phone, ArrowLeft } from "lucide-react";
 import {
   signInWithPopup,
   signInWithEmailAndPassword,
@@ -56,7 +56,7 @@ export default function LoginPage() {
     if (!addr) return;
     signInWithEmailLink(auth, addr, window.location.href)
       .then(() => {
-        localStorage.removeItem("emailForSignIn");
+        window.localStorage.removeItem("emailForSignIn");
         router.replace("/dashboard");
       })
       .catch((err) => setError(err.message));
@@ -102,11 +102,12 @@ export default function LoginPage() {
     setPending(true);
     setError("");
     try {
-      await sendSignInLinkToEmail(auth, email, {
+      const actionCodeSettings = {
         url: `${window.location.origin}/login`,
         handleCodeInApp: true,
-      });
-      localStorage.setItem("emailForSignIn", email);
+      };
+      await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+      window.localStorage.setItem("emailForSignIn", email);
       setLinkSent(true);
     } catch (err: unknown) {
       setError((err as { message: string }).message);
@@ -169,7 +170,16 @@ export default function LoginPage() {
         </motion.div>
       </div>
 
-      <div className="flex items-center justify-center px-6 py-16">
+      <div className="flex items-center justify-center px-6 py-16 relative">
+        {/* Back button */}
+        <Link
+          href="/"
+          className="absolute top-6 left-6 flex items-center gap-1.5 font-space-mono text-[11px] text-haze-3 hover:text-void tracking-widest transition-colors group"
+        >
+          <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
+          BACK
+        </Link>
+
         <motion.div variants={staggerContainer} initial="hidden" animate="show" className="w-full max-w-[440px]">
           <motion.div variants={slideUp} className="lg:hidden flex justify-center mb-8">
             <BountixxLogo size={48} showWordmark />
