@@ -15,7 +15,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   return (
     <div className="min-h-screen bg-cosmos">
       <TopNav />
-      <main className="pt-16 pb-20 md:pb-10 min-h-screen">
+      <main className="pt-[68px] pb-20 md:pb-12 min-h-screen">
         {children}
       </main>
       <MobileBottomNav />

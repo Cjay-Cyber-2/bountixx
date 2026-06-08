@@ -31,7 +31,7 @@ export async function POST(req: Request) {
         email: decoded.email ?? null,
         username: rawUsername,
         avatarUrl: decoded.picture ?? null,
-        coinsBalance: 100, // welcome bonus per PRD
+        coinsBalance: 500, // welcome bonus
         xp: 0,
         rank: "recruit",
         roomsCreatedCount: 0,

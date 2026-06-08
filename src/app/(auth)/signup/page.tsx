@@ -162,7 +162,7 @@ export default function SignupPage() {
           href="/"
           className="absolute top-6 left-6 flex items-center gap-1.5 font-space-mono text-[11px] text-haze-2 hover:text-void tracking-widest transition-colors group bg-cosmos-3/60 px-3 py-1.5 rounded-sm"
         >
-          <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
+          <ArrowLeft size={13} className="group-hover:-translate-x-0.5 transition-transform" />
           BACK
         </Link>
 
@@ -180,7 +180,7 @@ export default function SignupPage() {
 
           <motion.div variants={slideUp}>
             <h1 className="font-zen-dots text-2xl text-haze mb-2">CREATE ACCOUNT</h1>
-            <p className="font-rajdhani text-sm text-haze-2 mb-8">Start with 100 free coins welcome bonus</p>
+            <p className="font-rajdhani text-sm text-haze-2 mb-8">Start with 500 free coins welcome bonus</p>
           </motion.div>
 
           <motion.div variants={slideUp} className="flex flex-col gap-3 mb-6">

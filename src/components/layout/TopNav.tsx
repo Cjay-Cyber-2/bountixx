@@ -1,23 +1,102 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutDashboard, PlusCircle, User, Wallet, Menu, X, Bell } from "lucide-react";
+import { LayoutDashboard, PlusCircle, User, Wallet, Menu, X, Bell, BellOff, LogOut } from "lucide-react";
+import { signOut } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { BountixxLogo } from "@/components/BountixxLogo";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
-  { href: "/dashboard", label: "Dashboard",   icon: LayoutDashboard },
-  { href: "/create",    label: "Create Arena", icon: PlusCircle     },
-  { href: "/profile/me", label: "Profile",    icon: User           },
-  { href: "/wallet",    label: "Wallet",       icon: Wallet         },
+  { href: "/dashboard",  label: "Dashboard",   icon: LayoutDashboard },
+  { href: "/create",     label: "Create Arena", icon: PlusCircle     },
+  { href: "/profile/me", label: "Profile",      icon: User           },
+  { href: "/wallet",     label: "Wallet",       icon: Wallet         },
 ];
+
+type UserProfile = {
+  username: string;
+  avatarUrl: string | null;
+  coinsBalance: number;
+  rank: string;
+};
 
 export function TopNav() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [signingOut, setSigningOut] = useState(false);
+  const [notifEnabled, setNotifEnabled] = useState(false);
+  const [notifLoading, setNotifLoading] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    fetch("/api/user/me")
+      .then((r) => r.json())
+      .then((d) => d.user && setProfile(d.user))
+      .catch(() => {});
+  }, [user]);
+
+  async function handleNotificationOptIn() {
+    if (notifEnabled || notifLoading) return;
+    if (!("Notification" in window) || !("serviceWorker" in navigator)) return;
+
+    setNotifLoading(true);
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") return;
+
+      // Dynamically import to avoid SSR module evaluation
+      const { getMessaging, register, onRegistered } = await import("firebase/messaging");
+      const { app } = await import("@/lib/firebase");
+      const messaging = getMessaging(app);
+
+      const swReg = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+
+      // Subscribe via the FID-based new API
+      await register(messaging, {
+        vapidKey: process.env.NEXT_PUBLIC_FCM_VAPID_KEY,
+        serviceWorkerRegistration: swReg,
+      });
+
+      onRegistered(messaging, async (fid: string) => {
+        if (!fid) return;
+        await fetch("/api/notifications/subscribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: fid }),
+        });
+        setNotifEnabled(true);
+      });
+    } catch (err) {
+      console.error("[FCM] opt-in failed:", err);
+    } finally {
+      setNotifLoading(false);
+    }
+  }
+
+  async function handleLogout() {
+    setSigningOut(true);
+    try {
+      await signOut(auth);
+      await fetch("/api/auth/session", { method: "DELETE" });
+      router.replace("/");
+    } catch {
+      setSigningOut(false);
+    }
+  }
+
+  const initials = profile?.username
+    ? profile.username.slice(0, 2).toUpperCase()
+    : user?.displayName
+    ? user.displayName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()
+    : "??";
 
   return (
     <>
@@ -29,11 +108,11 @@ export function TopNav() {
 
           {/* Logo */}
           <Link href="/dashboard" className="shrink-0 cursor-target">
-            <BountixxLogo size={38} showWordmark />
+            <BountixxLogo size={36} showWordmark />
           </Link>
 
           {/* Desktop nav links */}
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden md:flex items-center gap-2">
             {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
               const active = pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
               return (
@@ -64,31 +143,60 @@ export function TopNav() {
           </nav>
 
           {/* Right cluster */}
-          <div className="hidden md:flex items-center gap-4 shrink-0">
+          <div className="hidden md:flex items-center gap-3 shrink-0">
             {/* Coin balance */}
             <div className="flex items-center gap-1.5 bg-cosmos-2 border border-cosmos-4 px-3 py-1.5">
-              <span className="text-crown text-xs" aria-hidden>⬡</span>
-              <span className="font-orbitron font-bold text-sm text-crown">450</span>
+              <span className="text-crown text-xs" aria-hidden>◈</span>
+              <span className="font-orbitron font-bold text-sm text-crown">
+                {profile?.coinsBalance ?? 0}
+              </span>
             </div>
 
-            {/* Notifications */}
+            {/* Notifications opt-in */}
             <button
-              className="cursor-target relative text-haze-2 hover:text-haze transition-colors p-1"
-              aria-label="Notifications"
+              onClick={handleNotificationOptIn}
+              disabled={notifLoading}
+              className={cn(
+                "cursor-target relative transition-colors p-1 disabled:opacity-40",
+                notifEnabled ? "text-success" : "text-haze-2 hover:text-haze"
+              )}
+              aria-label={notifEnabled ? "Notifications enabled" : "Enable notifications"}
+              title={notifEnabled ? "Notifications enabled" : "Enable push notifications"}
             >
-              <Bell size={18} />
-              <span
-                className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-void border border-cosmos"
-                aria-hidden
-              />
+              {notifEnabled ? <Bell size={18} /> : <BellOff size={18} />}
+              {!notifEnabled && (
+                <span
+                  className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-void border border-cosmos"
+                  aria-hidden
+                />
+              )}
             </button>
 
             {/* Avatar */}
             <Link href="/profile/me" className="cursor-target">
-              <div className="w-8 h-8 rounded-full border-2 border-void/60 bg-cosmos-3 flex items-center justify-center hover:border-void transition-colors">
-                <span className="font-orbitron font-bold text-[10px] text-haze">CJ</span>
-              </div>
+              {profile?.avatarUrl ? (
+                <img
+                  src={profile.avatarUrl}
+                  alt={profile.username}
+                  className="w-8 h-8 rounded-full border-2 border-void/60 hover:border-void transition-colors object-cover"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full border-2 border-void/60 bg-cosmos-3 flex items-center justify-center hover:border-void transition-colors">
+                  <span className="font-orbitron font-bold text-[10px] text-haze">{initials}</span>
+                </div>
+              )}
             </Link>
+
+            {/* Logout */}
+            <button
+              onClick={handleLogout}
+              disabled={signingOut}
+              className="cursor-target flex items-center gap-1.5 font-space-mono text-[10px] tracking-widest text-haze-2 hover:text-danger border border-cosmos-4 hover:border-danger/50 px-2.5 py-1.5 transition-all disabled:opacity-40 whitespace-nowrap"
+              aria-label="Sign out"
+            >
+              <LogOut size={12} aria-hidden />
+              {signingOut ? "…" : "SIGN OUT"}
+            </button>
           </div>
 
           {/* Mobile hamburger */}
@@ -132,12 +240,24 @@ export function TopNav() {
                 </Link>
               );
             })}
-            <div className="flex items-center gap-4 px-6 py-4">
+            <div className="flex items-center justify-between px-6 py-4">
               <div className="flex items-center gap-1.5 bg-cosmos-2 border border-cosmos-4 px-3 py-1.5">
-                <span className="text-crown text-xs">⬡</span>
-                <span className="font-orbitron font-bold text-sm text-crown">450</span>
+                <span className="text-crown text-xs">◈</span>
+                <span className="font-orbitron font-bold text-sm text-crown">
+                  {profile?.coinsBalance ?? 0}
+                </span>
               </div>
-              <span className="font-space-mono text-[10px] text-haze-3">CHALLENGER RANK</span>
+              <span className="font-space-mono text-[10px] text-haze-3 uppercase tracking-widest">
+                {profile?.rank ?? "RECRUIT"}
+              </span>
+              <button
+                onClick={handleLogout}
+                disabled={signingOut}
+                className="flex items-center gap-2 font-space-mono text-[11px] text-danger border border-danger/30 px-3 py-1.5 hover:bg-danger/10 transition-colors disabled:opacity-40"
+              >
+                <LogOut size={13} />
+                SIGN OUT
+              </button>
             </div>
           </motion.div>
         )}
@@ -146,7 +266,7 @@ export function TopNav() {
   );
 }
 
-/** Bottom tab bar — mobile only, inside the app layout */
+/** Bottom tab bar — mobile only */
 export function MobileBottomNav() {
   const pathname = usePathname();
   return (

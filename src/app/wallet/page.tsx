@@ -9,6 +9,7 @@ import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { CrownMark } from "@/components/BountixxLogo";
 
 type FilterTab = "ALL" | "EARNED" | "SPENT" | "PURCHASED";
+type PaymentMethod = "paystack" | "stripe";
 
 const TRANSACTIONS = [
   { type: "earned", desc: "Won String Reversal Clash", amount: +300, date: "Jun 4" },
@@ -20,18 +21,82 @@ const TRANSACTIONS = [
 ];
 
 const BUNDLES = [
-  { label: "Starter", coins: 100, price: "$0.99", popular: false },
-  { label: "Challenger", coins: 300, price: "$2.49", popular: false },
-  { label: "Elite", coins: 750, price: "$4.99", popular: true },
-  { label: "Champion", coins: 2000, price: "$11.99", popular: false },
-  { label: "Legendary", coins: 5500, price: "$27.99", popular: false },
+  { id: "starter",    label: "Starter",    coins: 100,  priceNGN: "₦750",    priceUSD: "$0.99",  popular: false },
+  { id: "challenger", label: "Challenger", coins: 300,  priceNGN: "₦2,000",  priceUSD: "$2.49",  popular: false },
+  { id: "elite",      label: "Elite",      coins: 750,  priceNGN: "₦4,000",  priceUSD: "$4.99",  popular: true  },
+  { id: "champion",   label: "Champion",   coins: 2000, priceNGN: "₦9,500",  priceUSD: "$11.99", popular: false },
+  { id: "legendary",  label: "Legendary",  coins: 5500, priceNGN: "₦25,000", priceUSD: "$27.99", popular: false },
 ];
 
 export default function WalletPage() {
   const [filter, setFilter] = useState<FilterTab>("ALL");
   const [selected, setSelected] = useState(2);
+  const [balance, setBalance] = useState(0);
+  const [txList, setTxList] = useState(TRANSACTIONS);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("paystack");
+  const [paying, setPaying] = useState(false);
 
-  const filtered = filter === "ALL" ? TRANSACTIONS : TRANSACTIONS.filter((t) => t.type === filter.toLowerCase());
+  useState(() => {
+    fetch("/api/wallet")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.balance !== undefined) setBalance(d.balance);
+        if (d.transactions?.length) {
+          setTxList(
+            d.transactions.map((t: { type: string; reference?: string; amount: number; createdAt: string }) => ({
+              type: t.type,
+              desc: t.reference ?? t.type,
+              amount: t.amount,
+              date: new Date(t.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+            }))
+          );
+        }
+      })
+      .catch(() => {});
+  });
+
+  const filtered = filter === "ALL" ? txList : txList.filter((t) => t.type === filter.toLowerCase());
+
+  async function handlePayment() {
+    const bundle = BUNDLES[selected];
+    setPaying(true);
+
+    try {
+      if (paymentMethod === "paystack") {
+        const res = await fetch("/api/payment/paystack/initialize", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ bundleId: bundle.id }),
+        });
+        const data = await res.json() as { authorizationUrl?: string; error?: string };
+        if (data.authorizationUrl) {
+          window.location.href = data.authorizationUrl;
+        } else {
+          alert(data.error ?? "Payment initialization failed");
+          setPaying(false);
+        }
+      } else {
+        const res = await fetch("/api/payment/stripe/checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ bundleId: bundle.id }),
+        });
+        const data = await res.json() as { url?: string; error?: string };
+        if (data.url) {
+          window.location.href = data.url;
+        } else {
+          alert(data.error ?? "Checkout session creation failed");
+          setPaying(false);
+        }
+      }
+    } catch {
+      alert("Network error. Please try again.");
+      setPaying(false);
+    }
+  }
+
+  const selectedBundle = BUNDLES[selected];
+  const displayPrice = paymentMethod === "paystack" ? selectedBundle.priceNGN : selectedBundle.priceUSD;
 
   return (
     <AppLayout>
@@ -59,7 +124,7 @@ export default function WalletPage() {
               </div>
               <div>
                 <p className="font-space-mono text-[10px] text-haze-3 tracking-[2px] mb-1 uppercase">Bountixx coins</p>
-                <AnimatedNumber value={450} className="font-orbitron font-black text-5xl md:text-6xl text-crown block leading-none" />
+                <AnimatedNumber value={balance} className="font-orbitron font-black text-5xl md:text-6xl text-crown block leading-none" />
               </div>
             </motion.div>
 
@@ -143,14 +208,48 @@ export default function WalletPage() {
                     <p className="font-orbitron font-bold text-2xl text-crown leading-none">{b.coins.toLocaleString()}</p>
                     <p className="font-space-mono text-[9px] text-haze-3 mt-1.5 uppercase tracking-wider">{b.label}</p>
                   </div>
-                  <p className="font-rajdhani font-bold text-xl text-haze">{b.price}</p>
+                  <p className="font-rajdhani font-bold text-xl text-haze">
+                    {paymentMethod === "paystack" ? b.priceNGN : b.priceUSD}
+                  </p>
                 </div>
               </button>
             ))}
 
-            <Button variant="primary" fullWidth size="lg" magnetic className="mt-2">
+            {/* Payment method toggle */}
+            <div className="flex border border-cosmos-4 mt-1">
+              <button
+                onClick={() => setPaymentMethod("paystack")}
+                className={`flex-1 py-2 font-space-mono text-[10px] tracking-[1px] transition-all ${
+                  paymentMethod === "paystack"
+                    ? "bg-void text-cosmos"
+                    : "text-haze-3 hover:text-haze-2 hover:bg-cosmos-3"
+                }`}
+              >
+                NGN · Paystack
+              </button>
+              <button
+                onClick={() => setPaymentMethod("stripe")}
+                className={`flex-1 py-2 font-space-mono text-[10px] tracking-[1px] transition-all ${
+                  paymentMethod === "stripe"
+                    ? "bg-void text-cosmos"
+                    : "text-haze-3 hover:text-haze-2 hover:bg-cosmos-3"
+                }`}
+              >
+                USD · Stripe
+              </button>
+            </div>
+
+            <Button
+              variant="primary"
+              fullWidth
+              size="lg"
+              magnetic
+              onClick={handlePayment}
+              disabled={paying}
+              className="mt-1"
+            >
               <ShoppingBag size={16} aria-hidden />
-              PROCEED TO PAYMENT
+              {paying ? "REDIRECTING…" : `PAY ${displayPrice}`}
             </Button>
             <p className="font-space-mono text-[9px] text-haze-3 text-center tracking-wider leading-relaxed">
               Secure checkout · Coins are non-refundable · Not redeemable for cash

@@ -3,47 +3,18 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { Zap, Trophy, TrendingUp, Coins, Swords, ArrowRight } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/Button";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 
-/* Unified stat treatment: white value, one size, small accent icon.
-   Gold is reserved for the coin balance (the only "reward" metric). */
-const STAT_CARDS = [
-  { label: "Rooms created", value: 24, icon: Swords, accent: "#9B6BFF" },
-  { label: "Rooms won", value: 11, icon: Trophy, accent: "#9B6BFF" },
-  { label: "Total XP", value: 6820, icon: TrendingUp, accent: "#9B6BFF" },
-  { label: "Coin balance", value: 450, icon: Coins, accent: "#F0A500", gold: true },
-];
-
-const ONLINE_PLAYERS = [
-  { name: "zainab_codes", rank: "ELITE", initials: "ZC", color: "#00D68F" },
-  { name: "dev_tolu", rank: "CHAMPION", initials: "DT", color: "#F0A500" },
-  { name: "chisom_x", rank: "LEGENDARY", initials: "CX", color: "#FF6B1A" },
-  { name: "code_chief", rank: "CHALLENGER", initials: "CC", color: "#9B6BFF" },
-  { name: "ade_logic", rank: "ELITE", initials: "AL", color: "#00D68F" },
-];
-
-const RECENT_ROOMS = [
-  { name: "String Reversal Clash", category: "Coding", players: "8/8", status: "ENDED", result: "WON", date: "2h ago" },
-  { name: "Capital Cities Rush", category: "Trivia", players: "4/4", status: "ENDED", result: "2ND", date: "5h ago" },
-  { name: "Regex Warfare", category: "Coding", players: "6/6", status: "LIVE", result: "—", date: "now" },
-  { name: "Math Sprint", category: "Math", players: "5/5", status: "ENDED", result: "LOST", date: "1d ago" },
-];
-
 const CATEGORY_COLORS: Record<string, string> = {
-  Coding: "#FF6B1A",
-  Trivia: "#9B6BFF",
-  Logic: "#00D68F",
-  Math: "#F0A500",
+  coding: "#FF6B1A", trivia: "#9B6BFF", logic: "#00D68F", math: "#F0A500",
 };
 
 const RESULT_COLORS: Record<string, string> = {
-  WON: "#F0A500",
-  "2ND": "#9B8FC0",
-  LOST: "#4A3F70",
-  "—": "#9B6BFF",
+  "1st": "#F0A500", "2nd": "#9B8FC0", "3rd": "#4A3F70", "—": "#9B6BFF",
 };
 
 function LiveClock() {
@@ -58,7 +29,49 @@ function LiveClock() {
   return <span className="font-space-mono text-xs text-haze-3 tabular-nums">{time}</span>;
 }
 
+type DashboardData = {
+  roomsCreated: number;
+  roomsWon: number;
+  totalXp: number;
+  coinsBalance: number;
+  recentRooms: { name: string; category: string; place: string; coins: number; date: string }[];
+  onlineUsers: { id: string; username: string; rank: string; avatarUrl: string | null; initials: string }[];
+};
+
 export default function DashboardPage() {
+  const { user } = useAuth();
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchData = useCallback(async () => {
+    if (!user) return;
+    try {
+      const res = await fetch("/api/dashboard");
+      if (res.ok) {
+        const d = await res.json();
+        setData(d);
+      }
+    } catch {
+      // fail gracefully
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    fetchData();
+    // Refresh presence every 30s
+    const id = setInterval(fetchData, 30_000);
+    return () => clearInterval(id);
+  }, [fetchData]);
+
+  const statCards = [
+    { label: "Rooms created",  value: data?.roomsCreated  ?? 0, icon: Swords,    accent: "#9B6BFF" },
+    { label: "Rooms won",      value: data?.roomsWon      ?? 0, icon: Trophy,    accent: "#9B6BFF" },
+    { label: "Total XP",       value: data?.totalXp       ?? 0, icon: TrendingUp, accent: "#9B6BFF" },
+    { label: "Coin balance",   value: data?.coinsBalance  ?? 0, icon: Coins,     accent: "#F0A500", gold: true },
+  ];
+
   return (
     <AppLayout>
       <div className="max-w-[1280px] mx-auto px-5 md:px-8 lg:px-10 py-8 md:py-10">
@@ -86,14 +99,14 @@ export default function DashboardPage() {
           </div>
         </motion.div>
 
-        {/* Stats — uniform */}
+        {/* Stats */}
         <motion.div
           initial="hidden"
           animate="show"
           variants={{ show: { transition: { staggerChildren: 0.07 } } }}
           className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-10"
         >
-          {STAT_CARDS.map((s) => {
+          {statCards.map((s) => {
             const Icon = s.icon;
             return (
               <motion.div
@@ -113,11 +126,15 @@ export default function DashboardPage() {
                 >
                   <Icon size={16} style={{ color: s.accent }} aria-hidden />
                 </div>
-                <AnimatedNumber
-                  value={s.value}
-                  className="font-orbitron font-black text-2xl md:text-3xl block leading-none mb-1.5"
-                  style={{ color: s.gold ? "#F0A500" : "var(--haze)" }}
-                />
+                {loading ? (
+                  <div className="h-8 w-16 bg-cosmos-3 animate-pulse mb-1.5" />
+                ) : (
+                  <AnimatedNumber
+                    value={s.value}
+                    className="font-orbitron font-black text-2xl md:text-3xl block leading-none mb-1.5"
+                    style={{ color: s.gold ? "#F0A500" : "var(--haze)" }}
+                  />
+                )}
                 <p className="font-space-mono text-[9px] text-haze-3 tracking-[2px] uppercase">{s.label}</p>
               </motion.div>
             );
@@ -169,12 +186,30 @@ export default function DashboardPage() {
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-success" />
               </span>
               <span className="font-orbitron font-bold text-sm text-haze tracking-wider">WHO&apos;S ONLINE</span>
-              <span className="ml-auto font-space-mono text-[10px] text-haze-3">{ONLINE_PLAYERS.length} LIVE</span>
+              <span className="ml-auto font-space-mono text-[10px] text-haze-3">
+                {data?.onlineUsers?.length ?? 0} LIVE
+              </span>
             </div>
             <div className="space-y-2.5">
-              {ONLINE_PLAYERS.map((p) => (
-                <OnlinePlayerRow key={p.name} player={p} />
-              ))}
+              {loading ? (
+                Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-cosmos-3 animate-pulse shrink-0" />
+                    <div className="flex-1">
+                      <div className="h-3 w-24 bg-cosmos-3 animate-pulse mb-1.5" />
+                      <div className="h-2 w-16 bg-cosmos-3 animate-pulse" />
+                    </div>
+                  </div>
+                ))
+              ) : data?.onlineUsers?.length === 0 ? (
+                <p className="font-space-mono text-[10px] text-haze-3 text-center py-4">
+                  No one else online right now
+                </p>
+              ) : (
+                data?.onlineUsers?.map((p) => (
+                  <OnlinePlayerRow key={p.id} player={p} />
+                ))
+              )}
             </div>
           </motion.div>
         </div>
@@ -195,32 +230,68 @@ export default function DashboardPage() {
             </Link>
           </div>
 
-          <div className="clip-arena overflow-hidden" style={{ border: "1px solid rgba(45,27,105,0.7)" }}>
-            {RECENT_ROOMS.map((room) => (
-              <RoomRow key={room.name} room={room} />
-            ))}
-          </div>
+          {loading ? (
+            <div className="clip-arena overflow-hidden" style={{ border: "1px solid rgba(45,27,105,0.7)" }}>
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3 px-5 py-3.5 bg-cosmos-2 border-b border-cosmos-4">
+                  <div className="w-1.5 h-1.5 rounded-full bg-cosmos-4 shrink-0" />
+                  <div className="flex-1">
+                    <div className="h-3 w-40 bg-cosmos-3 animate-pulse mb-1.5" />
+                    <div className="h-2 w-28 bg-cosmos-3 animate-pulse" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : !data?.recentRooms?.length ? (
+            <div
+              className="clip-arena p-8 text-center bg-cosmos-2"
+              style={{ border: "1px solid rgba(45,27,105,0.7)" }}
+            >
+              <p className="font-rajdhani text-haze-2 text-base mb-2">No arenas played yet</p>
+              <p className="font-space-mono text-[10px] text-haze-3">
+                Create or join an arena to see your history here.
+              </p>
+            </div>
+          ) : (
+            <div className="clip-arena overflow-hidden" style={{ border: "1px solid rgba(45,27,105,0.7)" }}>
+              {data.recentRooms.map((room, i) => (
+                <RoomRow key={i} room={room} />
+              ))}
+            </div>
+          )}
         </motion.div>
       </div>
     </AppLayout>
   );
 }
 
-function OnlinePlayerRow({ player }: { player: (typeof ONLINE_PLAYERS)[0] }) {
+function OnlinePlayerRow({
+  player,
+}: {
+  player: { id: string; username: string; rank: string; avatarUrl: string | null; initials: string };
+}) {
   const [invited, setInvited] = useState(false);
+  const RANK_COLORS: Record<string, string> = {
+    LEGENDARY: "#FF6B1A", CHAMPION: "#F0A500", ELITE: "#00D68F",
+    CHALLENGER: "#9B6BFF", RECRUIT: "#9B8FC0",
+  };
+  const color = RANK_COLORS[player.rank] ?? "#9B8FC0";
+
   return (
     <div className="flex items-center gap-3 group">
       <div
-        className="w-9 h-9 rounded-full bg-cosmos-3 border-2 flex items-center justify-center shrink-0"
-        style={{ borderColor: `${player.color}55` }}
+        className="w-9 h-9 rounded-full bg-cosmos-3 border-2 flex items-center justify-center shrink-0 overflow-hidden"
+        style={{ borderColor: `${color}55` }}
       >
-        <span className="font-orbitron font-bold text-[10px] text-haze">{player.initials}</span>
+        {player.avatarUrl ? (
+          <img src={player.avatarUrl} alt={player.username} className="w-full h-full object-cover" />
+        ) : (
+          <span className="font-orbitron font-bold text-[10px] text-haze">{player.initials}</span>
+        )}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="font-rajdhani font-semibold text-sm text-haze leading-none truncate">@{player.name}</p>
-        <p className="font-space-mono text-[9px] mt-1" style={{ color: player.color }}>
-          {player.rank}
-        </p>
+        <p className="font-rajdhani font-semibold text-sm text-haze leading-none truncate">@{player.username}</p>
+        <p className="font-space-mono text-[9px] mt-1" style={{ color }}>{player.rank}</p>
       </div>
       <button
         onClick={() => {
@@ -239,40 +310,25 @@ function OnlinePlayerRow({ player }: { player: (typeof ONLINE_PLAYERS)[0] }) {
   );
 }
 
-function RoomRow({ room }: { room: (typeof RECENT_ROOMS)[0] }) {
+function RoomRow({
+  room,
+}: {
+  room: { name: string; category: string; place: string; coins: number; date: string };
+}) {
   const catColor = CATEGORY_COLORS[room.category] ?? "#9B8FC0";
-  const resColor = RESULT_COLORS[room.result] ?? "#9B8FC0";
-  const live = room.status === "LIVE";
+  const resColor = RESULT_COLORS[room.place] ?? "#9B8FC0";
 
   return (
     <div className="flex items-center gap-3 px-4 md:px-5 py-3.5 bg-cosmos-2 hover:bg-cosmos-3 transition-colors border-b border-cosmos-4 last:border-0">
-      {/* Category dot */}
       <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: catColor }} aria-hidden />
-
-      {/* Name + meta */}
       <div className="flex-1 min-w-0">
         <p className="font-rajdhani font-bold text-sm text-haze truncate">{room.name}</p>
         <p className="font-space-mono text-[10px] text-haze-3 mt-0.5">
-          <span style={{ color: catColor }}>{room.category}</span> · {room.players} · {room.date}
+          <span style={{ color: catColor }}>{room.category}</span> · {room.date}
         </p>
       </div>
-
-      {/* Status */}
-      {live ? (
-        <span className="hidden sm:flex items-center gap-1.5 shrink-0">
-          <span className="w-1.5 h-1.5 rounded-full bg-void animate-[livepulse_1.5s_ease-in-out_infinite]" aria-hidden />
-          <span className="font-space-mono text-[10px] text-void">LIVE</span>
-        </span>
-      ) : (
-        <span className="hidden sm:inline font-space-mono text-[10px] text-haze-3 shrink-0">{room.status}</span>
-      )}
-
-      {/* Result */}
-      <span
-        className="font-orbitron font-bold text-xs shrink-0 w-12 text-right tracking-wide"
-        style={{ color: resColor }}
-      >
-        {room.result}
+      <span className="font-orbitron font-bold text-xs shrink-0 w-12 text-right tracking-wide" style={{ color: resColor }}>
+        {room.place}
       </span>
     </div>
   );
