@@ -184,7 +184,7 @@ export default function SignupPage() {
 
           <motion.div variants={slideUp}>
             <h1 className="font-zen-dots text-2xl text-haze mb-2">CREATE ACCOUNT</h1>
-            <p className="font-rajdhani text-sm text-haze-2 mb-8">Start with 100 free coins welcome bonus</p>
+            <p className="font-rajdhani text-sm text-haze-2 mb-8">Start with 500 free coins welcome bonus</p>
           </motion.div>
 
           <motion.div variants={slideUp} className="flex flex-col gap-3 mb-6">

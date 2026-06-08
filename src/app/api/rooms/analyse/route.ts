@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { getSession, unauthorized } from "@/lib/getSession";
 
 const GEMINI_API_URL =
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
 
 type AnalysisResult = {
   valid: boolean;
@@ -77,8 +77,15 @@ export async function POST(req: Request) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
-        contents: [{ parts: [{ text: userMessage }] }],
+        system_instruction: {
+          parts: [{ text: SYSTEM_PROMPT }],
+        },
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: userMessage }],
+          },
+        ],
         generationConfig: {
           temperature: 0.3,
           maxOutputTokens: 4096,
@@ -88,19 +95,29 @@ export async function POST(req: Request) {
     });
 
     if (!geminiRes.ok) {
-      const errText = await geminiRes.text();
-      console.error("[analyse] Gemini error:", errText);
-      return NextResponse.json({ error: "AI analysis failed" }, { status: 502 });
+      // Bubble the actual Gemini error message up to the client
+      let errDetail = `Gemini HTTP ${geminiRes.status}`;
+      try {
+        const errBody = await geminiRes.json() as { error?: { message?: string } };
+        errDetail = errBody?.error?.message ?? errDetail;
+      } catch {
+        errDetail = (await geminiRes.text().catch(() => errDetail)) || errDetail;
+      }
+      console.error("[analyse] Gemini error:", errDetail);
+      return NextResponse.json({ error: errDetail }, { status: 502 });
     }
 
-    const geminiData = await geminiRes.json();
+    const geminiData = await geminiRes.json() as {
+      candidates?: { content?: { parts?: { text?: string }[] } }[];
+    };
     const rawText: string =
       geminiData?.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}";
 
     let analysis: AnalysisResult;
     try {
-      analysis = JSON.parse(rawText);
+      analysis = JSON.parse(rawText) as AnalysisResult;
     } catch {
+      console.error("[analyse] Failed to parse Gemini response:", rawText.slice(0, 200));
       return NextResponse.json({ error: "Could not parse AI response" }, { status: 502 });
     }
 

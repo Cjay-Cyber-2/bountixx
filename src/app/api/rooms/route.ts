@@ -56,28 +56,23 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Name and task are required" }, { status: 400 });
   }
 
-  // Check free room creation quota (10 free rooms)
-  const FREE_LIMIT = 10;
-  const roomCost = 50; // coins
+  // Every room creation costs coins — no free quota
+  const tier = body.bountyTier ?? "bronze";
+  const costs: Record<string, number> = { bronze: 50, silver: 100, gold: 150, mythic: 400 };
+  const cost = costs[tier] ?? 50;
 
-  if (session.roomsCreatedCount >= FREE_LIMIT) {
-    const tier = body.bountyTier ?? "bronze";
-    const costs: Record<string, number> = { bronze: 50, silver: 100, gold: 150, mythic: 400 };
-    const cost = costs[tier] ?? roomCost;
-
-    if (session.coinsBalance < cost) {
-      return NextResponse.json(
-        { error: `Not enough coins. You need ${cost} coins to create a ${tier} room.` },
-        { status: 402 }
-      );
-    }
-
-    // Deduct coins
-    await db
-      .update(users)
-      .set({ coinsBalance: sql`${users.coinsBalance} - ${cost}` })
-      .where(eq(users.id, session.id));
+  if (session.coinsBalance < cost) {
+    return NextResponse.json(
+      { error: `Not enough coins. You need ${cost} coins to create this arena.` },
+      { status: 402 }
+    );
   }
+
+  // Deduct coins
+  await db
+    .update(users)
+    .set({ coinsBalance: sql`${users.coinsBalance} - ${cost}` })
+    .where(eq(users.id, session.id));
 
   const roomId = randomUUID();
 

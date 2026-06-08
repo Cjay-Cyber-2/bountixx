@@ -353,7 +353,7 @@ function ReviewStep({
             >
               <p className="font-orbitron font-bold text-sm text-haze capitalize">{tier}</p>
               <p className="font-space-mono text-[9px] text-haze-3 mt-0.5">
-                {i === 0 ? "FREE" : `${[50, 150, 400][i - 1]} coins`}
+                {["50 coins", "100 coins", "150 coins", "400 coins"][i]}
               </p>
             </button>
           ))}
