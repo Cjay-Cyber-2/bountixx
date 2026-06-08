@@ -18,6 +18,7 @@ import {
   updateProfile,
 } from "firebase/auth";
 import { auth, googleProvider, githubProvider } from "@/lib/firebase";
+import { createSession } from "@/lib/createSession";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { BountixxLogo } from "@/components/BountixxLogo";
 import { Button } from "@/components/ui/Button";
@@ -61,13 +62,14 @@ export default function SignupPage() {
     setVerifyEmail(false);
   }
 
-  // Handle the result when Google/GitHub redirect flow completes
+  // Handle redirect result (fallback for popup-blocked)
   useEffect(() => {
     getRedirectResult(auth)
-      .then((result) => {
-        if (result?.user) {
-          // onAuthStateChanged in AuthProvider handles session + redirect
-        }
+      .then(async (result) => {
+        if (!result?.user) return;
+        const ok = await createSession(result.user);
+        if (ok) router.replace("/dashboard");
+        else setError("Authentication failed. Please try again.");
       })
       .catch((err: unknown) => {
         const code = (err as { code?: string }).code;
@@ -78,21 +80,30 @@ export default function SignupPage() {
         ) return;
         if (err) setError((err as { message: string }).message);
       });
-  }, []);
+  }, [router]);
 
   async function handleOAuth(provider: "google" | "github") {
     setError("");
+    setPending(true);
     const p = provider === "google" ? googleProvider : githubProvider;
     try {
-      await signInWithPopup(auth, p);
+      const result = await signInWithPopup(auth, p);
+      const ok = await createSession(result.user);
+      if (!ok) throw new Error("Session creation failed. Please try again.");
+      router.replace("/dashboard");
     } catch (err: unknown) {
       const code = (err as { code?: string }).code;
-      if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request" || code === "auth/user-cancelled") return;
+      if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request" || code === "auth/user-cancelled") {
+        setPending(false);
+        return;
+      }
       if (code === "auth/popup-blocked") {
         signInWithRedirect(auth, p);
+        setPending(false);
         return;
       }
       setError((err as { message: string }).message);
+      setPending(false);
     }
   }
 
@@ -103,6 +114,7 @@ export default function SignupPage() {
     try {
       const credential = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(credential.user, { displayName: username });
+      await createSession(credential.user);
       await sendEmailVerification(credential.user);
       setVerifyEmail(true);
     } catch (err: unknown) {
@@ -157,10 +169,11 @@ export default function SignupPage() {
     try {
       const credential = await confirmationRef.current.confirm(otp);
       if (username) await updateProfile(credential.user, { displayName: username });
+      const ok = await createSession(credential.user);
+      if (!ok) throw new Error("Session creation failed. Please try again.");
       router.replace("/dashboard");
     } catch (err: unknown) {
       setError((err as { message: string }).message);
-    } finally {
       setPending(false);
     }
   }
