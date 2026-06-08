@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { BountixxLogo } from "@/components/BountixxLogo";
 import { Button } from "@/components/ui/Button";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 const NAV = [
   { href: "#how-it-works", label: "How It Works" },
@@ -63,6 +64,7 @@ export function LandingNav() {
 
           {/* Right cluster */}
           <div className="flex items-center gap-6">
+            <ThemeToggle />
             <Link href="/login" className="hidden sm:block">
               <Button
                 variant="ghost"

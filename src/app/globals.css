@@ -28,6 +28,20 @@
   --clip-arena-sm: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
 }
 
+/* ─── Light Mode Tokens ─── */
+[data-theme="light"] {
+  --cosmos: #FBF7FF;       /* very light lavender instead of black */
+  --cosmos-2: #F2ECF9;
+  --cosmos-3: #E5D9F5;
+  --cosmos-4: #C9B5E8;
+  --haze: #1A0A35;         /* deep purple-black for text */
+  --haze-2: #4A3570;       /* medium purple for secondary text */
+  --haze-3: #8B7AAA;       /* muted purple for tertiary text */
+  --void: #7C3AED;          /* keep brand purple accent */
+  --void-light: #A78BFA;
+  --void-deep: #5B21B6;
+}
+
 /* ─── Tailwind v4 Theme ─── */
 @theme inline {
   --color-brand-coral:       #FF5533;

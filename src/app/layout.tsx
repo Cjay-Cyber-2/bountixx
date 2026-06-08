@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Orbitron, Rajdhani, Space_Mono, Zen_Dots, Nunito } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/providers/AuthProvider";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { LenisProvider } from "@/components/providers/LenisProvider";
 import { ToastProvider } from "@/components/ui/Toast";
 import { TargetCursorWrapper } from "@/components/ui/TargetCursor";
@@ -66,12 +67,14 @@ export default function RootLayout({
     >
       <body className="min-h-full bg-cosmos text-haze overflow-x-hidden">
         <AuthProvider>
-          <LenisProvider>
-            <ToastProvider>
-              <TargetCursorWrapper />
-              {children}
-            </ToastProvider>
-          </LenisProvider>
+          <ThemeProvider>
+            <LenisProvider>
+              <ToastProvider>
+                <TargetCursorWrapper />
+                {children}
+              </ToastProvider>
+            </LenisProvider>
+          </ThemeProvider>
         </AuthProvider>
       </body>
     </html>

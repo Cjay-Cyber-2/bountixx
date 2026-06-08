@@ -6,7 +6,8 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, Mail, Lock, Phone, ArrowLeft } from "lucide-react";
 import {
-  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   createUserWithEmailAndPassword,
   sendEmailVerification,
   sendSignInLinkToEmail,
@@ -59,22 +60,17 @@ export default function SignupPage() {
     setVerifyEmail(false);
   }
 
-  async function handleOAuth(provider: "google" | "github") {
-    setPending(true);
-    setError("");
-    try {
-      await signInWithPopup(auth, provider === "google" ? googleProvider : githubProvider);
-      // Redirect is handled by onAuthStateChanged → setUser → useEffect below
-    } catch (err: unknown) {
+  useEffect(() => {
+    getRedirectResult(auth).catch((err: unknown) => {
       const code = (err as { code?: string }).code;
-      if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") {
-        setPending(false);
-        return;
-      }
-      setError((err as { message: string }).message);
-    } finally {
-      setPending(false);
-    }
+      if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") return;
+      if (err) setError((err as { message: string }).message);
+    });
+  }, []);
+
+  function handleOAuth(provider: "google" | "github") {
+    setError("");
+    signInWithRedirect(auth, provider === "google" ? googleProvider : githubProvider);
   }
 
   async function handleEmailPassword(e: React.FormEvent) {
@@ -164,7 +160,7 @@ export default function SignupPage() {
         {/* Back button */}
         <Link
           href="/"
-          className="absolute top-6 left-6 flex items-center gap-1.5 font-space-mono text-[11px] text-haze-3 hover:text-void tracking-widest transition-colors group"
+          className="absolute top-6 left-6 flex items-center gap-1.5 font-space-mono text-[11px] text-haze-2 hover:text-void tracking-widest transition-colors group bg-cosmos-3/60 px-3 py-1.5 rounded-sm"
         >
           <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
           BACK
@@ -300,7 +296,7 @@ export default function SignupPage() {
             </motion.form>
           )}
 
-          <motion.p variants={slideUp} className="font-rajdhani text-sm text-haze-3 text-center mt-8">
+          <motion.p variants={slideUp} className="font-rajdhani text-sm text-haze-2 text-center mt-8">
             Already have an account?{" "}<Link href="/login" className="cursor-target text-void hover:underline">Sign in</Link>
           </motion.p>
         </motion.div>
