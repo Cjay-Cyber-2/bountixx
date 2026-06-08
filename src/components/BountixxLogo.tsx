@@ -1,9 +1,6 @@
 "use client";
 
-/** Crown SVG faithfully recreated from the official Bountixx brand guide (PDF page 1).
- *  Three spikes = crown + three competitors. Base bar = podium. Dark circle = bounty coin.
- *  Colors: Bounty Coral #FF5533 / Coral Light #FF7A5C / Arena Navy #0C1340 / Deep Navy #111B56
- */
+import Image from "next/image";
 
 type CoinTier = "bronze" | "silver" | "gold" | "diamond";
 
@@ -94,45 +91,22 @@ export function CrownMark({
   );
 }
 
-/** Full logo: crown mark + optional "bountixx" wordmark */
+/** Full logo using the official logo.png asset */
 export function BountixxLogo({
   size = 56,
   showWordmark = false,
   className = "",
-  variant = "default",
 }: LogoProps) {
-  const wordmarkColor = variant === "light" ? "#0C1340" : "#FF5533";
-
   return (
-    <div
-      className={`flex items-center gap-3 ${className}`}
-      style={{ lineHeight: 0 }}
-    >
-      <CrownMark size={size} id="logo" />
-
+    <div className={`flex items-center gap-3 ${className}`} style={{ lineHeight: 0 }}>
+      <Image src="/logo.png" alt="Bountixx" width={size} height={size} priority />
       {showWordmark && (
-        <div className="flex flex-col" style={{ gap: 0 }}>
-          <span
-            className="font-nunito font-black leading-none tracking-tight select-none"
-            style={{
-              fontSize: size * 0.55,
-              color: wordmarkColor,
-              letterSpacing: "-0.01em",
-            }}
-          >
-            bountixx
-          </span>
-          <span
-            className="font-space-mono uppercase tracking-[0.22em] select-none"
-            style={{
-              fontSize: size * 0.115,
-              color: "rgba(255,85,51,0.55)",
-              marginTop: size * 0.03,
-            }}
-          >
-            compete · conquer · collect
-          </span>
-        </div>
+        <span
+          className="font-nunito font-black leading-none select-none"
+          style={{ fontSize: size * 0.55, color: "#FF5533", letterSpacing: "-0.01em" }}
+        >
+          bountixx
+        </span>
       )}
     </div>
   );

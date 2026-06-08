@@ -64,8 +64,13 @@ export default function SignupPage() {
     setError("");
     try {
       await signInWithPopup(auth, provider === "google" ? googleProvider : githubProvider);
-      router.replace("/dashboard");
+      // Redirect is handled by onAuthStateChanged → setUser → useEffect below
     } catch (err: unknown) {
+      const code = (err as { code?: string }).code;
+      if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") {
+        setPending(false);
+        return;
+      }
       setError((err as { message: string }).message);
     } finally {
       setPending(false);
