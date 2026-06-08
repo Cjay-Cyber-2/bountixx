@@ -30,8 +30,29 @@ const BUNDLES = [
 export default function WalletPage() {
   const [filter, setFilter] = useState<FilterTab>("ALL");
   const [selected, setSelected] = useState(2);
+  const [balance, setBalance] = useState(0);
+  const [txList, setTxList] = useState(TRANSACTIONS);
 
-  const filtered = filter === "ALL" ? TRANSACTIONS : TRANSACTIONS.filter((t) => t.type === filter.toLowerCase());
+  useState(() => {
+    fetch("/api/wallet")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.balance !== undefined) setBalance(d.balance);
+        if (d.transactions?.length) {
+          setTxList(
+            d.transactions.map((t: { type: string; reference?: string; amount: number; createdAt: string }) => ({
+              type: t.type,
+              desc: t.reference ?? t.type,
+              amount: t.amount,
+              date: new Date(t.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+            }))
+          );
+        }
+      })
+      .catch(() => {});
+  });
+
+  const filtered = filter === "ALL" ? txList : txList.filter((t) => t.type === filter.toLowerCase());
 
   return (
     <AppLayout>
@@ -59,7 +80,7 @@ export default function WalletPage() {
               </div>
               <div>
                 <p className="font-space-mono text-[10px] text-haze-3 tracking-[2px] mb-1 uppercase">Bountixx coins</p>
-                <AnimatedNumber value={450} className="font-orbitron font-black text-5xl md:text-6xl text-crown block leading-none" />
+                <AnimatedNumber value={balance} className="font-orbitron font-black text-5xl md:text-6xl text-crown block leading-none" />
               </div>
             </motion.div>
 

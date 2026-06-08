@@ -19,6 +19,7 @@ export const users = pgTable("users", {
   rank: rankEnum("rank").default("recruit").notNull(),
   roomsCreatedCount: integer("rooms_created_count").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  lastSeenAt: timestamp("last_seen_at"),
 });
 
 export const rooms = pgTable("rooms", {

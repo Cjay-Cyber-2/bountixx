@@ -164,9 +164,9 @@ export default function SignupPage() {
         {/* Back button */}
         <Link
           href="/"
-          className="absolute top-6 left-6 flex items-center gap-1.5 font-space-mono text-[11px] text-haze-3 hover:text-void tracking-widest transition-colors group"
+          className="absolute top-6 left-6 flex items-center gap-2 font-space-mono text-[11px] text-haze-2 hover:text-void tracking-widest transition-colors group border border-cosmos-4 hover:border-void/50 px-3 py-2 bg-cosmos-2 hover:bg-void/5"
         >
-          <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
+          <ArrowLeft size={13} className="group-hover:-translate-x-0.5 transition-transform" />
           BACK
         </Link>
 
