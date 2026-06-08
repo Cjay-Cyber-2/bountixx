@@ -102,7 +102,7 @@ export function TopNav() {
     <>
       <header
         className="fixed top-0 inset-x-0 z-50 h-16 border-b border-cosmos-4"
-        style={{ background: "rgba(14,8,24,0.92)", backdropFilter: "blur(16px)" }}
+        style={{ background: "var(--surface-raised)", backdropFilter: "blur(16px)" }}
       >
         <div className="max-w-[1400px] mx-auto h-full px-5 flex items-center justify-between gap-6">
 
@@ -219,7 +219,7 @@ export function TopNav() {
             exit={{ opacity: 0, y: -12 }}
             transition={{ duration: 0.2 }}
             className="md:hidden fixed top-16 inset-x-0 z-40 border-b border-cosmos-4 pb-2"
-            style={{ background: "rgba(14,8,24,0.97)", backdropFilter: "blur(20px)" }}
+            style={{ background: "var(--surface-raised)", backdropFilter: "blur(20px)" }}
           >
             {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
               const active = pathname === href;
@@ -272,7 +272,7 @@ export function MobileBottomNav() {
   return (
     <nav
       className="md:hidden fixed bottom-0 inset-x-0 z-50 border-t border-cosmos-4 flex"
-      style={{ background: "rgba(14,8,24,0.97)", backdropFilter: "blur(20px)" }}
+      style={{ background: "var(--surface-raised)", backdropFilter: "blur(20px)" }}
     >
       {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
         const active = pathname === href;

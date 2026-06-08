@@ -28,19 +28,47 @@
   --clip-arena-sm: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
 }
 
+/* ─── Theme-aware surface tokens (dark defaults) ─── */
+:root {
+  --surface-card:    rgba(19, 12, 36, 0.55);
+  --surface-raised:  rgba(14, 8, 24, 0.92);
+  --surface-inset:   rgba(14, 8, 24, 0.70);
+  --surface-hover:   rgba(30, 19, 64, 0.55);
+  --border-1:        rgba(45, 27, 105, 0.70);
+  --border-2:        rgba(155, 107, 255, 0.15);
+  --border-accent:   rgba(168, 85, 247, 0.22);
+  --void-tint:       rgba(168, 85, 247, 0.10);
+  --void-tint-hover: rgba(168, 85, 247, 0.18);
+  --glow-1:          rgba(155, 107, 255, 0.08);
+  --terminal-bg:     rgba(14, 8, 24, 0.95);
+  --terminal-border: rgba(155, 107, 255, 0.18);
+}
+
 /* ─── Light Mode Tokens ─── */
 [data-theme="light"] {
-  --cosmos:   #FFFFFF;       /* pure white background */
-  --cosmos-2: #F5F3FF;       /* soft lavender tint for cards */
-  --cosmos-3: #EDE9FE;       /* slightly deeper for borders */
-  --cosmos-4: #C4B5FD;       /* border/divider */
-  --haze:     #0F0720;       /* near-black title text */
-  --haze-2:   #3B2165;       /* dark purple for body text */
-  --haze-3:   #7C5CA6;       /* muted purple for secondary text */
-  --void:     #7C3AED;       /* brand purple accent — slightly darker for contrast */
-  --void-light: #A78BFA;
-  --void-deep:  #5B21B6;
-  --cosmos-bg-gradient: linear-gradient(135deg, #FFFFFF 0%, #F5F3FF 100%);
+  --cosmos:     #FFFFFF;
+  --cosmos-2:   #F5F3FF;
+  --cosmos-3:   #EDE9FE;
+  --cosmos-4:   #C4B5FD;
+  --haze:       #0F0720;
+  --haze-2:     #2E1B5A;
+  --haze-3:     #6B46A0;
+  --void:       #6D28D9;
+  --void-light: #8B5CF6;
+  --void-deep:  #4C1D95;
+  /* surfaces stay crisp and white in light mode */
+  --surface-card:    rgba(237, 233, 254, 0.55);
+  --surface-raised:  #ffffff;
+  --surface-inset:   rgba(245, 243, 255, 0.80);
+  --surface-hover:   rgba(237, 233, 254, 0.80);
+  --border-1:        rgba(196, 181, 253, 0.80);
+  --border-2:        rgba(109, 40, 217, 0.18);
+  --border-accent:   rgba(109, 40, 217, 0.25);
+  --void-tint:       rgba(109, 40, 217, 0.07);
+  --void-tint-hover: rgba(109, 40, 217, 0.13);
+  --glow-1:          rgba(109, 40, 217, 0.05);
+  --terminal-bg:     #120830;
+  --terminal-border: rgba(155, 107, 255, 0.30);
 }
 
 /* ─── Tailwind v4 Theme ─── */

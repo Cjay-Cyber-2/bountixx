@@ -16,37 +16,25 @@ export function FinalCTA() {
       ref={ref}
       className="relative py-40 px-6 lg:px-14 bg-cosmos overflow-hidden text-center"
     >
-      {/* Atmospheric glow — subtle, single color */}
+      {/* Atmospheric glow */}
       <div
         className="absolute inset-0 pointer-events-none"
         aria-hidden
         style={{
-          background:
-            "radial-gradient(ellipse 65% 55% at 50% 45%, rgba(168,85,247,0.10) 0%, transparent 70%)",
+          background: "radial-gradient(ellipse 65% 55% at 50% 45%, rgba(168,85,247,0.09), transparent 70%)",
         }}
       />
 
-      {/* Top horizontal rule */}
+      {/* Top rule */}
       <span
         aria-hidden
         className="absolute top-0 left-6 right-6 lg:left-14 lg:right-14 h-px"
         style={{
-          background:
-            "linear-gradient(90deg, transparent, rgba(155,107,255,0.4) 40%, rgba(155,107,255,0.4) 60%, transparent)",
+          background: "linear-gradient(90deg, transparent, var(--border-2) 40%, var(--border-2) 60%, transparent)",
         }}
       />
 
       <div className="max-w-2xl mx-auto relative">
-        {/* Eyebrow */}
-        <motion.p
-          initial={{ opacity: 0, y: 12 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.5 }}
-          className="font-space-mono text-[10px] tracking-[5px] uppercase text-haze-3 mb-10"
-        >
-          First 10 arenas · Free
-        </motion.p>
-
         {/* Headline */}
         <motion.h2
           initial={{ opacity: 0, y: 36 }}
@@ -54,34 +42,24 @@ export function FinalCTA() {
           transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
           className="font-zen-dots text-[clamp(2.4rem,6vw,4.5rem)] text-haze mb-6 leading-[1.04]"
         >
-          Ready to enter
-          <br />
-          <span
-            style={{
-              background: "linear-gradient(110deg,#a855f7 0%,#c084fc 55%,#e879f9 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-            }}
-          >
-            the arena?
-          </span>
+          Ready to enter{" "}
+          <span style={{ color: "var(--void)" }}>the arena?</span>
         </motion.h2>
 
         <motion.p
           initial={{ opacity: 0, y: 16 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6, delay: 0.15 }}
+          transition={{ duration: 0.6, delay: 0.12 }}
           className="font-rajdhani text-lg text-haze-2 mb-12 max-w-md mx-auto leading-relaxed"
         >
-          No subscription. No card. Just pure competition — and the AI calling every winner.
+          No subscription. No card required. Your first 10 arenas are free — the AI structures the challenge, you bring the skill.
         </motion.p>
 
         {/* CTAs */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.55, delay: 0.3 }}
+          transition={{ duration: 0.55, delay: 0.25 }}
           className="flex flex-col items-center gap-5"
         >
           <Link href="/signup">
@@ -91,17 +69,13 @@ export function FinalCTA() {
               magnetic
               className="text-base px-12 h-[56px] gap-3 group"
               style={{
-                background: "#a855f7",
-                borderColor: "#a855f7",
-                boxShadow: "0 0 48px rgba(168,85,247,0.35)",
+                background: "var(--void)",
+                borderColor: "var(--void)",
+                boxShadow: "0 0 48px rgba(168,85,247,0.30)",
               } as React.CSSProperties}
             >
               Create your first arena
-              <ArrowRight
-                size={16}
-                aria-hidden
-                className="transition-transform group-hover:translate-x-1"
-              />
+              <ArrowRight size={16} aria-hidden className="transition-transform group-hover:translate-x-1" />
             </Button>
           </Link>
 
@@ -113,19 +87,15 @@ export function FinalCTA() {
           </Link>
         </motion.div>
 
-        {/* Trust strip */}
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
+        {/* Trust strip — horizontal, not stacked bullets */}
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={inView ? { opacity: 1 } : {}}
           transition={{ delay: 0.5 }}
-          className="flex flex-col items-center gap-2 mt-14 font-space-mono text-[9px] text-haze-3 tracking-[3px] uppercase"
+          className="mt-14 font-space-mono text-[10px] text-haze-3 tracking-[3px] uppercase"
         >
-          <span>No subscription</span>
-          <span aria-hidden>·</span>
-          <span>Anti-cheat AI</span>
-          <span aria-hidden>·</span>
-          <span>Coins land instantly</span>
-        </motion.div>
+          No subscription · Anti-cheat AI · Coins land instantly
+        </motion.p>
       </div>
     </section>
   );

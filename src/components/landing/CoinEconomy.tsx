@@ -4,12 +4,12 @@ import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
 
 const EARN = [
-  { label: "Win 1st Place", value: "100–500 coins", desc: "Prize scales with room size and bounty tier" },
-  { label: "Place 2nd / 3rd", value: "30–50% / 10–20%", desc: "Offered in rooms with 5+ / 10+ participants respectively" },
-  { label: "Complete Room", value: "+10 coins", desc: "Consolation reward for attempting and finishing any room" },
-  { label: "Daily Streaks", value: "5/day + 50 bonus", desc: "Earn 5 coins daily. Get 50 bonus coins on Day 7 streak" },
-  { label: "Invite Referral", value: "+30 coins", desc: "Earn when a friend signs up and plays their first room" },
-  { label: "Rank Milestones", value: "100–500 coins", desc: "One-time milestone coin payout upon crossing ranks" },
+  { label: "Win 1st place",   value: "100–500 coins",    desc: "Prize scales with room size and bounty tier" },
+  { label: "Place 2nd / 3rd", value: "30–50% / 10–20%",  desc: "Offered in rooms with 5+ / 10+ participants" },
+  { label: "Complete a room", value: "+10 coins",         desc: "Consolation reward for finishing any room" },
+  { label: "Daily streaks",   value: "5/day + 50 bonus",  desc: "Earn 5 coins daily. Day 7 streak pays 50 bonus" },
+  { label: "Invite referral", value: "+30 coins",         desc: "When a friend signs up and plays their first room" },
+  { label: "Rank milestones", value: "100–500 coins",     desc: "One-time payout upon crossing each rank threshold" },
 ] as const;
 
 interface Bundle {
@@ -21,11 +21,11 @@ interface Bundle {
 }
 
 const BUNDLES: Bundle[] = [
-  { label: "Starter Pack", coins: 100, price: "$0.99", desc: "Perfect for testing the waters" },
-  { label: "Challenger Pack", coins: 300, price: "$2.49", desc: "Standard for regular players" },
-  { label: "Elite Pack", coins: 750, price: "$4.99", desc: "Best for active room hosts", popular: true },
-  { label: "Champion Pack", coins: 2000, price: "$11.99", desc: "Power users value tier" },
-  { label: "Legendary Pack", coins: 5500, price: "$27.99", desc: "Top tier package for community hosts" },
+  { label: "Starter",    coins: 100,   price: "$0.99",  desc: "Testing the waters" },
+  { label: "Challenger", coins: 300,   price: "$2.49",  desc: "Standard for regular players" },
+  { label: "Elite",      coins: 750,   price: "$4.99",  desc: "Best for active room hosts", popular: true },
+  { label: "Champion",   coins: 2000,  price: "$11.99", desc: "Power users value tier" },
+  { label: "Legendary",  coins: 5500,  price: "$27.99", desc: "Top tier for community hosts" },
 ];
 
 export function CoinEconomy() {
@@ -34,28 +34,21 @@ export function CoinEconomy() {
 
   return (
     <section
-      className="py-36 md:py-48 px-6 lg:px-14 bg-cosmos-2 border-y border-cosmos-4 overflow-hidden"
+      className="py-36 md:py-48 px-6 lg:px-14 overflow-hidden"
+      style={{
+        background: "var(--cosmos-2)",
+        borderTop: "1px solid var(--border-1)",
+        borderBottom: "1px solid var(--border-1)",
+      }}
       ref={ref}
     >
       <div className="max-w-[1280px] mx-auto">
-        {/* Top Header Grid */}
+        {/* Header */}
         <div className="mb-24 grid lg:grid-cols-2 gap-12 items-end">
           <div>
-            <p className="font-space-mono text-[10px] tracking-[5px] uppercase text-[#a855f7] mb-5">
-              Platform Economy
-            </p>
             <h2 className="font-zen-dots text-[clamp(2.2rem,5vw,3.8rem)] text-haze leading-[1.08]">
               The Bountixx{" "}
-              <span
-                style={{
-                  background: "linear-gradient(110deg,#a855f7 0%,#c084fc 100%)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundClip: "text",
-                }}
-              >
-                economy
-              </span>
+              <span style={{ color: "var(--void)" }}>economy.</span>
             </h2>
           </div>
           <div className="space-y-4 lg:pl-10">
@@ -63,37 +56,35 @@ export function CoinEconomy() {
               Your first 10 rooms are free. After that, creating standard rooms costs 50 coins. Participating in other players' rooms is free forever.
             </p>
             <p className="font-rajdhani text-[14px] text-haze-3 leading-relaxed">
-              Coins live inside Bountixx to drive progression and competitive stake. They are non-transferable database values with no cash-out value.
+              Coins are non-transferable values inside Bountixx — they drive progression and competitive stake, not cash transactions.
             </p>
           </div>
         </div>
 
-        {/* Columns Grid: Earn list + Bundle cards */}
         <div className="grid lg:grid-cols-2 gap-20 lg:gap-28">
-          
-          {/* Left: Ways to Earn */}
+
+          {/* Ways to earn */}
           <div>
-            <p className="font-space-mono text-[10px] tracking-[4px] uppercase text-haze-3 mb-8 pb-4 border-b border-cosmos-4">
-              Earning Mechanisms ◈
-            </p>
-            
-            <div className="divide-y divide-cosmos-4">
+            <div className="flex items-baseline gap-4 pb-4 mb-0" style={{ borderBottom: "1px solid var(--border-1)" }}>
+              <h3 className="font-zen-dots text-lg text-haze">Earning</h3>
+              <span className="font-space-mono text-[10px] text-haze-3 tracking-[3px] uppercase">◈ Coins</span>
+            </div>
+
+            <div style={{ borderBottom: "1px solid var(--border-1)" }}>
               {EARN.map((row, i) => (
                 <motion.div
                   key={row.label}
-                  initial={{ opacity: 0, x: -12 }}
+                  initial={{ opacity: 0, x: -10 }}
                   animate={inView ? { opacity: 1, x: 0 } : {}}
-                  transition={{ duration: 0.45, delay: 0.1 + i * 0.06 }}
+                  transition={{ duration: 0.4, delay: 0.1 + i * 0.055 }}
                   className="py-5 flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2"
+                  style={{ borderTop: "1px solid var(--border-1)" }}
                 >
                   <div>
-                    <h4 className="font-rajdhani font-semibold text-lg text-haze">{row.label}</h4>
+                    <h4 className="font-rajdhani font-semibold text-[17px] text-haze">{row.label}</h4>
                     <p className="font-rajdhani text-sm text-haze-3">{row.desc}</p>
                   </div>
-                  <span
-                    className="font-space-mono text-sm font-bold text-right shrink-0"
-                    style={{ color: "#F0A500" }}
-                  >
+                  <span className="font-space-mono text-sm font-bold shrink-0" style={{ color: "#F0A500" }}>
                     {row.value}
                   </span>
                 </motion.div>
@@ -101,62 +92,57 @@ export function CoinEconomy() {
             </div>
           </div>
 
-          {/* Right: Coin bundles list */}
+          {/* Coin bundles */}
           <div>
-            <div className="flex items-end justify-between mb-8 pb-4 border-b border-cosmos-4">
-              <p className="font-space-mono text-[10px] tracking-[4px] uppercase text-haze-3">
-                Coin Bundles
-              </p>
-              <p className="font-space-mono text-[9px] tracking-[2px] uppercase text-haze-3">
-                stripe / paystack webhooks
-              </p>
+            <div className="flex items-baseline justify-between pb-4" style={{ borderBottom: "1px solid var(--border-1)" }}>
+              <h3 className="font-zen-dots text-lg text-haze">Coin Bundles</h3>
+              <span className="font-space-mono text-[9px] tracking-[2px] uppercase text-haze-3">
+                Stripe · Paystack
+              </span>
             </div>
 
-            <div className="space-y-4">
+            <div className="mt-0" style={{ borderBottom: "1px solid var(--border-1)" }}>
               {BUNDLES.map((b, i) => (
                 <motion.div
                   key={b.label}
-                  initial={{ opacity: 0, y: 16 }}
+                  initial={{ opacity: 0, y: 14 }}
                   animate={inView ? { opacity: 1, y: 0 } : {}}
-                  transition={{ duration: 0.45, delay: 0.15 + i * 0.06 }}
-                  className="group relative flex items-center justify-between p-6 hover:bg-cosmos transition-all duration-300 rounded border"
+                  transition={{ duration: 0.4, delay: 0.15 + i * 0.055 }}
+                  className="group relative flex items-center justify-between py-5 px-4 transition-colors duration-200"
                   style={{
-                    borderColor: b.popular ? "rgba(240,165,0,0.3)" : "rgba(45,27,105,0.6)",
-                    background: b.popular ? "rgba(240,165,0,0.03)" : "rgba(19,12,36,0.3)",
+                    borderTop: "1px solid var(--border-1)",
+                    background: b.popular ? "var(--void-tint)" : "transparent",
                   }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = b.popular ? "var(--void-tint-hover)" : "var(--surface-hover)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = b.popular ? "var(--void-tint)" : "transparent")}
                 >
                   {b.popular && (
                     <span
-                      className="absolute -top-2.5 left-6 font-space-mono text-[8px] px-2 py-0.5 tracking-[2px] uppercase"
+                      className="absolute -top-px right-4 font-space-mono text-[8px] px-2 py-0.5 tracking-[2px] uppercase"
                       style={{ background: "#F0A500", color: "#0E0818" }}
                     >
                       Most Popular
                     </span>
                   )}
 
-                  <div className="flex flex-col gap-1">
+                  <div className="flex flex-col gap-0.5">
                     <div className="flex items-baseline gap-2">
-                      <span className="font-space-mono text-2xl font-black text-[#F0A500]">
+                      <span className="font-orbitron font-black text-2xl" style={{ color: "#F0A500" }}>
                         {b.coins.toLocaleString()}
                       </span>
-                      <span className="font-space-mono text-[9px] text-haze-3 tracking-[2px] uppercase">
-                        Coins
-                      </span>
+                      <span className="font-space-mono text-[9px] text-haze-3 tracking-[2px] uppercase">Coins</span>
                     </div>
                     <p className="font-rajdhani text-sm text-haze-3">{b.desc}</p>
                   </div>
 
                   <div className="text-right">
                     <p className="font-zen-dots text-xl text-haze">{b.price}</p>
-                    <p className="font-space-mono text-[9px] text-haze-3 tracking-[1px] uppercase mt-0.5">
-                      {b.label}
-                    </p>
+                    <p className="font-space-mono text-[9px] text-haze-3 tracking-[1px] uppercase mt-0.5">{b.label}</p>
                   </div>
                 </motion.div>
               ))}
             </div>
           </div>
-
         </div>
       </div>
     </section>

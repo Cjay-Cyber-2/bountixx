@@ -3,42 +3,46 @@
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
 
-const PHASE1_CATEGORIES = [
+const CATEGORIES = [
   {
     label: "Coding",
-    accent: "#a855f7",
-    tag: "01",
-    desc: "Functions, algorithms, data structures. Write directly in the sandboxed editor with support for JavaScript and Python.",
+    accent: "#FF6B1A",
+    accentDim: "rgba(255,107,26,0.12)",
+    accentBorder: "rgba(255,107,26,0.25)",
+    desc: "Functions, algorithms, data structures. Write directly in the sandboxed editor — JavaScript and Python supported.",
     sample: "fn reverse(s) → s[::-1]",
-    rule: "First to pass all 20 hidden tests",
-    partial: "Partial: % of test cases passed",
+    win: "First to pass all 20 hidden tests",
+    partial: "% of test cases passed",
   },
   {
     label: "Trivia",
     accent: "#a855f7",
-    tag: "02",
-    desc: "General knowledge, pop culture, and history. The canonical correct answer is hashed and locked before anyone enters.",
+    accentDim: "rgba(168,85,247,0.10)",
+    accentBorder: "rgba(168,85,247,0.22)",
+    desc: "General knowledge, pop culture, history. The correct answer is hashed and locked before anyone enters the room.",
     sample: "In what year did…?",
-    rule: "First correct submission wins",
-    partial: "Partial: N/A (correct or incorrect)",
+    win: "First correct submission wins",
+    partial: "N/A — correct or incorrect",
   },
   {
     label: "Logic",
-    accent: "#a855f7",
-    tag: "03",
-    desc: "Puzzles, riddles, and lateral thinking. Read carefully — the answer is objective but the trap is usually the obvious choice.",
+    accent: "#00D68F",
+    accentDim: "rgba(0,214,143,0.09)",
+    accentBorder: "rgba(0,214,143,0.22)",
+    desc: "Puzzles, riddles, lateral thinking. The answer is objective — the trap is the obvious choice.",
     sample: "If A < B and B < C…",
-    rule: "First correct submission wins",
-    partial: "Partial: Closest numeric or text match",
+    win: "First correct submission wins",
+    partial: "Closest numeric or text match",
   },
   {
     label: "Math",
-    accent: "#a855f7",
-    tag: "04",
-    desc: "Speed arithmetic, equations, and proofs. Pure speed and calculations against opponents who are just as fast.",
+    accent: "#F0A500",
+    accentDim: "rgba(240,165,0,0.09)",
+    accentBorder: "rgba(240,165,0,0.22)",
+    desc: "Speed arithmetic, equations, proofs. Pure calculation against opponents who are exactly as fast.",
     sample: "∑ x² + y , x∈[1,n]",
-    rule: "First correct submission wins",
-    partial: "Partial: Closest numeric value on timeout",
+    win: "First correct submission wins",
+    partial: "Closest numeric value on timeout",
   },
 ] as const;
 
@@ -50,89 +54,93 @@ export function Categories() {
     <section
       id="categories"
       ref={ref}
-      className="relative py-36 md:py-48 px-6 lg:px-14 bg-cosmos-2 border-y border-cosmos-4 overflow-hidden"
+      className="relative py-36 md:py-48 px-6 lg:px-14 overflow-hidden"
+      style={{ background: "var(--cosmos-2)", borderTop: "1px solid var(--border-1)", borderBottom: "1px solid var(--border-1)" }}
     >
-      {/* Background radial glow */}
       <div
         className="absolute inset-0 pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(ellipse 60% 50% at 90% 80%, rgba(155,107,255,0.06) 0%, transparent 65%)",
-        }}
+        style={{ background: "radial-gradient(ellipse 60% 50% at 90% 80%, var(--glow-1), transparent)" }}
         aria-hidden
       />
 
       <div className="max-w-[1280px] mx-auto relative">
-        {/* Spacious Top Row */}
-        <div className="mb-24">
-          <p className="font-space-mono text-[10px] tracking-[5px] uppercase text-[#a855f7] mb-5">
-            Arena Formats
-          </p>
-          <h2 className="font-zen-dots text-[clamp(2.2rem,5vw,3.8rem)] text-haze leading-[1.08]">
-            What can you{" "}
-            <span
-              style={{
-                background: "linear-gradient(110deg,#a855f7 0%,#c084fc 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-              }}
-            >
-              challenge?
-            </span>
+        <div className="mb-20 md:mb-24">
+          <h2 className="font-zen-dots text-[clamp(2rem,4.8vw,3.6rem)] text-haze leading-[1.08]">
+            Choose your battleground.
           </h2>
+          <p className="font-rajdhani text-lg text-haze-2 mt-5 max-w-lg leading-relaxed">
+            Four challenge formats, each with its own win condition and scoring rules.
+          </p>
         </div>
 
-        {/* Phase 1 Grid - Spacious boxes with extra padding */}
+        {/* Featured row: first two side by side at 50/50, then two smaller below */}
         <motion.div
           initial="hidden"
           animate={inView ? "show" : "hidden"}
-          variants={{ show: { transition: { staggerChildren: 0.1 } } }}
-          className="grid grid-cols-1 md:grid-cols-2 gap-8"
+          variants={{ show: { transition: { staggerChildren: 0.09 } } }}
+          className="grid grid-cols-1 md:grid-cols-2 gap-px"
+          style={{ background: "var(--border-1)" }}
         >
-          {PHASE1_CATEGORIES.map((cat) => (
+          {CATEGORIES.map((cat) => (
             <motion.div
               key={cat.label}
               variants={{
-                hidden: { opacity: 0, y: 32 },
-                show: { opacity: 1, y: 0, transition: { duration: 0.65, ease: [0.16, 1, 0.3, 1] } },
+                hidden: { opacity: 0 },
+                show: { opacity: 1, transition: { duration: 0.55, ease: [0.16, 1, 0.3, 1] } },
               }}
-              className="group relative bg-cosmos p-10 md:p-12 flex flex-col gap-8 border border-cosmos-4 hover:border-void-light/30 transition-all duration-300 rounded-lg"
+              className="group relative flex flex-col gap-7 p-9 md:p-11 transition-colors duration-300"
+              style={{
+                background: "var(--cosmos)",
+              }}
             >
-              {/* Header row */}
-              <div className="flex items-baseline justify-between border-b border-cosmos-4 pb-5">
-                <span className="font-space-mono text-xs text-haze-3 tracking-[3px]">
-                  {cat.tag}
-                </span>
-                <h3 className="font-zen-dots text-2xl text-haze">{cat.label}</h3>
-              </div>
-
-              {/* Description */}
-              <p className="font-rajdhani text-lg text-haze-2 leading-relaxed min-h-[72px]">
-                {cat.desc}
-              </p>
-
-              {/* Console preview */}
+              {/* Hover tint */}
               <div
-                className="flex items-center gap-3 px-5 py-3.5 font-space-mono text-xs rounded"
-                style={{
-                  background: "rgba(14,8,24,0.7)",
-                  border: "1px solid rgba(45,27,105,0.8)",
-                }}
-              >
-                <span className="text-[#a855f7]">›</span>
-                <span className="text-haze-2 truncate">{cat.sample}</span>
-              </div>
+                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-400 pointer-events-none"
+                style={{ background: cat.accentDim }}
+                aria-hidden
+              />
 
-              {/* Bottom rule info */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-4 border-t border-cosmos-4 text-[10px] font-space-mono text-haze-3 uppercase tracking-wider">
-                <span>{cat.rule}</span>
-                <span className="text-void">{cat.partial}</span>
+              <div className="relative">
+                {/* Label + accent line */}
+                <div className="flex items-center gap-3 mb-6">
+                  <span
+                    className="block w-8 h-[3px] rounded-full"
+                    style={{ background: cat.accent }}
+                    aria-hidden
+                  />
+                  <h3 className="font-zen-dots text-2xl text-haze">{cat.label}</h3>
+                </div>
+
+                <p className="font-rajdhani text-[17px] text-haze-2 leading-relaxed mb-7">
+                  {cat.desc}
+                </p>
+
+                {/* Console sample */}
+                <div
+                  className="flex items-center gap-3 px-4 py-3 font-space-mono text-[13px] rounded-sm mb-7"
+                  style={{
+                    background: "var(--terminal-bg)",
+                    border: "1px solid var(--terminal-border)",
+                  }}
+                >
+                  <span style={{ color: cat.accent }}>›</span>
+                  <span className="text-haze-2 truncate">{cat.sample}</span>
+                </div>
+
+                {/* Win condition + partial */}
+                <div
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-5"
+                  style={{ borderTop: `1px solid var(--border-1)` }}
+                >
+                  <span className="font-space-mono text-[10px] text-haze-3 uppercase tracking-wider">{cat.win}</span>
+                  <span className="font-space-mono text-[10px] uppercase tracking-wider" style={{ color: cat.accent }}>
+                    Partial: {cat.partial}
+                  </span>
+                </div>
               </div>
             </motion.div>
           ))}
         </motion.div>
-
       </div>
     </section>
   );
