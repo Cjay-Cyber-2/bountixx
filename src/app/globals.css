@@ -30,16 +30,17 @@
 
 /* ─── Light Mode Tokens ─── */
 [data-theme="light"] {
-  --cosmos: #FBF7FF;       /* very light lavender instead of black */
-  --cosmos-2: #F2ECF9;
-  --cosmos-3: #E5D9F5;
-  --cosmos-4: #C9B5E8;
-  --haze: #1A0A35;         /* deep purple-black for text */
-  --haze-2: #4A3570;       /* medium purple for secondary text */
-  --haze-3: #8B7AAA;       /* muted purple for tertiary text */
-  --void: #7C3AED;          /* keep brand purple accent */
+  --cosmos:   #FFFFFF;       /* pure white background */
+  --cosmos-2: #F5F3FF;       /* soft lavender tint for cards */
+  --cosmos-3: #EDE9FE;       /* slightly deeper for borders */
+  --cosmos-4: #C4B5FD;       /* border/divider */
+  --haze:     #0F0720;       /* near-black title text */
+  --haze-2:   #3B2165;       /* dark purple for body text */
+  --haze-3:   #7C5CA6;       /* muted purple for secondary text */
+  --void:     #7C3AED;       /* brand purple accent — slightly darker for contrast */
   --void-light: #A78BFA;
-  --void-deep: #5B21B6;
+  --void-deep:  #5B21B6;
+  --cosmos-bg-gradient: linear-gradient(135deg, #FFFFFF 0%, #F5F3FF 100%);
 }
 
 /* ─── Tailwind v4 Theme ─── */

@@ -63,7 +63,7 @@ export function LandingNav() {
           </div>
 
           {/* Right cluster */}
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4">
             <ThemeToggle />
             <Link href="/login" className="hidden sm:block">
               <Button
