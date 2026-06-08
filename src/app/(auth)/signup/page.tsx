@@ -48,9 +48,15 @@ export default function SignupPage() {
   const recaptchaRef = useRef<RecaptchaVerifier | null>(null);
   const confirmationRef = useRef<ConfirmationResult | null>(null);
   const recaptchaContainerRef = useRef<HTMLDivElement>(null);
-
+  // Auto-redirect only on initial load for users who were already authenticated.
+  const initialCheckDone = useRef(false);
   useEffect(() => {
-    if (!loading && user) router.replace("/dashboard");
+    if (loading || initialCheckDone.current) return;
+    initialCheckDone.current = true;
+    if (!user) return;
+    createSession(user).then((ok) => {
+      if (ok) router.replace("/dashboard");
+    });
   }, [user, loading, router]);
 
   function resetMethod(m: Method) {

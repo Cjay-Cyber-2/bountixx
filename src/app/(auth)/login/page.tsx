@@ -47,9 +47,20 @@ export default function LoginPage() {
   const recaptchaRef = useRef<RecaptchaVerifier | null>(null);
   const confirmationRef = useRef<ConfirmationResult | null>(null);
   const recaptchaContainerRef = useRef<HTMLDivElement>(null);
-
+  // Auto-redirect only on initial load for users who were already authenticated.
+  // Do NOT auto-redirect when user changes during an active login flow — that
+  // would navigate before the __session cookie is confirmed set (loop bug).
+  const initialCheckDone = useRef(false);
   useEffect(() => {
-    if (!loading && user) router.replace("/dashboard");
+    if (loading || initialCheckDone.current) return;
+    initialCheckDone.current = true;
+    if (!user) return;
+    // Re-establish the session cookie (may have expired) then navigate.
+    createSession(user).then((ok) => {
+      if (ok) router.replace("/dashboard");
+      // If not ok, Firebase is authenticated but Admin is unavailable —
+      // stay on login page so the user can retry.
+    });
   }, [user, loading, router]);
 
   useEffect(() => {
