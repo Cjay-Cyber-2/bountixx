@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutDashboard, PlusCircle, User, Wallet, Menu, X, Bell, LogOut } from "lucide-react";
+import { LayoutDashboard, PlusCircle, User, Wallet, Menu, X, Bell, BellOff, LogOut } from "lucide-react";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -32,6 +32,8 @@ export function TopNav() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [signingOut, setSigningOut] = useState(false);
+  const [notifEnabled, setNotifEnabled] = useState(false);
+  const [notifLoading, setNotifLoading] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -40,6 +42,44 @@ export function TopNav() {
       .then((d) => d.user && setProfile(d.user))
       .catch(() => {});
   }, [user]);
+
+  async function handleNotificationOptIn() {
+    if (notifEnabled || notifLoading) return;
+    if (!("Notification" in window) || !("serviceWorker" in navigator)) return;
+
+    setNotifLoading(true);
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") return;
+
+      // Dynamically import to avoid SSR module evaluation
+      const { getMessaging, register, onRegistered } = await import("firebase/messaging");
+      const { app } = await import("@/lib/firebase");
+      const messaging = getMessaging(app);
+
+      const swReg = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+
+      // Subscribe via the FID-based new API
+      await register(messaging, {
+        vapidKey: process.env.NEXT_PUBLIC_FCM_VAPID_KEY,
+        serviceWorkerRegistration: swReg,
+      });
+
+      onRegistered(messaging, async (fid: string) => {
+        if (!fid) return;
+        await fetch("/api/notifications/subscribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: fid }),
+        });
+        setNotifEnabled(true);
+      });
+    } catch (err) {
+      console.error("[FCM] opt-in failed:", err);
+    } finally {
+      setNotifLoading(false);
+    }
+  }
 
   async function handleLogout() {
     setSigningOut(true);
@@ -112,16 +152,24 @@ export function TopNav() {
               </span>
             </div>
 
-            {/* Notifications */}
+            {/* Notifications opt-in */}
             <button
-              className="cursor-target relative text-haze-2 hover:text-haze transition-colors p-1"
-              aria-label="Notifications"
+              onClick={handleNotificationOptIn}
+              disabled={notifLoading}
+              className={cn(
+                "cursor-target relative transition-colors p-1 disabled:opacity-40",
+                notifEnabled ? "text-success" : "text-haze-2 hover:text-haze"
+              )}
+              aria-label={notifEnabled ? "Notifications enabled" : "Enable notifications"}
+              title={notifEnabled ? "Notifications enabled" : "Enable push notifications"}
             >
-              <Bell size={18} />
-              <span
-                className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-void border border-cosmos"
-                aria-hidden
-              />
+              {notifEnabled ? <Bell size={18} /> : <BellOff size={18} />}
+              {!notifEnabled && (
+                <span
+                  className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-void border border-cosmos"
+                  aria-hidden
+                />
+              )}
             </button>
 
             {/* Avatar */}

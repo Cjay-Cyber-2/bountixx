@@ -15,6 +15,13 @@
       "when": 1780887200821,
       "tag": "0001_opposite_shatterstar",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1780893938801,
+      "tag": "0002_cynical_silverclaw",
+      "breakpoints": true
     }
   ]
 }

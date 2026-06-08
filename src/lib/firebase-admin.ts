@@ -14,4 +14,5 @@ const adminApp =
     "bountixx-admin"
   );
 
+export { adminApp };
 export const adminAuth = getAuth(adminApp);

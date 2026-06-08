@@ -6,6 +6,7 @@ import { rooms, roomPlayers, submissions, testCases, users, coinTransactions, ac
 import { eq, and, count, sql } from "drizzle-orm";
 import { getSession, unauthorized } from "@/lib/getSession";
 import { randomUUID } from "crypto";
+import { sendNotificationToUser } from "@/lib/sendNotification";
 
 // Piston API for code execution
 const PISTON_API = "https://emkc.org/api/v2/piston/execute";
@@ -154,6 +155,16 @@ export async function POST(
       await grantWinnerRewards(room.id, session.id, room.bountyTier, 1);
       // End the room
       await db.update(rooms).set({ status: "ended", endedAt: new Date() }).where(eq(rooms.id, roomId));
+      // Notify all players that the arena ended
+      const players = await db
+        .select({ userId: roomPlayers.userId })
+        .from(roomPlayers)
+        .where(eq(roomPlayers.roomId, roomId));
+      await Promise.all(
+        players.map((p) =>
+          sendNotificationToUser(p.userId, "Arena ended!", "Check the results.", { url: `/arena/${roomId}` })
+        )
+      );
     } else {
       // XP for participation
       await grantParticipationRewards(session.id);
@@ -208,6 +219,16 @@ export async function POST(
   if (isWinner) {
     await grantWinnerRewards(room.id, session.id, room.bountyTier, 1);
     await db.update(rooms).set({ status: "ended", endedAt: new Date() }).where(eq(rooms.id, roomId));
+    // Notify all players that the arena ended
+    const players = await db
+      .select({ userId: roomPlayers.userId })
+      .from(roomPlayers)
+      .where(eq(roomPlayers.roomId, roomId));
+    await Promise.all(
+      players.map((p) =>
+        sendNotificationToUser(p.userId, "Arena ended!", "Check the results.", { url: `/arena/${roomId}` })
+      )
+    );
   } else {
     await grantParticipationRewards(session.id);
   }

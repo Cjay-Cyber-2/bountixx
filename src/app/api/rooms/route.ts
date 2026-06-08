@@ -47,6 +47,7 @@ export async function POST(req: Request) {
     bountyTier?: "bronze" | "silver" | "gold" | "mythic";
     // AI analysis result fields
     taskNormalised?: string;
+    canonicalAnswer?: string;
     category?: "coding" | "trivia" | "logic" | "math" | "writing" | "design" | "meme";
     title?: string;
     difficulty?: "rookie" | "challenger" | "elite" | "legendary";
@@ -79,18 +80,19 @@ export async function POST(req: Request) {
   const [room] = await db
     .insert(rooms)
     .values({
-      id:            roomId,
-      name:          body.name.trim(),
-      taskRaw:       body.taskRaw.trim(),
-      taskNormalised: body.taskNormalised,
-      category:      body.category,
-      title:         body.title,
-      difficulty:    body.difficulty,
-      status:        "lobby",
-      adminId:       session.id,
-      playerCap:     Math.min(20, Math.max(2, body.playerCap ?? 2)),
-      timerSeconds:  body.timerSeconds,
-      bountyTier:    body.bountyTier ?? "bronze",
+      id:              roomId,
+      name:            body.name.trim(),
+      taskRaw:         body.taskRaw.trim(),
+      taskNormalised:  body.taskNormalised,
+      canonicalAnswer: body.canonicalAnswer,
+      category:        body.category,
+      title:           body.title,
+      difficulty:      body.difficulty,
+      status:          "lobby",
+      adminId:         session.id,
+      playerCap:       Math.min(20, Math.max(2, body.playerCap ?? 2)),
+      timerSeconds:    body.timerSeconds,
+      bountyTier:      body.bountyTier ?? "bronze",
     })
     .returning();
 

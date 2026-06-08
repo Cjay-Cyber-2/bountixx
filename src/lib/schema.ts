@@ -18,6 +18,7 @@ export const users = pgTable("users", {
   xp: integer("xp").default(0).notNull(),
   rank: rankEnum("rank").default("recruit").notNull(),
   roomsCreatedCount: integer("rooms_created_count").default(0).notNull(),
+  consecutiveWins: integer("consecutive_wins").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   lastSeenAt: timestamp("last_seen_at"),
 });
@@ -27,6 +28,7 @@ export const rooms = pgTable("rooms", {
   name: text("name").notNull(),
   taskRaw: text("task_raw").notNull(),
   taskNormalised: text("task_normalised"),
+  canonicalAnswer: text("canonical_answer"),
   category: categoryEnum("category"),
   title: text("title"),
   difficulty: difficultyEnum("difficulty"),
@@ -93,5 +95,12 @@ export const invites = pgTable("invites", {
   inviterId: text("inviter_id").notNull().references(() => users.id),
   inviteeId: text("invitee_id").notNull().references(() => users.id),
   status: inviteStatusEnum("status").default("pending").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const pushTokens = pgTable("push_tokens", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id),
+  token: text("token").notNull().unique(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
