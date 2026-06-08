@@ -1,11 +1,13 @@
 "use client";
 
 import type React from "react";
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
 import Link from "next/link";
 import { Zap, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import Lottie from "lottie-react";
+import bountixxAnimation from "@/data/bountixx.json";
 
 const fadeUp = (delay: number) => ({
   initial: { opacity: 0, y: 20 },
@@ -22,7 +24,6 @@ const fadeIn = (delay: number) => ({
 export function Hero() {
   const sectionRef = useRef<HTMLElement>(null);
   const reduceMotion = useReducedMotion();
-  const [svgFailed, setSvgFailed] = useState(false);
 
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -48,33 +49,18 @@ export function Hero() {
         aria-hidden
       />
 
-      {/* ── bountixx.svg / bountixx.json illustration ── */}
+      {/* ── bountixx.json Lottie animation — imported directly, no fetch ── */}
       <motion.div
         className="absolute inset-0 z-0 pointer-events-none overflow-hidden"
         style={{ scale: reduceMotion ? 1 : animScale }}
       >
-        {svgFailed ? (
-          <video
-            src="/bountixx-hero.mp4"
-            autoPlay
-            muted
-            loop
-            playsInline
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <object
-            type="image/svg+xml"
-            data="/bountixx.svg"
-            onError={() => setSvgFailed(true)}
-            className="w-full h-full pointer-events-none"
-            style={{
-              display: "block",
-              filter: "drop-shadow(0 0 60px rgba(155,107,255,0.25))",
-            }}
-            aria-label="Bountixx arena animation"
-          />
-        )}
+        <Lottie
+          animationData={bountixxAnimation}
+          loop
+          autoplay
+          style={{ width: "100%", height: "100%" }}
+          rendererSettings={{ preserveAspectRatio: "xMidYMid slice" }}
+        />
       </motion.div>
 
       {/* ── Legibility scrims (no grid) ── */}
