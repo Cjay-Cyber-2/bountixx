@@ -216,10 +216,16 @@ export default function LobbyPage() {
         method: "PATCH",
         body: JSON.stringify({ status: "live" }),
       });
+      const json = (await res.json()) as { room?: unknown; error?: string; removedPlayers?: string[] };
       if (!res.ok) {
-        const err = (await res.json()) as { error?: string };
-        toast({ type: "error", title: err.error ?? "Failed to start arena" });
+        toast({ type: "error", title: json.error ?? "Failed to start arena" });
         return;
+      }
+      if (json.removedPlayers && json.removedPlayers.length > 0) {
+        toast({
+          type: "info",
+          title: `${json.removedPlayers.length} player(s) removed — insufficient coins`,
+        });
       }
       router.replace(`/arena/${roomId}`);
     } catch {
@@ -328,25 +334,29 @@ export default function LobbyPage() {
         </motion.div>
 
         {/* Room meta */}
-        <motion.div
-          variants={slideUp}
-          className="grid grid-cols-3 gap-3 mb-6"
-        >
+        <motion.div variants={slideUp} className="grid grid-cols-3 gap-3 mb-4">
           {[
             { label: "Timer", value: formatTimer(room.timerSeconds) },
             { label: "Player Cap", value: `${room.playerCap} players` },
-            { label: "Bounty", value: room.bountyTier.toUpperCase() },
+            { label: "Entry Fee", value: "50 coins" },
           ].map(({ label, value }) => (
-            <div
-              key={label}
-              className="bg-cosmos-2 border border-cosmos-4 p-3 text-center"
-            >
-              <p className="font-space-mono text-[9px] text-haze-3 tracking-widest uppercase mb-1">
-                {label}
-              </p>
+            <div key={label} className="bg-cosmos-2 border border-cosmos-4 p-3 text-center">
+              <p className="font-space-mono text-[9px] text-haze-3 tracking-widest uppercase mb-1">{label}</p>
               <p className="font-orbitron font-bold text-sm text-haze">{value}</p>
             </div>
           ))}
+        </motion.div>
+
+        {/* Prize pool banner */}
+        <motion.div variants={slideUp} className="flex items-center justify-between bg-void/10 border border-void/30 px-4 py-3 mb-6">
+          <div>
+            <p className="font-space-mono text-[9px] text-haze-3 tracking-widest uppercase">Current Prize Pool</p>
+            <p className="font-orbitron font-black text-xl text-void mt-0.5">{players.length * 50} coins</p>
+          </div>
+          <div className="text-right">
+            <p className="font-space-mono text-[9px] text-haze-3">Max: {room.playerCap * 50} coins</p>
+            <p className="font-space-mono text-[9px] text-haze-3 mt-0.5">Winner takes all</p>
+          </div>
         </motion.div>
 
         {/* Players list */}

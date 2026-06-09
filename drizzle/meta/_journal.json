@@ -29,6 +29,13 @@
       "when": 1749427200000,
       "tag": "0003_add_questions_json",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1749513600000,
+      "tag": "0004_add_prize_pool",
+      "breakpoints": true
     }
   ]
 }

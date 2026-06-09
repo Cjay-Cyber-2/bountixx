@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { rooms, roomPlayers, users } from "@/lib/schema";
 import { eq, desc, sql } from "drizzle-orm";
+// sql kept for roomsCreatedCount increment
 import { getSession, unauthorized } from "@/lib/getSession";
 import { randomUUID } from "crypto";
 
@@ -96,24 +97,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "At least one question is required" }, { status: 400 });
   }
 
-  // Coin cost is per room (not per question)
-  const tier = body.bountyTier ?? "bronze";
-  const costs: Record<string, number> = { bronze: 50, silver: 100, gold: 150, mythic: 400 };
-  const cost = costs[tier] ?? 50;
-
-  if (session.coinsBalance < cost) {
-    return NextResponse.json(
-      { error: `Not enough coins. You need ${cost} to create this arena (you have ${session.coinsBalance}).` },
-      { status: 402 }
-    );
-  }
-
-  // Deduct coins
-  await db
-    .update(users)
-    .set({ coinsBalance: sql`${users.coinsBalance} - ${cost}` })
-    .where(eq(users.id, session.id));
-
+  // Room creation is FREE — entry fee (50 coins/player) is collected at game start
   const roomId = randomUUID();
 
   // First question fields go into top-level columns for backward compat

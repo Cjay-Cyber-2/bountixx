@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, Copy, AlertCircle, Plus, Trash2, Loader2, ChevronRight } from "lucide-react";
@@ -11,7 +11,6 @@ import { fetchWithAuth } from "@/lib/fetchWithAuth";
 /* ─── Types ─── */
 type Category = "coding" | "trivia" | "logic" | "math" | "writing" | "design" | "meme";
 type Difficulty = "rookie" | "challenger" | "elite" | "legendary";
-type BountyTier = "bronze" | "silver" | "gold" | "mythic";
 type Step = "setup" | "questions" | "review" | "lobby";
 
 interface AIAnalysis {
@@ -37,11 +36,9 @@ interface Question {
 
 interface CreatedRoom { id: string; name: string; status: string; }
 
+const ENTRY_FEE = 50;
+
 /* ─── Constants ─── */
-const TIER_COSTS: Record<BountyTier, number> = { bronze: 50, silver: 100, gold: 150, mythic: 400 };
-const TIER_LABELS: Record<BountyTier, string> = {
-  bronze: "50 coins", silver: "100 coins", gold: "150 coins", mythic: "400 coins",
-};
 const CAT_COLORS: Record<string, string> = {
   coding: "#FF6B1A", trivia: "#9B6BFF", logic: "#00D68F",
   math: "#F0A500", writing: "#9B8FC0", design: "#C084FC", meme: "#F472B6",
@@ -89,30 +86,31 @@ function StepIndicator({ step }: { step: Step }) {
 /* ─── Setup step ─── */
 function SetupStep({
   onNext,
-  balance,
 }: {
-  onNext: (data: { name: string; playerCap: number; timerSeconds?: number; bountyTier: BountyTier }) => void;
-  balance: number | null;
+  onNext: (data: { name: string; playerCap: number; timerSeconds?: number }) => void;
 }) {
   const [name, setName] = useState("");
   const [players, setPlayers] = useState(4);
   const [timer, setTimer] = useState(true);
   const [timerMin, setTimerMin] = useState(10);
-  const [bountyTier, setBountyTier] = useState<BountyTier>("bronze");
   const [error, setError] = useState("");
-
-  const cost = TIER_COSTS[bountyTier];
-  const canAfford = balance === null || balance >= cost;
 
   function handleNext() {
     if (!name.trim()) { setError("Arena name is required"); return; }
-    if (!canAfford) { setError(`Not enough coins. You need ${cost} coins but have ${balance ?? 0}.`); return; }
     setError("");
-    onNext({ name: name.trim(), playerCap: players, timerSeconds: timer ? timerMin * 60 : undefined, bountyTier });
+    onNext({ name: name.trim(), playerCap: players, timerSeconds: timer ? timerMin * 60 : undefined });
   }
 
   return (
     <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} className="flex flex-col gap-6">
+      {/* Entry fee banner */}
+      <div className="flex items-center gap-3 bg-void/10 border border-void/30 px-4 py-3">
+        <span className="font-space-mono text-[10px] text-void tracking-widest">ENTRY FEE</span>
+        <span className="flex-1 h-px bg-void/20" />
+        <span className="font-orbitron font-bold text-sm text-void">50 coins / player</span>
+        <span className="font-space-mono text-[9px] text-haze-3">charged when arena starts</span>
+      </div>
+
       <div>
         <label className="block font-space-mono text-[11px] text-void tracking-[3px] mb-2 uppercase">Arena Name</label>
         <input type="text" maxLength={60} placeholder="e.g. Friday Coding Battle" value={name}
@@ -128,6 +126,7 @@ function SetupStep({
             <span className="flex-1 text-center font-orbitron font-bold text-lg text-haze">{players}</span>
             <button type="button" onClick={() => setPlayers((n) => Math.min(20, n + 1))} className="cursor-target w-12 h-full text-haze-2 hover:text-void hover:bg-cosmos-3 transition-colors font-bold text-lg">+</button>
           </div>
+          <p className="font-space-mono text-[9px] text-haze-3 mt-1">Max prize pool: {players * ENTRY_FEE} coins</p>
         </div>
         <div>
           <label className="block font-space-mono text-[11px] text-void tracking-[3px] mb-2 uppercase">Timer</label>
@@ -147,26 +146,8 @@ function SetupStep({
         </div>
       )}
 
-      <div>
-        <label className="block font-space-mono text-[11px] text-void tracking-[3px] mb-2 uppercase">Bounty Tier</label>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {(["bronze", "silver", "gold", "mythic"] as BountyTier[]).map((tier) => (
-            <button key={tier} onClick={() => setBountyTier(tier)}
-              className={`cursor-target p-3 border text-center transition-all clip-arena-sm ${bountyTier === tier ? "border-void bg-void/10" : "border-cosmos-4 hover:border-void/50"}`}>
-              <p className="font-orbitron font-bold text-sm text-haze capitalize">{tier}</p>
-              <p className="font-space-mono text-[9px] text-haze-3 mt-0.5">{TIER_LABELS[tier]}</p>
-            </button>
-          ))}
-        </div>
-        {balance !== null && (
-          <p className={`font-space-mono text-[10px] mt-2 ${canAfford ? "text-haze-3" : "text-danger"}`}>
-            Your balance: {balance} coins {canAfford ? `· Cost: ${cost}` : `· Need ${cost - balance} more`}
-          </p>
-        )}
-      </div>
-
       {error && <p className="flex items-center gap-2 font-rajdhani text-sm text-danger"><AlertCircle size={14} /> {error}</p>}
-      <Button variant="primary" size="lg" fullWidth magnetic onClick={handleNext} disabled={!canAfford}>
+      <Button variant="primary" size="lg" fullWidth magnetic onClick={handleNext}>
         NEXT — ADD QUESTIONS <ChevronRight size={16} />
       </Button>
     </motion.div>
@@ -324,25 +305,22 @@ function QuestionsStep({
 /* ─── Review step ─── */
 function ReviewStep({
   arenaName,
+  playerCap,
   questions,
-  bountyTier,
-  balance,
   onLaunch,
   creating,
   createError,
   onBack,
 }: {
   arenaName: string;
+  playerCap: number;
   questions: Question[];
-  bountyTier: BountyTier;
-  balance: number | null;
   onLaunch: () => void;
   creating: boolean;
   createError: string;
   onBack: () => void;
 }) {
-  const cost = TIER_COSTS[bountyTier];
-  const canAfford = balance === null || balance >= cost;
+  const maxPrizePool = ENTRY_FEE * playerCap;
 
   return (
     <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} className="flex flex-col gap-5">
@@ -351,13 +329,9 @@ function ReviewStep({
         <div className="flex flex-col gap-2 font-space-mono text-xs">
           <div className="flex justify-between"><span className="text-haze-3">Name</span><span className="text-haze">{arenaName}</span></div>
           <div className="flex justify-between"><span className="text-haze-3">Questions</span><span className="text-haze">{questions.length}</span></div>
-          <div className="flex justify-between"><span className="text-haze-3">Bounty tier</span><span className="text-crown capitalize">{bountyTier} ({cost} coins)</span></div>
-          {balance !== null && (
-            <div className={`flex justify-between ${canAfford ? "" : "text-danger"}`}>
-              <span className={canAfford ? "text-haze-3" : "text-danger"}>Your balance</span>
-              <span>{balance} coins {canAfford ? "✓" : "— insufficient"}</span>
-            </div>
-          )}
+          <div className="flex justify-between"><span className="text-haze-3">Entry fee</span><span className="text-void">{ENTRY_FEE} coins per player</span></div>
+          <div className="flex justify-between"><span className="text-haze-3">Max prize pool</span><span className="text-crown font-bold">{maxPrizePool} coins</span></div>
+          <p className="text-haze-3 text-[9px] pt-1 border-t border-cosmos-4">Coins are deducted from each player when the arena starts. Winner takes the full pool.</p>
         </div>
       </div>
 
@@ -390,8 +364,8 @@ function ReviewStep({
 
       <div className="flex gap-3 mt-2">
         <Button variant="secondary" size="md" onClick={onBack} className="flex-1">← BACK</Button>
-        <Button variant="primary" size="lg" onClick={onLaunch} disabled={creating || !canAfford} loading={creating} className="flex-grow">
-          {creating ? "CREATING…" : `CREATE ARENA (${cost} coins) →`}
+        <Button variant="primary" size="lg" onClick={onLaunch} disabled={creating} loading={creating} className="flex-grow">
+          {creating ? "CREATING…" : "CREATE ARENA (FREE) →"}
         </Button>
       </div>
     </motion.div>
@@ -445,10 +419,9 @@ function LobbyView({ room }: { room: CreatedRoom }) {
 /* ─── Main ─── */
 export default function CreatePage() {
   const [step, setStep] = useState<Step>("setup");
-  const [balance, setBalance] = useState<number | null>(null);
 
   const [setupData, setSetupData] = useState<{
-    name: string; playerCap: number; timerSeconds?: number; bountyTier: BountyTier;
+    name: string; playerCap: number; timerSeconds?: number;
   } | null>(null);
 
   const [questions, setQuestions] = useState<Question[]>([
@@ -458,14 +431,6 @@ export default function CreatePage() {
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
   const [createdRoom, setCreatedRoom] = useState<CreatedRoom | null>(null);
-
-  // Fetch current coin balance
-  useEffect(() => {
-    fetchWithAuth("/api/wallet")
-      .then((r) => r.ok ? r.json() : null)
-      .then((d: { balance?: number } | null) => { if (d?.balance !== undefined) setBalance(d.balance); })
-      .catch(() => {});
-  }, []);
 
   /* ─── Analyze a single question ─── */
   const handleAnalyze = useCallback(async (localId: string) => {
@@ -525,7 +490,6 @@ export default function CreatePage() {
           name: setupData.name,
           playerCap: setupData.playerCap,
           timerSeconds: setupData.timerSeconds,
-          bountyTier: setupData.bountyTier,
           questions: questionsPayload,
         }),
       });
@@ -577,7 +541,6 @@ export default function CreatePage() {
           {step === "setup" && (
             <SetupStep
               key="setup"
-              balance={balance}
               onNext={(data) => {
                 setSetupData(data);
                 setStep("questions");
@@ -603,9 +566,8 @@ export default function CreatePage() {
             <ReviewStep
               key="review"
               arenaName={setupData.name}
+              playerCap={setupData.playerCap}
               questions={questions}
-              bountyTier={setupData.bountyTier}
-              balance={balance}
               onLaunch={handleLaunch}
               creating={creating}
               createError={createError}

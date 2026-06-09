@@ -37,10 +37,11 @@ export const rooms = pgTable("rooms", {
   playerCap: integer("player_cap").default(2).notNull(),
   timerSeconds: integer("timer_seconds"),
   bountyTier: bountyTierEnum("bounty_tier").default("bronze").notNull(),
+  prizePool: integer("prize_pool").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   startedAt: timestamp("started_at"),
   endedAt: timestamp("ended_at"),
-  questionsJson: text("questions_json"), // JSON array of RoomQuestion objects (multi-question rooms)
+  questionsJson: text("questions_json"),
 });
 
 export const testCases = pgTable("test_cases", {

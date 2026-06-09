@@ -11,14 +11,8 @@ import { sendNotificationToUser } from "@/lib/sendNotification";
 // Piston API for code execution
 const PISTON_API = "https://emkc.org/api/v2/piston/execute";
 
-const BOUNTY_PRIZES: Record<string, Record<number, number>> = {
-  bronze: { 1: 100, 2: 40, 3: 20 },
-  silver: { 1: 250, 2: 90, 3: 40 },
-  gold:   { 1: 500, 2: 180, 3: 70 },
-  mythic: { 1: 1500, 2: 500, 3: 200 },
-};
-
-const XP_PRIZES: Record<number, number> = { 1: 200, 2: 100, 3: 50 };
+const XP_WIN = 200;
+const XP_PARTICIPATION = 25;
 
 async function runTests(
   code: string,
@@ -81,9 +75,6 @@ export async function POST(
   if (!room) return NextResponse.json({ error: "Room not found" }, { status: 404 });
   if (room.status !== "live") {
     return NextResponse.json({ error: "Room is not live" }, { status: 409 });
-  }
-  if (room.adminId === session.id) {
-    return NextResponse.json({ error: "Admin cannot submit in their own room" }, { status: 403 });
   }
 
   // Confirm player is in the room
@@ -152,10 +143,8 @@ export async function POST(
       .where(and(eq(roomPlayers.roomId, roomId), eq(roomPlayers.userId, session.id)));
 
     if (isWinner && !existingWinner) {
-      await grantWinnerRewards(room.id, session.id, room.bountyTier, 1);
-      // End the room
+      await grantWinnerRewards(room.id, session.id, room.prizePool ?? 0);
       await db.update(rooms).set({ status: "ended", endedAt: new Date() }).where(eq(rooms.id, roomId));
-      // Notify all players that the arena ended
       const players = await db
         .select({ userId: roomPlayers.userId })
         .from(roomPlayers)
@@ -166,7 +155,6 @@ export async function POST(
         )
       );
     } else {
-      // XP for participation
       await grantParticipationRewards(session.id);
     }
 
@@ -217,7 +205,7 @@ export async function POST(
     .where(and(eq(roomPlayers.roomId, roomId), eq(roomPlayers.userId, session.id)));
 
   if (isWinner) {
-    await grantWinnerRewards(room.id, session.id, room.bountyTier, 1);
+    await grantWinnerRewards(room.id, session.id, room.prizePool ?? 0);
     await db.update(rooms).set({ status: "ended", endedAt: new Date() }).where(eq(rooms.id, roomId));
     // Notify all players that the arena ended
     const players = await db
@@ -243,24 +231,19 @@ export async function POST(
 async function grantWinnerRewards(
   roomId: string,
   userId: string,
-  bountyTier: string,
-  placement: number
+  prizePool: number
 ) {
-  const prizeTable = BOUNTY_PRIZES[bountyTier] ?? BOUNTY_PRIZES["bronze"];
-  const coins = prizeTable[placement] ?? 10;
-  const xp = XP_PRIZES[placement] ?? 25;
-
   await db.update(users).set({
-    coinsBalance: sql`${users.coinsBalance} + ${coins}`,
-    xp:           sql`${users.xp} + ${xp}`,
+    coinsBalance: sql`${users.coinsBalance} + ${prizePool}`,
+    xp:           sql`${users.xp} + ${XP_WIN}`,
   }).where(eq(users.id, userId));
 
   await db.insert(coinTransactions).values({
     id:        randomUUID(),
     userId,
-    amount:    coins,
+    amount:    prizePool,
     type:      "earned",
-    reference: `room:${roomId}:place:${placement}`,
+    reference: `room:${roomId}:winner`,
   });
 
   // Check + award First Blood badge
@@ -283,12 +266,8 @@ async function grantWinnerRewards(
 }
 
 async function grantParticipationRewards(userId: string) {
-  const XP_PARTICIPATION = 25;
-  const COINS_PARTICIPATION = 10;
-
   await db.update(users).set({
-    coinsBalance: sql`${users.coinsBalance} + ${COINS_PARTICIPATION}`,
-    xp:           sql`${users.xp} + ${XP_PARTICIPATION}`,
+    xp: sql`${users.xp} + ${XP_PARTICIPATION}`,
   }).where(eq(users.id, userId));
 
   await updateRank(userId);
