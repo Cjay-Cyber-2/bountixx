@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Upload, Users, AlertTriangle } from "lucide-react";
+import { Play, Upload, Users, AlertTriangle, Crown } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { useArenaGuard } from "@/hooks/useArenaGuard";
@@ -308,6 +308,111 @@ function AnswerInput({ answer, setAnswer, onSubmit, disabled, submitting }: Answ
   );
 }
 
+/* ─── Host Panel (shown instead of the input area for the arena creator) ─── */
+interface HostPanelProps {
+  players: Player[];
+  adminId: string;
+  roomId: string;
+  onEnded: () => void;
+}
+
+function HostPanel({ players, adminId, roomId, onEnded }: HostPanelProps) {
+  const [ending, setEnding] = useState(false);
+  const competitors = players.filter((p) => p.userId !== adminId);
+
+  async function handleEndArena() {
+    setEnding(true);
+    try {
+      await fetch(`/api/rooms/${roomId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "ended" }),
+      });
+      onEnded();
+    } catch {
+      setEnding(false);
+    }
+  }
+
+  const done = competitors.filter((p) => p.status === "completed" || p.status === "forfeited").length;
+  const total = competitors.length;
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Host badge */}
+      <div className="px-5 pt-4 pb-3 border-b border-cosmos-4 bg-cosmos-3 shrink-0 flex items-center gap-3">
+        <div className="w-8 h-8 flex items-center justify-center shrink-0" style={{ background: "rgba(240,165,0,0.12)", border: "1px solid rgba(240,165,0,0.3)" }}>
+          <Crown size={14} className="text-crown" aria-hidden="true" />
+        </div>
+        <div>
+          <p className="font-space-mono text-[11px] text-crown tracking-[2px] uppercase">Host View</p>
+          <p className="font-rajdhani text-xs text-haze-3">You created this arena — you cannot compete</p>
+        </div>
+      </div>
+
+      {/* Progress bar */}
+      <div className="px-5 py-3 border-b border-cosmos-4 bg-cosmos-2 shrink-0">
+        <div className="flex justify-between items-center mb-1.5">
+          <p className="font-space-mono text-[9px] text-haze-3 uppercase tracking-widest">Competitors finished</p>
+          <p className="font-orbitron font-bold text-sm text-haze">{done}/{total}</p>
+        </div>
+        <div className="h-1 bg-cosmos-4 w-full">
+          <div
+            className="h-1 bg-void transition-all duration-500"
+            style={{ width: total > 0 ? `${(done / total) * 100}%` : "0%" }}
+          />
+        </div>
+      </div>
+
+      {/* Competitors list */}
+      <div className="flex-1 overflow-y-auto px-5 py-4">
+        <p className="font-space-mono text-[9px] text-haze-3 tracking-widest mb-3 uppercase">Live standings</p>
+        {competitors.length === 0 && (
+          <p className="font-space-mono text-[10px] text-haze-3">No competitors yet.</p>
+        )}
+        {competitors.map((p, i) => (
+          <div
+            key={p.id}
+            className="flex items-center gap-3 py-2.5 border-b border-cosmos-4/40 last:border-0"
+          >
+            <span className="font-orbitron text-[10px] text-haze-3 w-4 shrink-0">{i + 1}</span>
+            <span
+              className={`w-2 h-2 rounded-full shrink-0 ${
+                p.status === "completed" ? "bg-success" : p.status === "forfeited" ? "bg-danger" : "bg-haze-3"
+              }`}
+            />
+            <span className="font-rajdhani font-semibold text-sm text-haze truncate flex-1">
+              @{p.username ?? "player"}
+            </span>
+            <span
+              className={`font-space-mono text-[9px] shrink-0 ${
+                p.status === "completed" ? "text-success" : p.status === "forfeited" ? "text-danger" : "text-haze-3"
+              }`}
+            >
+              {p.status === "completed" ? "FINISHED" : p.status === "forfeited" ? "DQ" : "PLAYING"}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* End arena */}
+      <div className="px-5 py-4 border-t border-cosmos-4 shrink-0">
+        <Button
+          variant="ghost"
+          size="md"
+          fullWidth
+          onClick={handleEndArena}
+          disabled={ending}
+          loading={ending}
+          className="border border-danger/40 text-danger hover:bg-danger/10"
+        >
+          End Arena Early
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Disqualified Banner ─── */
 function DQBanner() {
   return (
@@ -479,10 +584,11 @@ export default function ArenaPage() {
     [toast, roomId]
   );
 
-  useArenaGuard({ onStrike: handleStrike, maxStrikes: 1 });
+  // Anti-cheat disabled for the host — they're the referee, not a competitor
+  useArenaGuard({ onStrike: handleStrike, maxStrikes: 1, enabled: !(data?.isAdmin ?? true) });
 
   /* ─── Derived ─── */
-  const inputDisabled = timeUp || disqualified || submitted || loading || data?.isAdmin === true;
+  const inputDisabled = timeUp || disqualified || submitted || loading;
 
   /* ─── Run tests ─── */
   async function handleRunTests() {
@@ -618,7 +724,7 @@ export default function ArenaPage() {
 
         <div className="flex items-center gap-2">
           <Users size={14} className="text-haze-3" aria-hidden="true" />
-          <span className="font-space-mono text-xs text-haze-3">{players.length}/{room.playerCap}</span>
+          <span className="font-space-mono text-xs text-haze-3">{players.filter(p => p.userId !== room.adminId).length}/{room.playerCap}</span>
         </div>
       </div>
 
@@ -670,11 +776,17 @@ export default function ArenaPage() {
           </div>
         </div>
 
-        {/* Editor + results */}
+        {/* Editor + results (or host panel) */}
         <div className="flex-1 flex flex-col lg:flex-row min-w-0 overflow-hidden">
-          {/* Code editor or answer input — fills full height */}
           <div className="flex-1 flex flex-col border-b lg:border-b-0 lg:border-r border-cosmos-4 min-h-[400px] lg:min-h-0">
-            {isCoding ? (
+            {data.isAdmin ? (
+              <HostPanel
+                players={players}
+                adminId={room.adminId}
+                roomId={roomId}
+                onEnded={() => router.replace(`/arena/${roomId}/results`)}
+              />
+            ) : isCoding ? (
               <CodeEditor
                 code={code} setCode={setCode}
                 language={language} setLanguage={setLanguage}

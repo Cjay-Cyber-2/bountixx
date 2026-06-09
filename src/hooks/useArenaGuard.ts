@@ -6,16 +6,20 @@ interface ArenaGuardOptions {
   onStrike: (count: number, reason: string) => void;
   onDisqualify?: () => void;
   maxStrikes?: number;
+  enabled?: boolean;
 }
 
 export function useArenaGuard({
   onStrike,
   onDisqualify,
   maxStrikes = 1,
+  enabled = true,
 }: ArenaGuardOptions) {
   const strikeCount = useRef(0);
 
   useEffect(() => {
+    if (!enabled) return;
+
     function addStrike(reason: string) {
       strikeCount.current += 1;
       onStrike(strikeCount.current, reason);
@@ -33,7 +37,7 @@ export function useArenaGuard({
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [onStrike, onDisqualify, maxStrikes]);
+  }, [onStrike, onDisqualify, maxStrikes, enabled]);
 
   function blockPaste(e: React.ClipboardEvent) {
     e.preventDefault();
