@@ -104,14 +104,16 @@ export function TopNav() {
         className="fixed top-0 inset-x-0 z-50 h-16 border-b border-cosmos-4"
         style={{ background: "var(--surface-raised)", backdropFilter: "blur(16px)" }}
       >
-        <div className="max-w-[1400px] mx-auto h-full px-5 flex items-center justify-between gap-6">
+        <div className="max-w-[1400px] mx-auto h-full px-5 grid grid-cols-[1fr_auto_1fr] items-center">
 
-          {/* Logo */}
-          <Link href="/dashboard" className="shrink-0 cursor-target">
-            <BountixxLogo size={36} showWordmark />
-          </Link>
+          {/* Left: Logo */}
+          <div className="flex items-center">
+            <Link href="/dashboard" className="shrink-0 cursor-target">
+              <BountixxLogo size={36} showWordmark />
+            </Link>
+          </div>
 
-          {/* Desktop nav links */}
+          {/* Centre: Desktop nav links — always truly centred */}
           <nav className="hidden md:flex items-center gap-2">
             {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
               const active = pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
@@ -142,71 +144,74 @@ export function TopNav() {
             })}
           </nav>
 
-          {/* Right cluster */}
-          <div className="hidden md:flex items-center gap-3 shrink-0">
-            {/* Coin balance */}
-            <div className="flex items-center gap-1.5 bg-cosmos-2 border border-cosmos-4 px-3 py-1.5">
-              <span className="text-crown text-xs" aria-hidden>◈</span>
-              <span className="font-orbitron font-bold text-sm text-crown">
-                {profile?.coinsBalance ?? 0}
-              </span>
+          {/* Right: desktop right cluster + mobile hamburger */}
+          <div className="flex items-center justify-end gap-3">
+            {/* Desktop-only cluster */}
+            <div className="hidden md:flex items-center gap-3 shrink-0">
+              {/* Coin balance */}
+              <div className="flex items-center gap-1.5 bg-cosmos-2 border border-cosmos-4 px-3 py-1.5">
+                <span className="text-crown text-xs" aria-hidden>◈</span>
+                <span className="font-orbitron font-bold text-sm text-crown">
+                  {profile?.coinsBalance ?? 0}
+                </span>
+              </div>
+
+              {/* Notifications opt-in */}
+              <button
+                onClick={handleNotificationOptIn}
+                disabled={notifLoading}
+                className={cn(
+                  "cursor-target relative transition-colors p-1 disabled:opacity-40",
+                  notifEnabled ? "text-success" : "text-haze-2 hover:text-haze"
+                )}
+                aria-label={notifEnabled ? "Notifications enabled" : "Enable notifications"}
+                title={notifEnabled ? "Notifications enabled" : "Enable push notifications"}
+              >
+                {notifEnabled ? <Bell size={18} /> : <BellOff size={18} />}
+                {!notifEnabled && (
+                  <span
+                    className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-void border border-cosmos"
+                    aria-hidden
+                  />
+                )}
+              </button>
+
+              {/* Avatar */}
+              <Link href="/profile/me" className="cursor-target">
+                {profile?.avatarUrl ? (
+                  <img
+                    src={profile.avatarUrl}
+                    alt={profile.username}
+                    className="w-8 h-8 rounded-full border-2 border-void/60 hover:border-void transition-colors object-cover"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full border-2 border-void/60 bg-cosmos-3 flex items-center justify-center hover:border-void transition-colors">
+                    <span className="font-orbitron font-bold text-[10px] text-haze">{initials}</span>
+                  </div>
+                )}
+              </Link>
+
+              {/* Logout */}
+              <button
+                onClick={handleLogout}
+                disabled={signingOut}
+                className="cursor-target flex items-center gap-1.5 font-space-mono text-[10px] tracking-widest text-haze-2 hover:text-danger border border-cosmos-4 hover:border-danger/50 px-2.5 py-1.5 transition-all disabled:opacity-40 whitespace-nowrap"
+                aria-label="Sign out"
+              >
+                <LogOut size={12} aria-hidden />
+                {signingOut ? "…" : "SIGN OUT"}
+              </button>
             </div>
 
-            {/* Notifications opt-in */}
+            {/* Mobile hamburger */}
             <button
-              onClick={handleNotificationOptIn}
-              disabled={notifLoading}
-              className={cn(
-                "cursor-target relative transition-colors p-1 disabled:opacity-40",
-                notifEnabled ? "text-success" : "text-haze-2 hover:text-haze"
-              )}
-              aria-label={notifEnabled ? "Notifications enabled" : "Enable notifications"}
-              title={notifEnabled ? "Notifications enabled" : "Enable push notifications"}
+              className="md:hidden text-haze-2 hover:text-haze transition-colors p-1"
+              aria-label={mobileOpen ? "Close menu" : "Open menu"}
+              onClick={() => setMobileOpen((o) => !o)}
             >
-              {notifEnabled ? <Bell size={18} /> : <BellOff size={18} />}
-              {!notifEnabled && (
-                <span
-                  className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-void border border-cosmos"
-                  aria-hidden
-                />
-              )}
-            </button>
-
-            {/* Avatar */}
-            <Link href="/profile/me" className="cursor-target">
-              {profile?.avatarUrl ? (
-                <img
-                  src={profile.avatarUrl}
-                  alt={profile.username}
-                  className="w-8 h-8 rounded-full border-2 border-void/60 hover:border-void transition-colors object-cover"
-                />
-              ) : (
-                <div className="w-8 h-8 rounded-full border-2 border-void/60 bg-cosmos-3 flex items-center justify-center hover:border-void transition-colors">
-                  <span className="font-orbitron font-bold text-[10px] text-haze">{initials}</span>
-                </div>
-              )}
-            </Link>
-
-            {/* Logout */}
-            <button
-              onClick={handleLogout}
-              disabled={signingOut}
-              className="cursor-target flex items-center gap-1.5 font-space-mono text-[10px] tracking-widest text-haze-2 hover:text-danger border border-cosmos-4 hover:border-danger/50 px-2.5 py-1.5 transition-all disabled:opacity-40 whitespace-nowrap"
-              aria-label="Sign out"
-            >
-              <LogOut size={12} aria-hidden />
-              {signingOut ? "…" : "SIGN OUT"}
+              {mobileOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
           </div>
-
-          {/* Mobile hamburger */}
-          <button
-            className="md:hidden text-haze-2 hover:text-haze transition-colors p-1"
-            aria-label={mobileOpen ? "Close menu" : "Open menu"}
-            onClick={() => setMobileOpen((o) => !o)}
-          >
-            {mobileOpen ? <X size={22} /> : <Menu size={22} />}
-          </button>
         </div>
       </header>
 

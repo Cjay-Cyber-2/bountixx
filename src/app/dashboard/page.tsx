@@ -6,6 +6,7 @@ import { Zap, Trophy, TrendingUp, Coins, Swords, ArrowRight } from "lucide-react
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { Button } from "@/components/ui/Button";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 
@@ -46,7 +47,7 @@ export default function DashboardPage() {
   const fetchData = useCallback(async () => {
     if (!user) return;
     try {
-      const res = await fetch("/api/dashboard");
+      const res = await fetchWithAuth("/api/dashboard");
       if (res.ok) {
         const d = await res.json();
         setData(d);

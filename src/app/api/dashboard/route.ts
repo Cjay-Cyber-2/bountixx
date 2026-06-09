@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { rooms, submissions, roomPlayers, users } from "@/lib/schema";
-import { eq, and, desc, sql, count, gte } from "drizzle-orm";
+import { eq, and, desc, sql, count, gte, inArray } from "drizzle-orm";
 import { getSession, unauthorized } from "@/lib/getSession";
 import { timeAgo } from "@/lib/utils";
 
@@ -59,7 +59,7 @@ export async function GET() {
         endedAt:  rooms.endedAt,
       })
       .from(rooms)
-      .where(sql`${rooms.id} = ANY(${recentRoomIds})`);
+      .where(inArray(rooms.id, recentRoomIds));
 
     const submissionsForRooms = await db
       .select({
@@ -71,7 +71,7 @@ export async function GET() {
       .from(submissions)
       .where(and(
         eq(submissions.userId, uid),
-        sql`${submissions.roomId} = ANY(${recentRoomIds})`
+        inArray(submissions.roomId, recentRoomIds)
       ));
 
     const submissionsMap = new Map(submissionsForRooms.map((s) => [s.roomId, s]));

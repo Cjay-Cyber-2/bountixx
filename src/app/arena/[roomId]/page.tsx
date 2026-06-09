@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { useArenaGuard } from "@/hooks/useArenaGuard";
 import { useToast } from "@/components/ui/Toast";
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
 
 /* ─── Types ─── */
 type RoomCategory = "coding" | "trivia" | "logic" | "math" | "writing" | "design" | "meme";
@@ -323,7 +324,7 @@ function HostPanel({ players, adminId, roomId, onEnded }: HostPanelProps) {
   async function handleEndArena() {
     setEnding(true);
     try {
-      await fetch(`/api/rooms/${roomId}`, {
+      await fetchWithAuth(`/api/rooms/${roomId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "ended" }),
@@ -477,7 +478,7 @@ export default function ArenaPage() {
   /* ─── Fetch room data ─── */
   const fetchRoom = useCallback(async (silent = false) => {
     try {
-      const res = await fetch(`/api/rooms/${roomId}`);
+      const res = await fetchWithAuth(`/api/rooms/${roomId}`);
       if (res.status === 401) {
         router.replace(`/login?next=/arena/${roomId}`);
         return;
@@ -575,7 +576,7 @@ export default function ArenaPage() {
     (_count: number, _reason: string) => {
       setDisqualified(true);
       toast({ type: "error", title: "DISQUALIFIED", message: "Tab switch detected. You have been removed from this arena." });
-      fetch(`/api/rooms/${roomId}/submit`, {
+      fetchWithAuth(`/api/rooms/${roomId}/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ answer: "__forfeit__" }),
@@ -596,7 +597,7 @@ export default function ArenaPage() {
     setRunning(true);
     setTestRan(false);
     try {
-      const res = await fetch(`/api/rooms/${roomId}/submit`, {
+      const res = await fetchWithAuth(`/api/rooms/${roomId}/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code, language, runTestsOnly: true }),
@@ -620,7 +621,7 @@ export default function ArenaPage() {
     setSubmitting(true);
     try {
       const isCoding = data.room.category === "coding";
-      const res = await fetch(`/api/rooms/${roomId}/submit`, {
+      const res = await fetchWithAuth(`/api/rooms/${roomId}/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(isCoding ? { code, language } : { answer }),
