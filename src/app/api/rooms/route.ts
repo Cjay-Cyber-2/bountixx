@@ -142,9 +142,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ room }, { status: 201 });
   } catch (err) {
     console.error("[POST /api/rooms]", err);
-    return NextResponse.json(
-      { error: "Failed to create arena. Please try again." },
-      { status: 500 }
-    );
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

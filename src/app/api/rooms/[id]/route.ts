@@ -8,6 +8,7 @@ import { getSession, unauthorized } from "@/lib/getSession";
 import { randomUUID } from "crypto";
 
 const ENTRY_FEE = 50;
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "chijiokejoseph2022@gmail.com";
 
 export async function GET(
   _req: Request,
@@ -104,20 +105,24 @@ export async function PATCH(
 
   if (status === "live") {
     // ── Entry fee gate ────────────────────────────────────────────────────────
-    // 1. Fetch all players with their current coin balance
+    // 1. Fetch all players with their current coin balance + email
     const playerRows = await db
       .select({
         playerId:     roomPlayers.id,
         userId:       roomPlayers.userId,
         coinsBalance: users.coinsBalance,
         username:     users.username,
+        email:        users.email,
       })
       .from(roomPlayers)
       .leftJoin(users, eq(roomPlayers.userId, users.id))
       .where(eq(roomPlayers.roomId, id));
 
-    const broke = playerRows.filter((p) => (p.coinsBalance ?? 0) < ENTRY_FEE);
-    const eligible = playerRows.filter((p) => (p.coinsBalance ?? 0) >= ENTRY_FEE);
+    // Admin account is always exempt from the entry fee and can never be kicked
+    const isAdmin = (email: string | null) => email === ADMIN_EMAIL;
+
+    const broke = playerRows.filter((p) => (p.coinsBalance ?? 0) < ENTRY_FEE && !isAdmin(p.email));
+    const eligible = playerRows.filter((p) => (p.coinsBalance ?? 0) >= ENTRY_FEE || isAdmin(p.email));
 
     // 2. Remove broke players from the room
     for (const p of broke) {
@@ -137,8 +142,10 @@ export async function PATCH(
       );
     }
 
-    // 4. Deduct 50 coins from every eligible player and record the transaction
+    // 4. Deduct 50 coins from every eligible player (admin account is exempt)
     for (const p of eligible) {
+      if (isAdmin(p.email)) continue;
+
       await db
         .update(users)
         .set({ coinsBalance: sql`${users.coinsBalance} - ${ENTRY_FEE}` })
@@ -153,9 +160,9 @@ export async function PATCH(
       });
     }
 
-    // 5. Calculate and store prize pool
-    const prizePool = ENTRY_FEE * eligible.length;
-    updates.prizePool = prizePool;
+    // 5. Prize pool = sum of fees paid by non-admin players
+    const paidCount = eligible.filter((p) => !isAdmin(p.email)).length;
+    updates.prizePool = ENTRY_FEE * paidCount;
     updates.startedAt = new Date();
   }
 
