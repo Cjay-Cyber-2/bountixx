@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Check, Copy, AlertCircle } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/Button";
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
 
 type Step = "define" | "analyzing" | "review" | "lobby";
 type Category = "coding" | "trivia" | "logic" | "math" | "writing" | "design" | "meme";
@@ -469,9 +470,8 @@ export default function CreatePage() {
     setStep("analyzing");
 
     try {
-      const res = await fetch("/api/rooms/analyse", {
+      const res = await fetchWithAuth("/api/rooms/analyse", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ taskRaw: data.taskRaw, arenaName: data.name }),
       });
 
@@ -485,7 +485,7 @@ export default function CreatePage() {
       setAnalysis(aiResult);
       setStep("review");
     } catch {
-      setAnalysisError("Could not reach the AI service. Check your GEMINI_API_KEY.");
+      setAnalysisError("Could not reach the AI service. Please try again.");
     }
   }, []);
 
@@ -495,9 +495,8 @@ export default function CreatePage() {
     setCreateError("");
 
     try {
-      const res = await fetch("/api/rooms", {
+      const res = await fetchWithAuth("/api/rooms", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name:            defineDataRef.current.name,
           taskRaw:         defineDataRef.current.taskRaw,
@@ -527,9 +526,8 @@ export default function CreatePage() {
           ...(analysis.hiddenTests ?? []).map((t) => ({ ...t, isHidden: true })),
         ];
         if (allTests.length > 0) {
-          await fetch(`/api/rooms/${room.id}/testcases`, {
+          await fetchWithAuth(`/api/rooms/${room.id}/testcases`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ tests: allTests }),
           });
         }
