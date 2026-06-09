@@ -3,8 +3,8 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { getSession, unauthorized } from "@/lib/getSession";
 
-const GEMINI_API_URL =
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
+const GROQ_MODEL = "llama-3.3-70b-versatile";
 
 type AnalysisResult = {
   valid: boolean;
@@ -54,10 +54,10 @@ export async function POST(req: Request) {
   const session = await getSession();
   if (!session) return unauthorized();
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
     return NextResponse.json(
-      { error: "AI analysis unavailable — GEMINI_API_KEY not configured" },
+      { error: "AI analysis unavailable — GROQ_API_KEY not configured" },
       { status: 503 }
     );
   }
@@ -73,51 +73,46 @@ export async function POST(req: Request) {
     : `Challenge:\n${taskRaw}`;
 
   try {
-    const geminiRes = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+    const groqRes = await fetch(GROQ_API_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
       body: JSON.stringify({
-        system_instruction: {
-          parts: [{ text: SYSTEM_PROMPT }],
-        },
-        contents: [
-          {
-            role: "user",
-            parts: [{ text: userMessage }],
-          },
+        model: GROQ_MODEL,
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user", content: userMessage },
         ],
-        generationConfig: {
-          temperature: 0.3,
-          maxOutputTokens: 4096,
-          responseMimeType: "application/json",
-        },
+        temperature: 0.3,
+        max_tokens: 4096,
+        response_format: { type: "json_object" },
       }),
     });
 
-    if (!geminiRes.ok) {
-      // Bubble the actual Gemini error message up to the client
-      let errDetail = `Gemini HTTP ${geminiRes.status}`;
+    if (!groqRes.ok) {
+      let errDetail = `Groq HTTP ${groqRes.status}`;
       try {
-        const errBody = await geminiRes.json() as { error?: { message?: string } };
+        const errBody = await groqRes.json() as { error?: { message?: string } };
         errDetail = errBody?.error?.message ?? errDetail;
       } catch {
-        errDetail = (await geminiRes.text().catch(() => errDetail)) || errDetail;
+        errDetail = (await groqRes.text().catch(() => errDetail)) || errDetail;
       }
-      console.error("[analyse] Gemini error:", errDetail);
+      console.error("[analyse] Groq error:", errDetail);
       return NextResponse.json({ error: errDetail }, { status: 502 });
     }
 
-    const geminiData = await geminiRes.json() as {
-      candidates?: { content?: { parts?: { text?: string }[] } }[];
+    const groqData = await groqRes.json() as {
+      choices?: { message?: { content?: string } }[];
     };
-    const rawText: string =
-      geminiData?.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}";
+    const rawText: string = groqData?.choices?.[0]?.message?.content ?? "{}";
 
     let analysis: AnalysisResult;
     try {
       analysis = JSON.parse(rawText) as AnalysisResult;
     } catch {
-      console.error("[analyse] Failed to parse Gemini response:", rawText.slice(0, 200));
+      console.error("[analyse] Failed to parse Groq response:", rawText.slice(0, 200));
       return NextResponse.json({ error: "Could not parse AI response" }, { status: 502 });
     }
 

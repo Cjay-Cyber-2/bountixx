@@ -44,32 +44,6 @@
   --terminal-border: rgba(155, 107, 255, 0.18);
 }
 
-/* ─── Light Mode Tokens ─── */
-[data-theme="light"] {
-  --cosmos:     #FFFFFF;
-  --cosmos-2:   #F5F3FF;
-  --cosmos-3:   #EDE9FE;
-  --cosmos-4:   #C4B5FD;
-  --haze:       #0F0720;
-  --haze-2:     #2E1B5A;
-  --haze-3:     #6B46A0;
-  --void:       #6D28D9;
-  --void-light: #8B5CF6;
-  --void-deep:  #4C1D95;
-  /* surfaces stay crisp and white in light mode */
-  --surface-card:    rgba(237, 233, 254, 0.55);
-  --surface-raised:  #ffffff;
-  --surface-inset:   rgba(245, 243, 255, 0.80);
-  --surface-hover:   rgba(237, 233, 254, 0.80);
-  --border-1:        rgba(196, 181, 253, 0.80);
-  --border-2:        rgba(109, 40, 217, 0.18);
-  --border-accent:   rgba(109, 40, 217, 0.25);
-  --void-tint:       rgba(109, 40, 217, 0.07);
-  --void-tint-hover: rgba(109, 40, 217, 0.13);
-  --glow-1:          rgba(109, 40, 217, 0.05);
-  --terminal-bg:     #120830;
-  --terminal-border: rgba(155, 107, 255, 0.30);
-}
 
 /* ─── Tailwind v4 Theme ─── */
 @theme inline {
