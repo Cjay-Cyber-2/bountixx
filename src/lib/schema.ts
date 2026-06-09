@@ -40,6 +40,7 @@ export const rooms = pgTable("rooms", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   startedAt: timestamp("started_at"),
   endedAt: timestamp("ended_at"),
+  questionsJson: text("questions_json"), // JSON array of RoomQuestion objects (multi-question rooms)
 });
 
 export const testCases = pgTable("test_cases", {

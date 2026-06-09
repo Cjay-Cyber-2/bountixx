@@ -8,6 +8,7 @@ import { BountixxLogo } from "@/components/BountixxLogo";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { scalePop } from "@/lib/animations";
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
 
 type JoinState =
   | { phase: "loading" }
@@ -36,7 +37,7 @@ export default function JoinPage() {
     async function tryJoin() {
       setState({ phase: "joining" });
       try {
-        const res = await fetch(`/api/rooms/${roomId}/join`, {
+        const res = await fetchWithAuth(`/api/rooms/${roomId}/join`, {
           method: "POST",
         });
 

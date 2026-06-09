@@ -9,6 +9,7 @@ import { Chip } from "@/components/ui/Chip";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useToast } from "@/components/ui/Toast";
 import { staggerContainer, slideUp } from "@/lib/animations";
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
 
 /* ─── Types ─── */
 type RoomCategory = "coding" | "trivia" | "logic" | "math" | "writing" | "design" | "meme";
@@ -136,7 +137,7 @@ export default function LobbyPage() {
   const fetchRoom = useCallback(
     async (silent = false) => {
       try {
-        const res = await fetch(`/api/rooms/${roomId}`);
+        const res = await fetchWithAuth(`/api/rooms/${roomId}`);
         if (res.status === 401) {
           router.replace(`/login?next=/lobby/${roomId}`);
           return;
@@ -181,7 +182,7 @@ export default function LobbyPage() {
   async function handleReady() {
     setReadying(true);
     try {
-      const res = await fetch(`/api/rooms/${roomId}/ready`, {
+      const res = await fetchWithAuth(`/api/rooms/${roomId}/ready`, {
         method: "PATCH",
       });
       if (!res.ok) {
@@ -211,9 +212,8 @@ export default function LobbyPage() {
     if (!data) return;
     setStarting(true);
     try {
-      const res = await fetch(`/api/rooms/${roomId}`, {
+      const res = await fetchWithAuth(`/api/rooms/${roomId}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "live" }),
       });
       if (!res.ok) {

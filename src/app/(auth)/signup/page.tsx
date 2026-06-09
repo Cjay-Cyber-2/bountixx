@@ -27,6 +27,12 @@ import { staggerContainer, slideUp } from "@/lib/animations";
 
 type Method = "email-password" | "email-link" | "phone-otp";
 
+function getNext(): string {
+  if (typeof window === "undefined") return "/dashboard";
+  const n = new URLSearchParams(window.location.search).get("next");
+  return n && n.startsWith("/") ? n : "/dashboard";
+}
+
 export default function SignupPage() {
   const router = useRouter();
   const { user, loading } = useAuth();
@@ -55,7 +61,7 @@ export default function SignupPage() {
     initialCheckDone.current = true;
     if (!user) return;
     createSession(user).then((ok) => {
-      if (ok) router.replace("/dashboard");
+      if (ok) router.replace(getNext());
     });
   }, [user, loading, router]);
 
@@ -74,7 +80,7 @@ export default function SignupPage() {
       .then(async (result) => {
         if (!result?.user) return;
         const ok = await createSession(result.user);
-        if (ok) router.replace("/dashboard");
+        if (ok) router.replace(getNext());
         else setError("Authentication failed. Please try again.");
       })
       .catch((err: unknown) => {
@@ -96,7 +102,7 @@ export default function SignupPage() {
       const result = await signInWithPopup(auth, p);
       const ok = await createSession(result.user);
       if (!ok) throw new Error("Session creation failed. Please try again.");
-      router.replace("/dashboard");
+      router.replace(getNext());
     } catch (err: unknown) {
       const code = (err as { code?: string }).code;
       if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request" || code === "auth/user-cancelled") {
@@ -136,7 +142,7 @@ export default function SignupPage() {
     setError("");
     try {
       const actionCodeSettings = {
-        url: `${window.location.origin}/login`,
+        url: `${window.location.origin}/login?next=${encodeURIComponent(getNext())}`,
         handleCodeInApp: true,
       };
       await sendSignInLinkToEmail(auth, email, actionCodeSettings);
@@ -177,7 +183,7 @@ export default function SignupPage() {
       if (username) await updateProfile(credential.user, { displayName: username });
       const ok = await createSession(credential.user);
       if (!ok) throw new Error("Session creation failed. Please try again.");
-      router.replace("/dashboard");
+      router.replace(getNext());
     } catch (err: unknown) {
       setError((err as { message: string }).message);
       setPending(false);
