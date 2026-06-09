@@ -11,7 +11,7 @@ interface ArenaGuardOptions {
 export function useArenaGuard({
   onStrike,
   onDisqualify,
-  maxStrikes = 3,
+  maxStrikes = 1,
 }: ArenaGuardOptions) {
   const strikeCount = useRef(0);
 
@@ -24,20 +24,14 @@ export function useArenaGuard({
       }
     }
 
+    // Only visibilitychange — blur also fires on every tab switch, causing double-strikes
     function handleVisibilityChange() {
       if (document.hidden) addStrike("tab-switch");
     }
 
-    function handleBlur() {
-      addStrike("window-blur");
-    }
-
     document.addEventListener("visibilitychange", handleVisibilityChange);
-    window.addEventListener("blur", handleBlur);
-
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
-      window.removeEventListener("blur", handleBlur);
     };
   }, [onStrike, onDisqualify, maxStrikes]);
 

@@ -66,20 +66,20 @@ interface TestResult {
 
 /* ─── Constants ─── */
 const CAT_COLORS: Record<string, string> = {
-  coding: "#FF6B1A",
-  trivia: "#9B6BFF",
-  logic: "#00D68F",
-  math: "#F0A500",
+  coding:  "#FF6B1A",
+  trivia:  "#9B6BFF",
+  logic:   "#00D68F",
+  math:    "#F0A500",
   writing: "#9B8FC0",
-  design: "#C084FC",
-  meme: "#F472B6",
+  design:  "#C084FC",
+  meme:    "#F472B6",
 };
 
 const DIFF_CHIP_COLOR: Record<RoomDifficulty, "ignite" | "crown" | "void" | "success" | "danger" | "haze"> = {
-  rookie: "success",
+  rookie:     "success",
   challenger: "crown",
-  elite: "void",
-  legendary: "danger",
+  elite:      "void",
+  legendary:  "danger",
 };
 
 function getDefaultCode(category: RoomCategory | null): string {
@@ -102,7 +102,7 @@ function Timer({ seconds }: { seconds: number }) {
   return (
     <motion.span
       className="font-orbitron font-bold text-2xl tabular-nums"
-      style={{ color: critical ? "var(--danger)" : seconds === 0 ? "var(--danger)" : "var(--void)" }}
+      style={{ color: critical || seconds === 0 ? "var(--danger)" : "var(--void)" }}
       animate={critical ? { scale: [1, 1.05, 1] } : { scale: 1 }}
       transition={{ duration: 1, repeat: critical ? Infinity : 0 }}
       aria-live="polite"
@@ -140,11 +140,7 @@ function ActivityFeed({ items }: { items: ActivityItem[] }) {
           >
             <span
               className={`font-space-mono text-[10px] shrink-0 ${
-                item.type === "completed"
-                  ? "text-success"
-                  : item.type === "forfeited"
-                  ? "text-danger"
-                  : "text-haze-3"
+                item.type === "completed" ? "text-success" : item.type === "forfeited" ? "text-danger" : "text-haze-3"
               }`}
             >
               {item.type === "completed" ? "✓" : item.type === "forfeited" ? "✗" : "●"}
@@ -159,7 +155,7 @@ function ActivityFeed({ items }: { items: ActivityItem[] }) {
   );
 }
 
-/* ─── Test Results display ─── */
+/* ─── Test Results ─── */
 interface TestResultsProps {
   testCases: TestCase[];
   results: TestResult[];
@@ -179,23 +175,9 @@ function TestResults({ testCases, results, ran }: TestResultsProps) {
         const result = results[i];
         const status = !ran ? "pending" : result?.pass ? "pass" : "fail";
         return (
-          <div
-            key={tc.id}
-            className={`py-2 border-b border-cosmos-4/50 last:border-0 ${
-              i % 2 === 0 ? "bg-cosmos/30" : ""
-            }`}
-          >
+          <div key={tc.id} className={`py-2 border-b border-cosmos-4/50 last:border-0 ${i % 2 === 0 ? "bg-cosmos/30" : ""}`}>
             <div className="flex items-center gap-3 mb-1">
-              <span
-                className={`font-space-mono text-xs w-4 text-center ${
-                  status === "pass"
-                    ? "text-success"
-                    : status === "fail"
-                    ? "text-danger"
-                    : "text-haze-3"
-                }`}
-                aria-label={status}
-              >
+              <span className={`font-space-mono text-xs w-4 text-center ${status === "pass" ? "text-success" : status === "fail" ? "text-danger" : "text-haze-3"}`} aria-label={status}>
                 {status === "pass" ? "✓" : status === "fail" ? "✗" : "○"}
               </span>
               <div className="flex-1 font-space-mono text-[10px] text-haze-2 min-w-0">
@@ -205,26 +187,14 @@ function TestResults({ testCases, results, ran }: TestResultsProps) {
             </div>
             {ran && result && (
               <div className="pl-7 font-space-mono text-[9px] text-haze-3 space-y-0.5">
-                <div>
-                  <span className="text-haze-3">expected:</span>{" "}
-                  <span className="text-success">{tc.expectedOutput}</span>
-                </div>
-                <div>
-                  <span className="text-haze-3">got:</span>{" "}
-                  <span className={result.pass ? "text-success" : "text-danger"}>
-                    {result.output || "(empty)"}
-                  </span>
-                </div>
+                <div><span className="text-haze-3">expected:</span> <span className="text-success">{tc.expectedOutput}</span></div>
+                <div><span className="text-haze-3">got:</span> <span className={result.pass ? "text-success" : "text-danger"}>{result.output || "(empty)"}</span></div>
               </div>
             )}
           </div>
         );
       })}
-      {ran && (
-        <p className="font-space-mono text-[10px] text-haze-3 mt-3">
-          Submit to run against hidden tests
-        </p>
-      )}
+      {ran && <p className="font-space-mono text-[10px] text-haze-3 mt-3">Submit to run against hidden tests</p>}
     </div>
   );
 }
@@ -243,28 +213,14 @@ interface CodeEditorProps {
   category: RoomCategory | null;
 }
 
-function CodeEditor({
-  code,
-  setCode,
-  language,
-  setLanguage,
-  onRun,
-  onSubmit,
-  disabled,
-  running,
-  submitting,
-  category,
-}: CodeEditorProps) {
+function CodeEditor({ code, setCode, language, setLanguage, onRun, onSubmit, disabled, running, submitting, category }: CodeEditorProps) {
   const isCoding = category === "coding";
   const ext = language === "python" ? "py" : "js";
 
   return (
     <div className="flex flex-col h-full">
-      {/* Tab bar */}
       <div className="flex items-center justify-between border-b border-cosmos-4 bg-cosmos-3 px-4">
-        <span className="font-space-mono text-xs text-haze py-2 border-b-2 border-void">
-          solution.{ext}
-        </span>
+        <span className="font-space-mono text-xs text-haze py-2 border-b-2 border-void">solution.{ext}</span>
         {isCoding && (
           <select
             value={language}
@@ -277,44 +233,25 @@ function CodeEditor({
           </select>
         )}
       </div>
-      {/* Editor */}
       <textarea
         value={code}
         onChange={(e) => setCode(e.target.value)}
-        className="flex-1 p-4 bg-[#080612] text-haze font-space-mono text-sm resize-none
-                   focus:outline-none leading-relaxed"
+        className="flex-1 p-4 bg-[#080612] text-haze font-space-mono text-sm resize-none focus:outline-none leading-relaxed"
         style={{ minHeight: 280, caretColor: "var(--void)" }}
         spellCheck={false}
         aria-label="Code editor"
         disabled={disabled}
         onPaste={(e) => e.preventDefault()}
       />
-      {/* Action bar */}
       <div className="flex items-center justify-between px-4 py-3 bg-cosmos-3 border-t border-cosmos-4">
-        <p className="font-space-mono text-[10px] text-haze-3">
-          Ctrl+Enter to run · Ctrl+Shift+Enter to submit
-        </p>
+        <p className="font-space-mono text-[10px] text-haze-3">Ctrl+Enter to run · Ctrl+Shift+Enter to submit</p>
         <div className="flex items-center gap-2">
           {isCoding && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onRun}
-              disabled={disabled || running || submitting}
-              loading={running}
-              className="gap-1.5"
-            >
+            <Button variant="ghost" size="sm" onClick={onRun} disabled={disabled || running || submitting} loading={running} className="gap-1.5">
               <Play size={12} aria-hidden="true" /> RUN TESTS
             </Button>
           )}
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={onSubmit}
-            disabled={disabled || running || submitting}
-            loading={submitting}
-            className="gap-1.5"
-          >
+          <Button variant="primary" size="sm" onClick={onSubmit} disabled={disabled || running || submitting} loading={submitting} className="gap-1.5">
             <Upload size={12} aria-hidden="true" /> SUBMIT
           </Button>
         </div>
@@ -334,39 +271,45 @@ interface AnswerInputProps {
 
 function AnswerInput({ answer, setAnswer, onSubmit, disabled, submitting }: AnswerInputProps) {
   return (
-    <div className="flex flex-col h-full p-6 gap-4">
-      <div>
-        <label className="block font-space-mono text-[11px] text-void tracking-[3px] mb-3 uppercase">
-          Your Answer
-        </label>
-        <textarea
-          value={answer}
-          onChange={(e) => setAnswer(e.target.value)}
-          className="w-full h-48 p-4 bg-cosmos-2 border border-cosmos-4 text-haze font-rajdhani text-base
-                     placeholder:text-haze-3 focus:outline-none focus:border-void resize-none"
-          placeholder="Type your answer here..."
-          disabled={disabled}
-          aria-label="Answer input"
-          style={{ borderRadius: 0 }}
-        />
+    <div className="flex flex-col h-full">
+      <div className="px-5 pt-4 pb-3 border-b border-cosmos-4 bg-cosmos-3 shrink-0">
+        <p className="font-space-mono text-[11px] text-void tracking-[3px] uppercase">Your Answer</p>
+        <p className="font-rajdhani text-xs text-haze-3 mt-0.5">Case-insensitive · Ctrl+Enter to submit</p>
       </div>
-      <Button
-        variant="primary"
-        size="md"
-        onClick={onSubmit}
-        disabled={disabled || submitting}
-        loading={submitting}
-        className="self-end gap-1.5"
-      >
-        <Upload size={14} aria-hidden="true" /> SUBMIT ANSWER
-      </Button>
+      <textarea
+        value={answer}
+        onChange={(e) => setAnswer(e.target.value)}
+        onKeyDown={(e) => {
+          if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+            e.preventDefault();
+            onSubmit();
+          }
+        }}
+        className="flex-1 p-5 bg-[#080612] text-haze font-rajdhani text-lg
+                   placeholder:text-haze-3/40 focus:outline-none resize-none"
+        style={{ caretColor: "var(--void)" }}
+        placeholder="Type your answer here..."
+        disabled={disabled}
+        aria-label="Answer input"
+      />
+      <div className="flex items-center justify-end px-5 py-3 bg-cosmos-3 border-t border-cosmos-4 shrink-0">
+        <Button
+          variant="primary"
+          size="md"
+          onClick={onSubmit}
+          disabled={disabled || submitting}
+          loading={submitting}
+          className="gap-1.5"
+        >
+          <Upload size={14} aria-hidden="true" /> SUBMIT ANSWER
+        </Button>
+      </div>
     </div>
   );
 }
 
-/* ─── Strike Warning Banner ─── */
-function StrikeBanner({ count }: { count: number }) {
-  if (count === 0) return null;
+/* ─── Disqualified Banner ─── */
+function DQBanner() {
   return (
     <motion.div
       initial={{ opacity: 0, y: -40 }}
@@ -375,8 +318,7 @@ function StrikeBanner({ count }: { count: number }) {
     >
       <AlertTriangle size={14} className="text-white" aria-hidden="true" />
       <p className="font-space-mono text-[11px] text-white tracking-widest">
-        ANTI-CHEAT WARNING · STRIKE {count}/3
-        {count >= 3 && " · DISQUALIFIED"}
+        ANTI-CHEAT · TAB SWITCH DETECTED · DISQUALIFIED
       </p>
     </motion.div>
   );
@@ -407,7 +349,8 @@ export default function ArenaPage() {
 
   const [data, setData] = useState<RoomData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [timeLeft, setTimeLeft] = useState<number>(300);
+  const [hasTimer, setHasTimer] = useState(false);
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const [timeUp, setTimeUp] = useState(false);
 
   const [code, setCode] = useState("");
@@ -420,7 +363,6 @@ export default function ArenaPage() {
   const [testResults, setTestResults] = useState<TestResult[]>([]);
 
   const [activityFeed, setActivityFeed] = useState<ActivityItem[]>([]);
-  const [strikes, setStrikes] = useState(0);
   const [disqualified, setDisqualified] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -439,70 +381,44 @@ export default function ArenaPage() {
 
       const json = (await res.json()) as RoomData;
 
-      // Redirects based on status
-      if (json.room.status === "lobby") {
-        router.replace(`/lobby/${roomId}`);
-        return;
-      }
-      if (json.room.status === "ended") {
-        router.replace(`/arena/${roomId}/results`);
-        return;
-      }
+      if (json.room.status === "lobby") { router.replace(`/lobby/${roomId}`); return; }
+      if (json.room.status === "ended") { router.replace(`/arena/${roomId}/results`); return; }
 
-      // Derive activity from player status changes
+      // Derive activity feed from player status changes
       if (prevPlayersRef.current.length > 0) {
         const newItems: ActivityItem[] = [];
         for (const player of json.players) {
           const prev = prevPlayersRef.current.find((p) => p.userId === player.userId);
           if (prev && prev.status !== player.status) {
             const name = player.username ?? "Someone";
-            if (player.status === "completed") {
-              newItems.push({
-                id: `act-${activityIdRef.current++}`,
-                type: "completed",
-                player: name,
-                text: "submitted a solution",
-              });
-            } else if (player.status === "forfeited") {
-              newItems.push({
-                id: `act-${activityIdRef.current++}`,
-                type: "forfeited",
-                player: name,
-                text: "was disqualified",
-              });
-            }
+            if (player.status === "completed") newItems.push({ id: `act-${activityIdRef.current++}`, type: "completed", player: name, text: "submitted a solution" });
+            else if (player.status === "forfeited") newItems.push({ id: `act-${activityIdRef.current++}`, type: "forfeited", player: name, text: "was disqualified" });
           } else if (!prev) {
             const name = player.username ?? "Someone";
-            newItems.push({
-              id: `act-${activityIdRef.current++}`,
-              type: "joined",
-              player: name,
-              text: "entered the arena",
-            });
+            newItems.push({ id: `act-${activityIdRef.current++}`, type: "joined", player: name, text: "entered the arena" });
           }
         }
-        if (newItems.length > 0) {
-          setActivityFeed((prev) => [...newItems, ...prev].slice(0, 20));
-        }
+        if (newItems.length > 0) setActivityFeed((prev) => [...newItems, ...prev].slice(0, 20));
       }
-
       prevPlayersRef.current = json.players;
 
       if (!silent) {
-        // Set initial code from category default
         setCode((prev) => (prev === "" ? getDefaultCode(json.room.category) : prev));
 
-        // Compute initial time left
-        const timerSec = json.room.timerSeconds ?? 300;
-        if (json.room.startedAt) {
-          const elapsed = Math.floor(
-            (Date.now() - new Date(json.room.startedAt).getTime()) / 1000
-          );
-          const remaining = Math.max(0, timerSec - elapsed);
-          setTimeLeft(remaining);
-          if (remaining === 0) setTimeUp(true);
+        const timerSec = json.room.timerSeconds;
+        if (timerSec !== null) {
+          setHasTimer(true);
+          if (json.room.startedAt) {
+            const elapsed = Math.floor((Date.now() - new Date(json.room.startedAt).getTime()) / 1000);
+            const remaining = Math.max(0, timerSec - elapsed);
+            setTimeLeft(remaining);
+            if (remaining === 0) setTimeUp(true);
+          } else {
+            setTimeLeft(timerSec);
+          }
         } else {
-          setTimeLeft(timerSec);
+          setHasTimer(false);
+          setTimeLeft(null);
         }
       }
 
@@ -514,39 +430,27 @@ export default function ArenaPage() {
     }
   }, [roomId, router]);
 
-  /* ─── Initial fetch ─── */
-  useEffect(() => {
-    fetchRoom(false);
-  }, [fetchRoom]);
-
-  /* ─── Poll every 3s ─── */
+  useEffect(() => { fetchRoom(false); }, [fetchRoom]);
   useEffect(() => {
     const id = setInterval(() => fetchRoom(true), 3000);
     return () => clearInterval(id);
   }, [fetchRoom]);
 
-  /* ─── Timer countdown ─── */
+  /* ─── Timer countdown — only when timerSeconds was set ─── */
   useEffect(() => {
-    if (timeUp || submitted || disqualified) return;
+    if (!hasTimer || timeUp || submitted || disqualified) return;
     const id = setInterval(() => {
       setTimeLeft((t) => {
-        if (t <= 1) {
-          clearInterval(id);
-          setTimeUp(true);
-          return 0;
-        }
+        if (t === null || t <= 1) { clearInterval(id); setTimeUp(true); return 0; }
         return t - 1;
       });
     }, 1000);
     return () => clearInterval(id);
-  }, [timeUp, submitted, disqualified]);
+  }, [hasTimer, timeUp, submitted, disqualified]);
 
-  /* ─── Auto-redirect on time up ─── */
   useEffect(() => {
     if (!timeUp) return;
-    const t = setTimeout(() => {
-      router.replace(`/arena/${roomId}/results`);
-    }, 3000);
+    const t = setTimeout(() => router.replace(`/arena/${roomId}/results`), 3000);
     return () => clearTimeout(t);
   }, [timeUp, router, roomId]);
 
@@ -554,51 +458,31 @@ export default function ArenaPage() {
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (inputDisabled) return;
-      if (e.ctrlKey && e.shiftKey && e.key === "Enter") {
-        e.preventDefault();
-        handleSubmit();
-      } else if (e.ctrlKey && e.key === "Enter") {
-        e.preventDefault();
-        handleRunTests();
-      }
+      if (e.ctrlKey && e.shiftKey && e.key === "Enter") { e.preventDefault(); handleSubmit(); }
+      else if (e.ctrlKey && e.key === "Enter") { e.preventDefault(); handleRunTests(); }
     }
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
   });
 
-  /* ─── Anti-cheat ─── */
+  /* ─── Anti-cheat: first tab switch = immediate disqualification ─── */
   const handleStrike = useCallback(
-    (count: number, _reason: string) => {
-      setStrikes(count);
-      if (count >= 3) {
-        setDisqualified(true);
-        toast({
-          type: "error",
-          title: "DISQUALIFIED",
-          message: "Too many anti-cheat violations.",
-        });
-        // forfeit submission
-        fetch(`/api/rooms/${roomId}/submit`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code, language, answer: "__forfeit__" }),
-        }).catch(() => {});
-      } else {
-        toast({
-          type: "warning",
-          title: `TAB SWITCH DETECTED (${count}/3)`,
-          message: count === 2 ? "One more violation = disqualification." : undefined,
-        });
-      }
+    (_count: number, _reason: string) => {
+      setDisqualified(true);
+      toast({ type: "error", title: "DISQUALIFIED", message: "Tab switch detected. You have been removed from this arena." });
+      fetch(`/api/rooms/${roomId}/submit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ answer: "__forfeit__" }),
+      }).catch(() => {});
     },
-    [toast, roomId, code, language]
+    [toast, roomId]
   );
 
-  useArenaGuard({ onStrike: handleStrike });
+  useArenaGuard({ onStrike: handleStrike, maxStrikes: 1 });
 
-  /* ─── Derived state ─── */
-  const inputDisabled =
-    timeUp || disqualified || submitted || loading || data?.isAdmin === true;
+  /* ─── Derived ─── */
+  const inputDisabled = timeUp || disqualified || submitted || loading || data?.isAdmin === true;
 
   /* ─── Run tests ─── */
   async function handleRunTests() {
@@ -611,22 +495,12 @@ export default function ArenaPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code, language, runTestsOnly: true }),
       });
-      if (!res.ok) {
-        const err = (await res.json()) as { error?: string };
-        toast({ type: "error", title: "Run failed", message: err.error });
-        return;
-      }
-      const json = (await res.json()) as {
-        testResults: { passed: number; total: number; results: TestResult[] };
-        runOnly: boolean;
-      };
+      if (!res.ok) { const err = (await res.json()) as { error?: string }; toast({ type: "error", title: "Run failed", message: err.error }); return; }
+      const json = (await res.json()) as { testResults: { passed: number; total: number; results: TestResult[] }; runOnly: boolean };
       setTestResults(json.testResults.results);
       setTestRan(true);
       const { passed, total } = json.testResults;
-      toast({
-        type: passed === total && total > 0 ? "success" : "warning",
-        title: `${passed}/${total} public tests passed`,
-      });
+      toast({ type: passed === total && total > 0 ? "success" : "warning", title: `${passed}/${total} public tests passed` });
     } catch {
       toast({ type: "error", title: "Network error" });
     } finally {
@@ -640,14 +514,10 @@ export default function ArenaPage() {
     setSubmitting(true);
     try {
       const isCoding = data.room.category === "coding";
-      const body = isCoding
-        ? { code, language }
-        : { answer };
-
       const res = await fetch(`/api/rooms/${roomId}/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify(isCoding ? { code, language } : { answer }),
       });
 
       if (!res.ok) {
@@ -660,20 +530,14 @@ export default function ArenaPage() {
         won?: boolean;
         correct?: boolean;
         testResults?: { passed: number; total: number; results: TestResult[] };
-        submission?: { id: string };
       };
 
-      setSubmitted(true);
-
       if (json.won) {
-        toast({
-          type: "coins",
-          title: "YOU WON! 🏆",
-          message: "Redirecting to results...",
-          duration: 2000,
-        });
+        setSubmitted(true);
+        toast({ type: "coins", title: "YOU WON! 🏆", message: "Redirecting to results...", duration: 2000 });
         setTimeout(() => router.replace(`/arena/${roomId}/results`), 2000);
       } else if (isCoding && json.testResults) {
+        setSubmitted(true);
         const { passed, total } = json.testResults;
         setTestResults(json.testResults.results);
         setTestRan(true);
@@ -681,19 +545,18 @@ export default function ArenaPage() {
         toast({
           type: passed === 0 ? "error" : "info",
           title: passed === 0 ? "All tests failed" : `${pct}% tests passed`,
-          message:
-            passed === 0
-              ? "You have been disqualified."
-              : `${passed}/${total} hidden tests passed`,
+          message: passed === 0 ? "You have been disqualified." : `${passed}/${total} hidden tests passed`,
         });
         if (passed === 0) setDisqualified(true);
       } else {
-        // non-coding, wrong answer
+        // Non-coding: allow retries on wrong answer
         const correct = json.correct ?? false;
-        toast({
-          type: correct ? "success" : "error",
-          title: correct ? "Correct! But someone was faster." : "Wrong answer",
-        });
+        if (correct) {
+          setSubmitted(true);
+          toast({ type: "success", title: "Correct! But someone was faster." });
+        } else {
+          toast({ type: "error", title: "Wrong answer — try again." });
+        }
       }
     } catch {
       toast({ type: "error", title: "Network error" });
@@ -708,9 +571,7 @@ export default function ArenaPage() {
       <div className="min-h-screen bg-cosmos flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="spinner" />
-          <p className="font-space-mono text-xs text-haze-3 tracking-widest">
-            LOADING ARENA...
-          </p>
+          <p className="font-space-mono text-xs text-haze-3 tracking-widest">LOADING ARENA...</p>
         </div>
       </div>
     );
@@ -729,150 +590,115 @@ export default function ArenaPage() {
   const isCoding = room.category === "coding";
 
   return (
-    <div
-      className="min-h-screen flex flex-col bg-cosmos select-none"
-      onContextMenu={(e) => e.preventDefault()}
-    >
-      <AnimatePresence>
-        {strikes > 0 && <StrikeBanner count={strikes} />}
-      </AnimatePresence>
-      <AnimatePresence>
-        {timeUp && <TimeUpBanner />}
-      </AnimatePresence>
+    <div className="min-h-screen flex flex-col bg-cosmos select-none" onContextMenu={(e) => e.preventDefault()}>
+      <AnimatePresence>{disqualified && <DQBanner />}</AnimatePresence>
+      <AnimatePresence>{timeUp && <TimeUpBanner />}</AnimatePresence>
 
       {/* ── Top bar ── */}
       <div className="fixed top-0 inset-x-0 z-30 flex items-center justify-between px-6 h-14 bg-cosmos-2 border-b border-cosmos-4">
-        <div className="flex items-center gap-3">
-          <span className="font-rajdhani font-bold text-sm text-haze truncate max-w-[180px]">
-            {room.name}
-          </span>
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="font-rajdhani font-bold text-sm text-haze truncate max-w-[180px]">{room.name}</span>
           {room.category && (
-            <span
-              className="font-space-mono text-[10px] px-2 py-0.5 border"
-              style={{
-                color: catColor,
-                borderColor: `${catColor}40`,
-                backgroundColor: `${catColor}15`,
-              }}
-            >
+            <span className="font-space-mono text-[10px] px-2 py-0.5 border shrink-0" style={{ color: catColor, borderColor: `${catColor}40`, backgroundColor: `${catColor}15` }}>
               {room.category.toUpperCase()}
             </span>
           )}
           {room.difficulty && (
-            <Chip color={DIFF_CHIP_COLOR[room.difficulty]} size="xs">
+            <Chip color={DIFF_CHIP_COLOR[room.difficulty]} size="xs" className="shrink-0">
               {room.difficulty.toUpperCase()}
             </Chip>
           )}
         </div>
 
-        <Timer seconds={timeLeft} />
+        {/* Timer — only shown when the room was created with a timer */}
+        {hasTimer && timeLeft !== null
+          ? <Timer seconds={timeLeft} />
+          : <span className="font-space-mono text-[10px] text-haze-3 tracking-widest">NO TIMER</span>
+        }
 
         <div className="flex items-center gap-2">
           <Users size={14} className="text-haze-3" aria-hidden="true" />
-          <span className="font-space-mono text-xs text-haze-3">
-            {players.length}/{room.playerCap}
-          </span>
+          <span className="font-space-mono text-xs text-haze-3">{players.length}/{room.playerCap}</span>
         </div>
       </div>
 
       {/* ── Content ── */}
-      <div className="flex flex-col lg:flex-row flex-1 pt-14">
+      <div className="flex flex-col lg:flex-row flex-1 pt-14 h-[calc(100vh-56px)]">
+
         {/* Challenge panel */}
-        <div className="w-full lg:w-[30%] lg:max-w-xs border-b lg:border-b-0 lg:border-r border-cosmos-4 bg-cosmos-2 p-5 overflow-y-auto">
-          <p className="font-space-mono text-[10px] text-void tracking-widest mb-3 uppercase">
-            Challenge Brief
-          </p>
-          <div className="font-rajdhani text-base text-haze leading-relaxed mb-4 whitespace-pre-wrap">
-            {room.taskNormalised ?? room.taskRaw}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {room.category && (
-              <span
-                className="font-space-mono text-[10px] px-2 py-0.5 border"
-                style={{
-                  color: catColor,
-                  borderColor: `${catColor}40`,
-                  backgroundColor: `${catColor}15`,
-                }}
-              >
-                {room.category.toUpperCase()}
-              </span>
-            )}
-            {room.difficulty && (
-              <Chip color={DIFF_CHIP_COLOR[room.difficulty]} size="xs">
-                {room.difficulty.toUpperCase()}
-              </Chip>
-            )}
-            <Chip color="crown" size="xs">{room.bountyTier.toUpperCase()}</Chip>
+        <div className="w-full lg:w-[28%] lg:max-w-[300px] border-b lg:border-b-0 lg:border-r border-cosmos-4 flex flex-col bg-cosmos-2 overflow-y-auto shrink-0">
+          {/* Header */}
+          <div className="px-5 pt-4 pb-3 border-b border-cosmos-4 bg-cosmos-3 shrink-0">
+            <p className="font-space-mono text-[9px] text-void tracking-[3px] uppercase mb-1">Challenge Brief</p>
+            <p className="font-zen-dots text-sm text-haze leading-snug truncate">{room.name}</p>
           </div>
 
-          {/* Players status */}
-          <div className="mt-6">
-            <p className="font-space-mono text-[10px] text-haze-3 tracking-widest mb-3 uppercase">
-              Players
-            </p>
-            {players.map((p) => (
-              <div key={p.id} className="flex items-center gap-2 mb-2">
-                <span
-                  className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                    p.status === "completed"
-                      ? "bg-success"
-                      : p.status === "forfeited"
-                      ? "bg-danger"
-                      : "bg-haze-3"
-                  }`}
-                />
-                <span className="font-space-mono text-[10px] text-haze-2 truncate">
-                  @{p.username ?? "player"}
+          {/* Task */}
+          <div className="px-5 py-4 flex-1 overflow-y-auto">
+            <div className="p-4 mb-4 border-l-2 bg-cosmos" style={{ borderLeftColor: catColor }}>
+              <p className="font-rajdhani text-sm text-haze leading-relaxed whitespace-pre-wrap">
+                {room.taskNormalised ?? room.taskRaw}
+              </p>
+            </div>
+
+            {/* Tags */}
+            <div className="flex flex-wrap gap-2 mb-5">
+              {room.category && (
+                <span className="font-space-mono text-[9px] px-2 py-0.5 border" style={{ color: catColor, borderColor: `${catColor}40`, backgroundColor: `${catColor}15` }}>
+                  {room.category.toUpperCase()}
                 </span>
-                <span className="font-space-mono text-[9px] text-haze-3 ml-auto shrink-0">
-                  {p.status}
-                </span>
-              </div>
-            ))}
+              )}
+              {room.difficulty && (
+                <Chip color={DIFF_CHIP_COLOR[room.difficulty]} size="xs">{room.difficulty.toUpperCase()}</Chip>
+              )}
+              <Chip color="crown" size="xs">{room.bountyTier.toUpperCase()}</Chip>
+            </div>
+
+            {/* Players */}
+            <div className="border border-cosmos-4 bg-cosmos-3 p-3">
+              <p className="font-space-mono text-[9px] text-haze-3 tracking-widest mb-2 uppercase">Players</p>
+              {players.map((p) => (
+                <div key={p.id} className="flex items-center gap-2 py-1 border-b border-cosmos-4/40 last:border-0">
+                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${p.status === "completed" ? "bg-success" : p.status === "forfeited" ? "bg-danger" : "bg-haze-3"}`} />
+                  <span className="font-space-mono text-[9px] text-haze-2 truncate flex-1">@{p.username ?? "player"}</span>
+                  <span className={`font-space-mono text-[9px] shrink-0 ${p.status === "completed" ? "text-success" : p.status === "forfeited" ? "text-danger" : "text-haze-3"}`}>
+                    {p.status}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
         {/* Editor + results */}
-        <div className="flex-1 flex flex-col lg:flex-row min-w-0">
-          {/* Code editor or answer input */}
-          <div className="flex-1 flex flex-col border-b lg:border-b-0 lg:border-r border-cosmos-4">
+        <div className="flex-1 flex flex-col lg:flex-row min-w-0 overflow-hidden">
+          {/* Code editor or answer input — fills full height */}
+          <div className="flex-1 flex flex-col border-b lg:border-b-0 lg:border-r border-cosmos-4 min-h-[400px] lg:min-h-0">
             {isCoding ? (
               <CodeEditor
-                code={code}
-                setCode={setCode}
-                language={language}
-                setLanguage={setLanguage}
-                onRun={handleRunTests}
-                onSubmit={handleSubmit}
-                disabled={inputDisabled}
-                running={running}
-                submitting={submitting}
+                code={code} setCode={setCode}
+                language={language} setLanguage={setLanguage}
+                onRun={handleRunTests} onSubmit={handleSubmit}
+                disabled={inputDisabled} running={running} submitting={submitting}
                 category={room.category}
               />
             ) : (
               <AnswerInput
-                answer={answer}
-                setAnswer={setAnswer}
+                answer={answer} setAnswer={setAnswer}
                 onSubmit={handleSubmit}
-                disabled={inputDisabled}
-                submitting={submitting}
+                disabled={inputDisabled} submitting={submitting}
               />
             )}
           </div>
 
-          {/* Right panel: test results + activity */}
-          <div className="w-full lg:w-64 xl:w-80 flex flex-col gap-0">
+          {/* Right panel */}
+          <div className="w-full lg:w-64 xl:w-80 flex flex-col shrink-0">
             {isCoding && (
-              <div className="flex-1 p-4 overflow-y-auto">
-                <TestResults
-                  testCases={testCases}
-                  results={testResults}
-                  ran={testRan}
-                />
+              <div className="flex-1 p-4 overflow-y-auto border-b border-cosmos-4">
+                <TestResults testCases={testCases} results={testResults} ran={testRan} />
               </div>
             )}
-            <div className={isCoding ? "border-t border-cosmos-4" : "flex-1 p-4"}>
+            <div className={isCoding ? "p-4" : "flex-1 p-4"}>
               <ActivityFeed items={activityFeed} />
             </div>
           </div>
@@ -885,13 +711,11 @@ export default function ArenaPage() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="fixed bottom-6 inset-x-6 z-40 flex items-center justify-center"
+            className="fixed bottom-6 inset-x-6 z-40 flex items-center justify-center pointer-events-none"
           >
             <div className="bg-danger/10 border border-danger/50 px-6 py-4 text-center clip-arena-sm">
               <p className="font-zen-dots text-danger text-sm">DISQUALIFIED</p>
-              <p className="font-space-mono text-[10px] text-haze-3 mt-1">
-                You have been removed from this arena.
-              </p>
+              <p className="font-space-mono text-[10px] text-haze-3 mt-1">You have been removed from this arena.</p>
             </div>
           </motion.div>
         )}

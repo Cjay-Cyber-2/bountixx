@@ -90,7 +90,7 @@ function SetupStep({
   onNext: (data: { name: string; playerCap: number; timerSeconds?: number }) => void;
 }) {
   const [name, setName] = useState("");
-  const [players, setPlayers] = useState(4);
+  const [players, setPlayers] = useState(2);
   const [timer, setTimer] = useState(true);
   const [timerMin, setTimerMin] = useState(10);
   const [error, setError] = useState("");
