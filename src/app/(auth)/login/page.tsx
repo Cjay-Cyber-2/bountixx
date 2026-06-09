@@ -341,7 +341,7 @@ export default function LoginPage() {
           )}
 
           <motion.p variants={slideUp} className="font-rajdhani text-sm text-haze-2 text-center mt-8">
-            No account yet?{" "}<Link href="/signup" className="cursor-target text-void hover:underline">Create one free</Link>
+            No account yet?{" "}<Link href={`/signup?next=${encodeURIComponent(getNext())}`} className="cursor-target text-void hover:underline">Create one free</Link>
           </motion.p>
         </motion.div>
       </div>

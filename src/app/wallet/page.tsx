@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Plus, Minus, ShoppingBag } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -36,7 +36,7 @@ export default function WalletPage() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("paystack");
   const [paying, setPaying] = useState(false);
 
-  useState(() => {
+  useEffect(() => {
     fetch("/api/wallet")
       .then((r) => r.json())
       .then((d) => {
@@ -53,7 +53,7 @@ export default function WalletPage() {
         }
       })
       .catch(() => {});
-  });
+  }, []);
 
   const filtered = filter === "ALL" ? txList : txList.filter((t) => t.type === filter.toLowerCase());
 
@@ -100,7 +100,7 @@ export default function WalletPage() {
 
   return (
     <AppLayout>
-      <div className="px-5 md:px-8 lg:px-10 py-8 md:py-10 max-w-5xl mx-auto">
+      <div className="px-5 md:px-8 lg:px-10 py-8 md:py-10 max-w-[1280px] mx-auto w-full">
         <p className="font-space-mono text-[11px] text-crown tracking-[3px] uppercase mb-2">Treasury</p>
         <h1 className="font-zen-dots text-2xl md:text-3xl text-haze mb-8">Your wallet</h1>
 

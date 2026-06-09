@@ -495,8 +495,12 @@ export default function CreatePage() {
       });
 
       if (!res.ok) {
-        const err = await res.json() as { error?: string };
-        setCreateError(err.error ?? "Failed to create room");
+        let errMsg = "Failed to create room";
+        try {
+          const err = await res.json() as { error?: string };
+          errMsg = err.error ?? errMsg;
+        } catch {}
+        setCreateError(errMsg);
         return;
       }
 
@@ -530,7 +534,7 @@ export default function CreatePage() {
 
   return (
     <AppLayout>
-      <div className="px-5 md:px-8 lg:px-10 py-8 md:py-12 max-w-2xl mx-auto">
+      <div className="px-5 md:px-8 lg:px-10 py-8 md:py-12 max-w-3xl mx-auto w-full">
         <p className="font-space-mono text-[11px] text-void tracking-[3px] uppercase mb-2">New arena</p>
         <h1 className="font-zen-dots text-2xl md:text-3xl text-haze mb-2">Create your arena</h1>
         <p className="font-rajdhani text-base text-haze-2 mb-10">Set up your challenge. The AI validates and builds the rest.</p>

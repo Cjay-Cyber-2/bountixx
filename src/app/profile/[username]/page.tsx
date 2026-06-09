@@ -148,7 +148,7 @@ export default function ProfilePage() {
 
   return (
     <AppLayout>
-      <div className="max-w-4xl mx-auto">
+      <div className="w-full max-w-[1280px] mx-auto">
         {/* Banner */}
         <div
           className="relative border-b border-cosmos-4"

@@ -290,7 +290,7 @@ export default function SignupPage() {
             <motion.div key="ep-verify" variants={slideUp} initial="hidden" animate="show" className="text-center py-4">
               <p className="font-zen-dots text-void text-lg mb-3">VERIFY YOUR EMAIL</p>
               <p className="font-rajdhani text-haze-2 text-sm mb-6">We sent a verification link to <span className="text-void">{email}</span>. Click it to activate your account.</p>
-              <Link href="/login" className="font-space-mono text-[11px] text-void hover:underline">Back to sign in</Link>
+              <Link href={`/login?next=${encodeURIComponent(getNext())}`} className="font-space-mono text-[11px] text-void hover:underline">Back to sign in</Link>
             </motion.div>
           )}
 
@@ -345,7 +345,7 @@ export default function SignupPage() {
           )}
 
           <motion.p variants={slideUp} className="font-rajdhani text-sm text-haze-2 text-center mt-8">
-            Already have an account?{" "}<Link href="/login" className="cursor-target text-void hover:underline">Sign in</Link>
+            Already have an account?{" "}<Link href={`/login?next=${encodeURIComponent(getNext())}`} className="cursor-target text-void hover:underline">Sign in</Link>
           </motion.p>
         </motion.div>
       </div>
