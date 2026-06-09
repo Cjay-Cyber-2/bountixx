@@ -155,7 +155,7 @@ export async function POST(req: Request) {
       "23503": "Account setup incomplete — please sign out, sign back in, and try again.",
       "23505": "A room with this ID already exists — please try again.",
     };
-    const userMsg = friendly[code] ?? detail || msg;
+    const userMsg = (friendly[code] ?? detail) || msg;
     return NextResponse.json({ error: userMsg }, { status: 500 });
   }
 }
