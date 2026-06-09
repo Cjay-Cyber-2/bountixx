@@ -142,7 +142,20 @@ export async function POST(req: Request) {
     return NextResponse.json({ room }, { status: 201 });
   } catch (err) {
     console.error("[POST /api/rooms]", err);
-    const message = err instanceof Error ? err.message : String(err);
-    return NextResponse.json({ error: message }, { status: 500 });
+    // Unwrap the underlying DB error (Drizzle wraps it in "Failed query: ...")
+    const raw = (err instanceof Error && (err as any).cause instanceof Error)
+      ? (err as any).cause as Error
+      : err as Error;
+    const code: string = (raw as any)?.code ?? "";
+    const detail: string = (raw as any)?.detail ?? "";
+    const msg = raw instanceof Error ? raw.message : String(raw);
+    // Map known PostgreSQL error codes to friendly messages
+    const friendly: Record<string, string> = {
+      "42703": "Database schema is outdated — open your Neon dashboard and run the SQL below, then try again:\nALTER TABLE rooms ADD COLUMN IF NOT EXISTS questions_json text;\nALTER TABLE rooms ADD COLUMN IF NOT EXISTS prize_pool integer DEFAULT 0 NOT NULL;",
+      "23503": "Account setup incomplete — please sign out, sign back in, and try again.",
+      "23505": "A room with this ID already exists — please try again.",
+    };
+    const userMsg = friendly[code] ?? detail || msg;
+    return NextResponse.json({ error: userMsg }, { status: 500 });
   }
 }

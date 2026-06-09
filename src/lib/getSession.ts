@@ -23,15 +23,10 @@ async function findOrCreateUser(
   const existing = await findUser(uid);
   if (existing) return existing;
 
-  if (!claims.email) {
-    console.error("[getSession] token valid but no email claim — cannot create user:", uid);
-    return null;
-  }
-
   try {
     const rawUsername =
       claims.name?.replace(/\s+/g, "_").toLowerCase() ??
-      claims.email.split("@")[0] ??
+      claims.email?.split("@")[0] ??
       uid.slice(0, 16);
 
     // Append a short uid suffix to avoid username collisions on first insert
@@ -39,7 +34,7 @@ async function findOrCreateUser(
 
     await db.insert(users).values({
       id: uid,
-      email: claims.email,
+      email: claims.email ?? null,
       username,
       avatarUrl: claims.picture ?? null,
       coinsBalance: 500,
@@ -90,10 +85,12 @@ export async function getSession(): Promise<SessionUser | null> {
     }
 
     const decoded = await adminAuth.verifySessionCookie(sessionCookie, false);
-    const user = await findUser(decoded.uid);
+    // Use findOrCreateUser so a user whose DB row is missing (e.g. auth/session insert
+    // silently failed) is auto-created with their 500-coin welcome bonus here.
+    const user = await findOrCreateUser(decoded.uid, decoded);
 
     if (!user) {
-      console.error("[getSession] session cookie valid but user row missing in DB:", decoded.uid);
+      console.error("[getSession] session cookie valid but user unresolvable:", decoded.uid);
     }
 
     return user;

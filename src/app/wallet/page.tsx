@@ -7,6 +7,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/Button";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { CrownMark } from "@/components/BountixxLogo";
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
 
 type FilterTab = "ALL" | "EARNED" | "SPENT" | "PURCHASED";
 type PaymentMethod = "paystack" | "stripe";
@@ -37,7 +38,7 @@ export default function WalletPage() {
   const [paying, setPaying] = useState(false);
 
   useEffect(() => {
-    fetch("/api/wallet")
+    fetchWithAuth("/api/wallet")
       .then((r) => r.json())
       .then((d) => {
         if (d.balance !== undefined) setBalance(d.balance);

@@ -29,10 +29,13 @@ export async function POST(req: Request) {
           decoded.email?.split("@")[0] ??
           decoded.uid.slice(0, 16);
 
+        // Add uid suffix to prevent username collisions between users with the same name
+        const username = `${rawUsername}_${decoded.uid.slice(0, 5)}`;
+
         await db.insert(users).values({
           id: decoded.uid,
           email: decoded.email ?? null,
-          username: rawUsername,
+          username,
           avatarUrl: decoded.picture ?? null,
           coinsBalance: 500,
           xp: 0,
