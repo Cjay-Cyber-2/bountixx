@@ -15,12 +15,6 @@ const fadeUp = (delay: number) => ({
   transition: { delay, duration: 0.7, ease: [0.16, 1, 0.3, 1] as const },
 });
 
-const fadeIn = (delay: number) => ({
-  initial: { opacity: 0 },
-  animate: { opacity: 1 },
-  transition: { delay, duration: 0.8 },
-});
-
 export function Hero() {
   const sectionRef = useRef<HTMLElement>(null);
   const reduceMotion = useReducedMotion();
@@ -160,28 +154,7 @@ export function Hero() {
               </Button>
             </Link>
           </motion.div>
-
-          <motion.p
-            {...fadeIn(0.85)}
-            className="font-space-mono text-[10px] md:text-[11px] tracking-[6px] uppercase text-haze-3"
-          >
-            Compete · Conquer · Collect
-          </motion.p>
         </div>
-      </motion.div>
-
-      {/* Scroll indicator */}
-      <motion.div
-        className="absolute bottom-4 left-1/2 -translate-x-1/2 flex-col items-center gap-1.5 z-20 hidden md:flex"
-        animate={{ y: [0, 6, 0] }}
-        transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
-        aria-hidden
-      >
-        <span className="font-space-mono text-[8px] text-haze-3/50 tracking-[4px] uppercase">Scroll</span>
-        <span
-          className="w-px h-6"
-          style={{ background: "linear-gradient(to bottom, transparent, rgba(255,107,26,0.4))" }}
-        />
       </motion.div>
     </section>
   );

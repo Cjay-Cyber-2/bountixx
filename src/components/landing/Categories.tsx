@@ -7,9 +7,8 @@ const CATEGORIES = [
   {
     label: "Coding",
     accent: "#FF6B1A",
-    accentDim: "rgba(255,107,26,0.12)",
-    accentBorder: "rgba(255,107,26,0.25)",
-    desc: "Functions, algorithms, data structures. Write directly in the sandboxed editor — JavaScript and Python supported.",
+    accentDim: "rgba(255,107,26,0.07)",
+    desc: "Functions, algorithms, data structures. Write directly in the sandboxed editor. JavaScript and Python supported.",
     sample: "fn reverse(s) → s[::-1]",
     win: "First to pass all 20 hidden tests",
     partial: "% of test cases passed",
@@ -17,19 +16,17 @@ const CATEGORIES = [
   {
     label: "Trivia",
     accent: "#a855f7",
-    accentDim: "rgba(168,85,247,0.10)",
-    accentBorder: "rgba(168,85,247,0.22)",
+    accentDim: "rgba(168,85,247,0.06)",
     desc: "General knowledge, pop culture, history. The correct answer is hashed and locked before anyone enters the room.",
     sample: "In what year did…?",
     win: "First correct submission wins",
-    partial: "N/A — correct or incorrect",
+    partial: "N/A - correct or incorrect",
   },
   {
     label: "Logic",
     accent: "#00D68F",
-    accentDim: "rgba(0,214,143,0.09)",
-    accentBorder: "rgba(0,214,143,0.22)",
-    desc: "Puzzles, riddles, lateral thinking. The answer is objective — the trap is the obvious choice.",
+    accentDim: "rgba(0,214,143,0.06)",
+    desc: "Puzzles, riddles, lateral thinking. The answer is objective. The trap is the obvious choice.",
     sample: "If A < B and B < C…",
     win: "First correct submission wins",
     partial: "Closest numeric or text match",
@@ -37,8 +34,7 @@ const CATEGORIES = [
   {
     label: "Math",
     accent: "#F0A500",
-    accentDim: "rgba(240,165,0,0.09)",
-    accentBorder: "rgba(240,165,0,0.22)",
+    accentDim: "rgba(240,165,0,0.06)",
     desc: "Speed arithmetic, equations, proofs. Pure calculation against opponents who are exactly as fast.",
     sample: "∑ x² + y , x∈[1,n]",
     win: "First correct submission wins",
@@ -64,8 +60,8 @@ export function Categories() {
       />
 
       <div className="max-w-[1280px] mx-auto relative">
-        <div className="mb-20 md:mb-24">
-          <h2 className="font-zen-dots text-[clamp(2rem,4.8vw,3.6rem)] text-haze leading-[1.08]">
+        <div className="mb-20 md:mb-28 max-w-2xl">
+          <h2 className="font-zen-dots text-[clamp(2rem,4.8vw,3.6rem)] text-haze leading-[1.08] text-balance">
             Choose your battleground.
           </h2>
           <p className="font-rajdhani text-lg text-haze-2 mt-5 max-w-lg leading-relaxed">
@@ -73,70 +69,52 @@ export function Categories() {
           </p>
         </div>
 
-        {/* Featured row: first two side by side at 50/50, then two smaller below */}
+        {/* Index ledger: each format is one oversized row */}
         <motion.div
           initial="hidden"
           animate={inView ? "show" : "hidden"}
-          variants={{ show: { transition: { staggerChildren: 0.09 } } }}
-          className="grid grid-cols-1 md:grid-cols-2 gap-px"
-          style={{ background: "var(--border-1)" }}
+          variants={{ show: { transition: { staggerChildren: 0.1 } } }}
+          style={{ borderTop: "1px solid var(--border-1)" }}
         >
           {CATEGORIES.map((cat) => (
             <motion.div
               key={cat.label}
               variants={{
-                hidden: { opacity: 0 },
-                show: { opacity: 1, transition: { duration: 0.55, ease: [0.16, 1, 0.3, 1] } },
+                hidden: { opacity: 0, y: 24 },
+                show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } },
               }}
-              className="group relative flex flex-col gap-7 p-9 md:p-11 transition-colors duration-300"
-              style={{
-                background: "var(--cosmos)",
-              }}
+              className="group relative grid grid-cols-1 lg:grid-cols-[minmax(220px,0.8fr)_1.4fr_1fr] gap-6 lg:gap-12 items-start py-10 md:py-12 px-2 md:px-4 transition-colors duration-300"
+              style={{ borderBottom: "1px solid var(--border-1)" }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = cat.accentDim)}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
             >
-              {/* Hover tint */}
-              <div
-                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-400 pointer-events-none"
-                style={{ background: cat.accentDim }}
-                aria-hidden
-              />
+              {/* Format name, the row's anchor */}
+              <h3
+                className="font-zen-dots leading-none transition-transform duration-300 group-hover:translate-x-2"
+                style={{ fontSize: "clamp(1.9rem, 4vw, 3rem)", color: cat.accent }}
+              >
+                {cat.label}
+              </h3>
 
-              <div className="relative">
-                {/* Label + accent line */}
-                <div className="flex items-center gap-3 mb-6">
-                  <span
-                    className="block w-8 h-[3px] rounded-full"
-                    style={{ background: cat.accent }}
-                    aria-hidden
-                  />
-                  <h3 className="font-zen-dots text-2xl text-haze">{cat.label}</h3>
-                </div>
-
-                <p className="font-rajdhani text-[17px] text-haze-2 leading-relaxed mb-7">
+              {/* Description + sample */}
+              <div>
+                <p className="font-rajdhani text-[17px] text-haze-2 leading-relaxed mb-5 max-w-[52ch]">
                   {cat.desc}
                 </p>
+                <p className="font-space-mono text-[13px] text-haze-3">
+                  <span style={{ color: cat.accent }}>›</span>{" "}
+                  {cat.sample}
+                </p>
+              </div>
 
-                {/* Console sample */}
-                <div
-                  className="flex items-center gap-3 px-4 py-3 font-space-mono text-[13px] rounded-sm mb-7"
-                  style={{
-                    background: "var(--terminal-bg)",
-                    border: "1px solid var(--terminal-border)",
-                  }}
-                >
-                  <span style={{ color: cat.accent }}>›</span>
-                  <span className="text-haze-2 truncate">{cat.sample}</span>
-                </div>
-
-                {/* Win condition + partial */}
-                <div
-                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-5"
-                  style={{ borderTop: `1px solid var(--border-1)` }}
-                >
-                  <span className="font-space-mono text-[10px] text-haze-3 uppercase tracking-wider">{cat.win}</span>
-                  <span className="font-space-mono text-[10px] uppercase tracking-wider" style={{ color: cat.accent }}>
-                    Partial: {cat.partial}
-                  </span>
-                </div>
+              {/* Win conditions */}
+              <div className="flex flex-col gap-3 lg:items-end lg:text-right">
+                <p className="font-space-mono text-[11px] uppercase tracking-wider text-haze">
+                  {cat.win}
+                </p>
+                <p className="font-space-mono text-[10px] uppercase tracking-wider" style={{ color: cat.accent }}>
+                  Partial: {cat.partial}
+                </p>
               </div>
             </motion.div>
           ))}

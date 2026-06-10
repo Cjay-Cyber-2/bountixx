@@ -52,7 +52,7 @@ export function FinalCTA() {
           transition={{ duration: 0.6, delay: 0.12 }}
           className="font-rajdhani text-lg text-haze-2 mb-12 max-w-md mx-auto leading-relaxed"
         >
-          No subscription. No card required. Your first 10 arenas are free — the AI structures the challenge, you bring the skill.
+          No subscription. No card required. Your first 10 arenas are free. The AI structures the challenge, you bring the skill.
         </motion.p>
 
         {/* CTAs */}
