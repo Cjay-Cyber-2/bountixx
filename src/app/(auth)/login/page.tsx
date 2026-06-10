@@ -78,8 +78,11 @@ export default function LoginPage() {
       .then(async (credential) => {
         window.localStorage.removeItem("emailForSignIn");
         const ok = await createSession(credential.user);
-        if (ok) router.replace(getNext());
-        else setError("Session creation failed. Please try again.");
+        if (!ok) {
+          setError("Session creation failed. Please try again.");
+          return;
+        }
+        router.replace(getNext());
       })
       .catch((err) => setError(err.message));
   }, [router]);
@@ -113,23 +116,35 @@ export default function LoginPage() {
   }, [router]);
 
   async function handleOAuth(provider: "google" | "github") {
+    console.log("[handleOAuth] Starting OAuth flow with", provider);
     setError("");
     setPending(true);
     const p = provider === "google" ? googleProvider : githubProvider;
     try {
+      console.log("[handleOAuth] Attempting signInWithPopup...");
       const result = await signInWithPopup(auth, p);
+      console.log("[handleOAuth] signInWithPopup succeeded, user:", result.user.uid);
+      console.log("[handleOAuth] Creating session...");
       const ok = await createSession(result.user);
-      if (!ok) throw new Error("Session creation failed. Please try again.");
+      console.log("[handleOAuth] createSession result:", ok);
+      if (!ok) {
+        setError("Session creation failed. Please try again.");
+        setPending(false);
+        return;
+      }
+      console.log("[handleOAuth] Redirecting to:", getNext());
       router.replace(getNext());
     } catch (err: unknown) {
       const code = (err as { code?: string }).code;
+      console.error("[handleOAuth] Error caught:", code, err);
       if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request" || code === "auth/user-cancelled") {
+        console.log("[handleOAuth] User cancelled popup");
         setPending(false);
         return;
       }
       if (code === "auth/popup-blocked") {
+        console.log("[handleOAuth] Popup blocked, falling back to redirect");
         signInWithRedirect(auth, p);
-        setPending(false);
         return;
       }
       setError((err as { message: string }).message);
@@ -144,7 +159,11 @@ export default function LoginPage() {
     try {
       const credential = await signInWithEmailAndPassword(auth, identifier, password);
       const ok = await createSession(credential.user);
-      if (!ok) throw new Error("Session creation failed. Please try again.");
+      if (!ok) {
+        setError("Session creation failed. Please try again.");
+        setPending(false);
+        return;
+      }
       router.replace(getNext());
     } catch (err: unknown) {
       setError((err as { message: string }).message);
@@ -197,7 +216,11 @@ export default function LoginPage() {
     try {
       const credential = await confirmationRef.current.confirm(otp);
       const ok = await createSession(credential.user);
-      if (!ok) throw new Error("Session creation failed. Please try again.");
+      if (!ok) {
+        setError("Session creation failed. Please try again.");
+        setPending(false);
+        return;
+      }
       router.replace(getNext());
     } catch (err: unknown) {
       setError((err as { message: string }).message);

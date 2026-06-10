@@ -9,18 +9,26 @@ import { User } from "firebase/auth";
  */
 export async function createSession(user: User): Promise<boolean> {
   try {
-    // No forceRefresh — the token from signInWithPopup/signInWithEmailAndPassword
-    // is already fresh. Forcing a refresh makes a redundant network round-trip to
-    // Firebase's token endpoint which hangs the UI for several seconds.
+    console.log("[createSession] Getting ID token for user:", user.uid);
     const idToken = await user.getIdToken();
+    console.log("[createSession] Got ID token, posting to /api/auth/session");
     const res = await fetch("/api/auth/session", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ idToken }),
       signal: AbortSignal.timeout(12_000),
     });
-    return res.ok;
-  } catch {
+    console.log("[createSession] Response status:", res.status, "ok:", res.ok);
+    if (!res.ok) {
+      const text = await res.text();
+      console.error("[createSession] Session API failed:", text);
+      return false;
+    }
+    // Wait for cookie to propagate to browser before continuing
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    return true;
+  } catch (err) {
+    console.error("[createSession] Exception:", err);
     return false;
   }
 }
