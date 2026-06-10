@@ -1,59 +1,44 @@
-# Authentication Fixes - Production Ready
+# Authentication Fixes - CRITICAL PRODUCTION FIX
 
 ## Problem
-Users were experiencing redirect loops when signing in/up with Google OAuth (and potentially other providers). After selecting their email, they were redirected back to the signin page instead of the dashboard.
+**REDIRECT LOOP**: After OAuth/signup, users were immediately redirected back to login page instead of dashboard.
 
-## Root Cause
-The authentication flow had **race conditions** where:
-1. Firebase authentication completed successfully
-2. Session cookie was created via `/api/auth/session`
-3. Router immediately redirected to dashboard
-4. **Middleware checked for cookie before it fully propagated to the browser**
-5. User was redirected back to login
+## Root Causes Found
+1. **Cookie propagation delay**: Session cookie wasn't available to middleware fast enough
+2. **Soft navigation**: `router.replace()` doesn't guarantee cookie visibility on next request
+3. **Auto-redirect loop**: Initial load check was creating session and redirecting, causing loops
+4. **Token refresh not forced**: Fresh tokens needed for session creation
 
-Additionally, error handling was inconsistent - throwing errors after Firebase auth succeeded but session creation failed, leaving users in an inconsistent authenticated state.
+## Critical Fixes Applied
 
-## Fixes Applied
+### 1. Session Creation (`/src/lib/createSession.ts`)
+- **Force token refresh** with `getIdToken(true)` for fresh tokens
+- **Added `credentials: "include"`** to ensure cookies are sent/received
+- **Increased delay to 500ms** for reliable cookie propagation
+- Better error handling
 
-### 1. Session Cookie Propagation (`/src/lib/createSession.ts`)
-- **Added 100ms delay** after successful cookie creation to ensure it propagates to browser before navigation
-- **Fixed error handling** to return `false` instead of throwing, allowing callers to handle failures gracefully
-- This ensures middleware will find the cookie when checking protected routes
+### 2. Hard Navigation (Both login & signup pages)
+- **Replaced ALL `router.replace()` with `window.location.href`**
+  - Forces full page reload
+  - Guarantees browser sees new cookies
+  - Ensures middleware check passes
+  
+### 3. Removed Auto-Redirect Loops
+- **Disabled automatic redirect on page load** for authenticated users
+- Prevents redirect loops where:
+  1. User lands on /login with Firebase auth
+  2. Page tries to create session and redirect
+  3. Middleware redirects back to /login (cookie not visible yet)
+  4. Loop repeats
 
-### 2. Signup Page (`/src/app/(auth)/signup/page.tsx`)
-Fixed all authentication methods:
+### 4. Fixed All Auth Methods
+- Google OAuth ✓
+- GitHub OAuth ✓  
+- Email/Password ✓
+- Magic Link ✓
+- Phone OTP ✓
 
-#### OAuth (Google & GitHub)
-- Changed from throwing error to setting error state and returning early when session creation fails
-- User stays on page with clear error message instead of being caught in redirect loop
-
-#### Email/Password
-- Added proper session creation failure handling
-- Returns early with error message instead of proceeding to verify email screen
-- Ensures user has valid session before showing "check your email" message
-
-#### Phone OTP
-- Changed from throwing error to setting error state when session creation fails
-- Prevents redirect if session isn't properly established
-
-### 3. Login Page (`/src/app/(auth)/login/page.tsx`)
-Fixed all authentication methods:
-
-#### OAuth (Google & GitHub)
-- Same fixes as signup: proper error handling, no redirect loops
-
-#### Email/Password
-- Returns early with error message if session creation fails
-- Prevents redirect without valid session
-
-#### Magic Link
-- Fixed to return early with error message if session creation fails
-- Prevents attempting redirect without session
-
-#### Phone OTP
-- Same fixes as signup: proper error handling before redirect
-
-## Technical Details
+## Technical Changes
 
 ### Before
 ```typescript

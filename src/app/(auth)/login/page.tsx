@@ -53,21 +53,7 @@ export default function LoginPage() {
   const recaptchaRef = useRef<RecaptchaVerifier | null>(null);
   const confirmationRef = useRef<ConfirmationResult | null>(null);
   const recaptchaContainerRef = useRef<HTMLDivElement>(null);
-  // Auto-redirect only on initial load for users who were already authenticated.
-  // Do NOT auto-redirect when user changes during an active login flow — that
-  // would navigate before the __session cookie is confirmed set (loop bug).
-  const initialCheckDone = useRef(false);
-  useEffect(() => {
-    if (loading || initialCheckDone.current) return;
-    initialCheckDone.current = true;
-    if (!user) return;
-    // Re-establish the session cookie (may have expired) then navigate.
-    createSession(user).then((ok) => {
-      if (ok) router.replace(getNext());
-      // If not ok, Firebase is authenticated but Admin is unavailable —
-      // stay on login page so the user can retry.
-    });
-  }, [user, loading, router]);
+  // Removed auto-redirect to prevent loops - user must explicitly sign in
 
   useEffect(() => {
     if (!isSignInWithEmailLink(auth, window.location.href)) return;
@@ -82,7 +68,7 @@ export default function LoginPage() {
           setError("Session creation failed. Please try again.");
           return;
         }
-        router.replace(getNext());
+        window.location.href = getNext();
       })
       .catch((err) => setError(err.message));
   }, [router]);
@@ -101,7 +87,7 @@ export default function LoginPage() {
       .then(async (result) => {
         if (!result?.user) return;
         const ok = await createSession(result.user);
-        if (ok) router.replace(getNext());
+        if (ok) window.location.href = getNext();
         else setError("Authentication failed. Please try again.");
       })
       .catch((err: unknown) => {
@@ -113,7 +99,7 @@ export default function LoginPage() {
         ) return;
         if (err) setError((err as { message: string }).message);
       });
-  }, [router]);
+  }, []);
 
   async function handleOAuth(provider: "google" | "github") {
     console.log("[handleOAuth] Starting OAuth flow with", provider);
@@ -133,7 +119,7 @@ export default function LoginPage() {
         return;
       }
       console.log("[handleOAuth] Redirecting to:", getNext());
-      router.replace(getNext());
+      window.location.href = getNext();
     } catch (err: unknown) {
       const code = (err as { code?: string }).code;
       console.error("[handleOAuth] Error caught:", code, err);
@@ -164,7 +150,7 @@ export default function LoginPage() {
         setPending(false);
         return;
       }
-      router.replace(getNext());
+      window.location.href = getNext();
     } catch (err: unknown) {
       setError((err as { message: string }).message);
       setPending(false);
@@ -221,7 +207,7 @@ export default function LoginPage() {
         setPending(false);
         return;
       }
-      router.replace(getNext());
+      window.location.href = getNext();
     } catch (err: unknown) {
       setError((err as { message: string }).message);
       setPending(false);
