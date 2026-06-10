@@ -6,7 +6,8 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, Mail, Lock, Phone, ArrowLeft } from "lucide-react";
 import {
-  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   createUserWithEmailAndPassword,
   sendEmailVerification,
   sendSignInLinkToEmail,
@@ -63,35 +64,29 @@ export default function SignupPage() {
     setVerifyEmail(false);
   }
 
-  // Removed redirect result handler - using popup-only flow
+  useEffect(() => {
+    getRedirectResult(auth)
+      .then(async (result) => {
+        if (!result?.user) return;
+        setPending(true);
+        const ok = await createSession(result.user);
+        if (ok) {
+          window.location.href = getNext();
+        } else {
+          setError("Authentication failed. Please try again.");
+          setPending(false);
+        }
+      })
+      .catch((err: unknown) => {
+        if (err) setError((err as { message: string }).message);
+      });
+  }, []);
 
   async function handleOAuth(provider: "google" | "github") {
     setError("");
     setPending(true);
     const p = provider === "google" ? googleProvider : githubProvider;
-    try {
-      const result = await signInWithPopup(auth, p);
-      const ok = await createSession(result.user);
-      if (!ok) {
-        setError("Session creation failed. Please try again.");
-        setPending(false);
-        return;
-      }
-      window.location.href = getNext();
-    } catch (err: unknown) {
-      const code = (err as { code?: string }).code;
-      if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request" || code === "auth/user-cancelled") {
-        setPending(false);
-        return;
-      }
-      if (code === "auth/popup-blocked") {
-        setError("Please enable popups for this site to sign in.");
-        setPending(false);
-        return;
-      }
-      setError((err as { message: string }).message);
-      setPending(false);
-    }
+    await signInWithRedirect(auth, p);
   }
 
   async function handleEmailPassword(e: React.FormEvent) {
