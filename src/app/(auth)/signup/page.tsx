@@ -7,8 +7,6 @@ import { motion } from "framer-motion";
 import { Eye, EyeOff, Mail, Lock, Phone, ArrowLeft } from "lucide-react";
 import {
   signInWithPopup,
-  signInWithRedirect,
-  getRedirectResult,
   createUserWithEmailAndPassword,
   sendEmailVerification,
   sendSignInLinkToEmail,
@@ -65,56 +63,30 @@ export default function SignupPage() {
     setVerifyEmail(false);
   }
 
-  // Handle redirect result (fallback for popup-blocked)
-  useEffect(() => {
-    getRedirectResult(auth)
-      .then(async (result) => {
-        if (!result?.user) return;
-        const ok = await createSession(result.user);
-        if (ok) window.location.href = getNext();
-        else setError("Authentication failed. Please try again.");
-      })
-      .catch((err: unknown) => {
-        const code = (err as { code?: string }).code;
-        if (
-          code === "auth/popup-closed-by-user" ||
-          code === "auth/cancelled-popup-request" ||
-          code === "auth/user-cancelled"
-        ) return;
-        if (err) setError((err as { message: string }).message);
-      });
-  }, []);
+  // Removed redirect result handler - using popup-only flow
 
   async function handleOAuth(provider: "google" | "github") {
-    console.log("[handleOAuth] Starting OAuth flow with", provider);
     setError("");
     setPending(true);
     const p = provider === "google" ? googleProvider : githubProvider;
     try {
-      console.log("[handleOAuth] Attempting signInWithPopup...");
       const result = await signInWithPopup(auth, p);
-      console.log("[handleOAuth] signInWithPopup succeeded, user:", result.user.uid);
-      console.log("[handleOAuth] Creating session...");
       const ok = await createSession(result.user);
-      console.log("[handleOAuth] createSession result:", ok);
       if (!ok) {
         setError("Session creation failed. Please try again.");
         setPending(false);
         return;
       }
-      console.log("[handleOAuth] Redirecting to:", getNext());
       window.location.href = getNext();
     } catch (err: unknown) {
       const code = (err as { code?: string }).code;
-      console.error("[handleOAuth] Error caught:", code, err);
       if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request" || code === "auth/user-cancelled") {
-        console.log("[handleOAuth] User cancelled popup");
         setPending(false);
         return;
       }
       if (code === "auth/popup-blocked") {
-        console.log("[handleOAuth] Popup blocked, falling back to redirect");
-        signInWithRedirect(auth, p);
+        setError("Please enable popups for this site to sign in.");
+        setPending(false);
         return;
       }
       setError((err as { message: string }).message);
