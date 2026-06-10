@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { rooms, roomPlayers, testCases, users, submissions, coinTransactions } from "@/lib/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { getSession, unauthorized } from "@/lib/getSession";
+import { expireLobbyIfStale } from "@/lib/roomExpiry";
 import { randomUUID } from "crypto";
 
 const ENTRY_FEE = 50;
@@ -27,6 +28,10 @@ export async function GET(
 
   if (!room) {
     return NextResponse.json({ error: "Room not found" }, { status: 404 });
+  }
+
+  if (await expireLobbyIfStale(room)) {
+    return NextResponse.json({ error: "This arena link has expired" }, { status: 404 });
   }
 
   const players = await db
@@ -61,12 +66,43 @@ export async function GET(
     .where(and(eq(submissions.roomId, id), eq(submissions.userId, session.id)))
     .limit(1);
 
+  // Real final standings once the room is over — winner first, then by submission time
+  let results: {
+    userId: string;
+    username: string | null;
+    isWinner: boolean;
+    testsPassed: number;
+    testsTotal: number;
+    submittedAt: Date | null;
+  }[] = [];
+
+  if (room.status === "ended" || room.status === "cancelled") {
+    const subRows = await db
+      .select({
+        userId:      submissions.userId,
+        username:    users.username,
+        isWinner:    submissions.isWinner,
+        testsPassed: submissions.testsPassed,
+        testsTotal:  submissions.testsTotal,
+        submittedAt: submissions.submittedAt,
+      })
+      .from(submissions)
+      .leftJoin(users, eq(submissions.userId, users.id))
+      .where(eq(submissions.roomId, id));
+
+    results = subRows.sort((a, b) => {
+      if (a.isWinner !== b.isWinner) return a.isWinner ? -1 : 1;
+      return new Date(a.submittedAt ?? 0).getTime() - new Date(b.submittedAt ?? 0).getTime();
+    });
+  }
+
   return NextResponse.json({
     room,
     players,
     testCases: testCaseRows,
     mySubmission: userSubmission ?? null,
     isAdmin,
+    results,
   });
 }
 
@@ -118,11 +154,15 @@ export async function PATCH(
       .leftJoin(users, eq(roomPlayers.userId, users.id))
       .where(eq(roomPlayers.roomId, id));
 
-    // Admin account is always exempt from the entry fee and can never be kicked
-    const isAdmin = (email: string | null) => email === ADMIN_EMAIL;
+    // Exempt from the entry fee and never kicked:
+    //  - the room host (they referee, they don't compete)
+    //  - the unlimited admin account
+    const isExempt = (p: { userId: string; email: string | null }) =>
+      p.userId === room.adminId || p.email === ADMIN_EMAIL;
 
-    const broke = playerRows.filter((p) => (p.coinsBalance ?? 0) < ENTRY_FEE && !isAdmin(p.email));
-    const eligible = playerRows.filter((p) => (p.coinsBalance ?? 0) >= ENTRY_FEE || isAdmin(p.email));
+    const competitors = playerRows.filter((p) => p.userId !== room.adminId);
+    const broke = competitors.filter((p) => (p.coinsBalance ?? 0) < ENTRY_FEE && !isExempt(p));
+    const eligible = competitors.filter((p) => (p.coinsBalance ?? 0) >= ENTRY_FEE || isExempt(p));
 
     // 2. Remove broke players from the room
     for (const p of broke) {
@@ -131,20 +171,20 @@ export async function PATCH(
         .where(and(eq(roomPlayers.roomId, id), eq(roomPlayers.userId, p.userId)));
     }
 
-    // 3. Need at least 2 eligible players to run a game
+    // 3. Need at least 2 eligible competitors (host excluded) to run a game
     if (eligible.length < 2) {
       return NextResponse.json(
         {
-          error: `Not enough players with 50+ coins. ${eligible.length} player${eligible.length === 1 ? "" : "s"} can afford the entry fee — need at least 2.`,
+          error: `Not enough players with 50+ coins. ${eligible.length} competitor${eligible.length === 1 ? "" : "s"} can afford the entry fee — need at least 2 (you, the host, don't count).`,
           removedPlayers: broke.map((p) => p.username),
         },
         { status: 402 }
       );
     }
 
-    // 4. Deduct 50 coins from every eligible player (admin account is exempt)
+    // 4. Deduct 50 coins from every paying competitor
     for (const p of eligible) {
-      if (isAdmin(p.email)) continue;
+      if (isExempt(p)) continue;
 
       await db
         .update(users)
@@ -160,8 +200,8 @@ export async function PATCH(
       });
     }
 
-    // 5. Prize pool = sum of fees paid by non-admin players
-    const paidCount = eligible.filter((p) => !isAdmin(p.email)).length;
+    // 5. Prize pool = sum of fees actually paid
+    const paidCount = eligible.filter((p) => !isExempt(p)).length;
     updates.prizePool = ENTRY_FEE * paidCount;
     updates.startedAt = new Date();
   }

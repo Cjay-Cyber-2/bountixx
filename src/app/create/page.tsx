@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, Copy, AlertCircle, Plus, Trash2, Loader2, ChevronRight } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/Button";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
@@ -157,13 +158,14 @@ function SetupStep({
 /* ─── Question card ─── */
 function QuestionCard({
   q, index, total, arenaName,
-  onChange, onDelete, onAnalyze,
+  onChange, onAnswerChange, onDelete, onAnalyze,
 }: {
   q: Question;
   index: number;
   total: number;
   arenaName: string;
   onChange: (taskRaw: string) => void;
+  onAnswerChange: (answer: string) => void;
   onDelete: () => void;
   onAnalyze: () => void;
 }) {
@@ -207,15 +209,48 @@ function QuestionCard({
 
       {/* Analysis preview */}
       {q.status === "done" && q.analysis?.valid && (
-        <div className="mt-3 flex flex-wrap gap-2">
-          <span className="font-space-mono text-[9px] px-2 py-0.5 border" style={{ color: catColor, borderColor: `${catColor}44`, background: `${catColor}11` }}>
-            {q.analysis.category.toUpperCase()}
-          </span>
-          <span className="font-space-mono text-[9px] px-2 py-0.5 border" style={{ color: DIFF_COLORS[q.analysis.difficulty], borderColor: `${DIFF_COLORS[q.analysis.difficulty]}44`, background: `${DIFF_COLORS[q.analysis.difficulty]}11` }}>
-            {q.analysis.difficulty.toUpperCase()}
-          </span>
-          <span className="font-rajdhani text-xs text-haze-2 self-center">"{q.analysis.title}"</span>
-        </div>
+        <>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <span className="font-space-mono text-[9px] px-2 py-0.5 border" style={{ color: catColor, borderColor: `${catColor}44`, background: `${catColor}11` }}>
+              {q.analysis.category.toUpperCase()}
+            </span>
+            <span className="font-space-mono text-[9px] px-2 py-0.5 border" style={{ color: DIFF_COLORS[q.analysis.difficulty], borderColor: `${DIFF_COLORS[q.analysis.difficulty]}44`, background: `${DIFF_COLORS[q.analysis.difficulty]}11` }}>
+              {q.analysis.difficulty.toUpperCase()}
+            </span>
+            <span className="font-rajdhani text-xs text-haze-2 self-center">"{q.analysis.title}"</span>
+          </div>
+
+          {/* AI answer — visible and editable before the room is created */}
+          {q.analysis.category !== "coding" && (
+            <div className="mt-3 border border-crown/30 bg-crown/5 p-3">
+              <label
+                htmlFor={`answer-${q.localId}`}
+                className="font-space-mono text-[9px] text-crown tracking-widest uppercase block mb-1.5"
+              >
+                Correct Answer (AI) — edit if wrong
+              </label>
+              <input
+                id={`answer-${q.localId}`}
+                type="text"
+                value={q.analysis.canonicalAnswer ?? ""}
+                onChange={(e) => onAnswerChange(e.target.value)}
+                placeholder="The answer players must match"
+                className="w-full h-9 px-3 bg-cosmos border border-cosmos-4 text-haze font-rajdhani text-sm focus:outline-none focus:border-crown transition-colors"
+                style={{ borderRadius: 0 }}
+              />
+              <p className="font-space-mono text-[8px] text-haze-3 mt-1.5">
+                Players win by matching this exactly (case-insensitive). Fix it now if the AI got it wrong.
+              </p>
+            </div>
+          )}
+
+          {/* Coding: AI-generated tests summary */}
+          {q.analysis.category === "coding" && (
+            <p className="font-space-mono text-[9px] text-haze-3 mt-2">
+              AI generated {q.analysis.publicTests?.length ?? 0} public + {q.analysis.hiddenTests?.length ?? 0} hidden test cases — players win by passing them.
+            </p>
+          )}
+        </>
       )}
 
       <button
@@ -247,6 +282,7 @@ function QuestionsStep({
   onAdd,
   onDelete,
   onChange,
+  onAnswerChange,
   onNext,
   onBack,
 }: {
@@ -256,6 +292,7 @@ function QuestionsStep({
   onAdd: () => void;
   onDelete: (localId: string) => void;
   onChange: (localId: string, taskRaw: string) => void;
+  onAnswerChange: (localId: string, answer: string) => void;
   onNext: () => void;
   onBack: () => void;
 }) {
@@ -273,6 +310,7 @@ function QuestionsStep({
             total={questions.length}
             arenaName={arenaName}
             onChange={(taskRaw) => onChange(q.localId, taskRaw)}
+            onAnswerChange={(answer) => onAnswerChange(q.localId, answer)}
             onDelete={() => onDelete(q.localId)}
             onAnalyze={() => onAnalyze(q.localId)}
           />
@@ -354,6 +392,11 @@ function ReviewStep({
               </div>
               <p className="font-rajdhani font-bold text-sm text-haze mb-1">"{a.title}"</p>
               <p className="font-rajdhani text-xs text-haze-2 line-clamp-2">{a.taskNormalised}</p>
+              {a.category !== "coding" && a.canonicalAnswer && (
+                <p className="font-space-mono text-[9px] text-crown mt-1.5 truncate">
+                  ANSWER: <span className="text-haze">{a.canonicalAnswer}</span>
+                </p>
+              )}
               {a.publicTests && <p className="font-space-mono text-[9px] text-haze-3 mt-1">{a.publicTests.length} public · {a.hiddenTests?.length ?? 0} hidden tests</p>}
             </div>
           );
@@ -401,6 +444,14 @@ function LobbyView({ room }: { room: CreatedRoom }) {
             {copied ? <Check size={14} /> : <Copy size={14} />}
             {copied ? "COPIED!" : "COPY"}
           </button>
+        </div>
+
+        {/* QR — white quiet zone so phone cameras can read it on the dark UI */}
+        <div className="flex flex-col items-center gap-2 mt-5">
+          <div className="bg-white p-2.5" style={{ lineHeight: 0 }}>
+            <QRCodeSVG value={inviteLink} size={132} level="M" bgColor="#FFFFFF" fgColor="#0B0817" />
+          </div>
+          <p className="font-space-mono text-[9px] text-haze-3 tracking-widest">SCAN TO JOIN · EXPIRES IN 30 MIN</p>
         </div>
       </div>
 
@@ -561,6 +612,11 @@ export default function CreatePage() {
               onAdd={() => setQuestions((prev) => [...prev, { localId: crypto.randomUUID(), taskRaw: "", status: "idle" }])}
               onDelete={(id) => setQuestions((prev) => prev.filter((q) => q.localId !== id))}
               onChange={(id, taskRaw) => setQuestions((prev) => prev.map((q) => q.localId === id ? { ...q, taskRaw, status: q.status === "done" || q.status === "invalid" ? "idle" : q.status } : q))}
+              onAnswerChange={(id, answer) => setQuestions((prev) => prev.map((q) =>
+                q.localId === id && q.analysis
+                  ? { ...q, analysis: { ...q.analysis, canonicalAnswer: answer } }
+                  : q
+              ))}
               onNext={() => setStep("review")}
               onBack={() => setStep("setup")}
             />

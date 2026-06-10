@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Users, Copy, Check, LogIn } from "lucide-react";
+import { Users, Copy, Check, LogIn, QrCode } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -74,7 +75,7 @@ function formatTimer(secs: number | null): string {
 }
 
 /* ─── Player row ─── */
-function PlayerRow({ player }: { player: Player }) {
+function PlayerRow({ player, isHost = false }: { player: Player; isHost?: boolean }) {
   const isReady = player.status === "ready";
   return (
     <motion.div
@@ -84,6 +85,7 @@ function PlayerRow({ player }: { player: Player }) {
       exit={{ opacity: 0, x: 20 }}
       transition={{ type: "spring", damping: 20, stiffness: 300 }}
       className="flex items-center gap-3 px-4 py-3 bg-cosmos-2 border border-cosmos-4"
+      style={isHost ? { borderColor: "rgba(240,165,0,0.35)" } : undefined}
     >
       {/* Avatar */}
       <div className="w-8 h-8 rounded-full bg-cosmos-3 border border-cosmos-4 flex items-center justify-center shrink-0">
@@ -102,19 +104,23 @@ function PlayerRow({ player }: { player: Player }) {
         )}
       </div>
 
-      {/* Ready indicator */}
-      <div className="flex items-center gap-1.5">
-        <span
-          className={`w-2 h-2 rounded-full ${isReady ? "bg-success dot-live" : "bg-haze-3"}`}
-        />
-        <span
-          className={`font-space-mono text-[10px] ${
-            isReady ? "text-success" : "text-haze-3"
-          }`}
-        >
-          {isReady ? "READY" : "WAITING"}
-        </span>
-      </div>
+      {/* Status: HOST badge or ready indicator */}
+      {isHost ? (
+        <span className="font-space-mono text-[10px] text-crown tracking-widest">HOST</span>
+      ) : (
+        <div className="flex items-center gap-1.5">
+          <span
+            className={`w-2 h-2 rounded-full ${isReady ? "bg-success dot-live" : "bg-haze-3"}`}
+          />
+          <span
+            className={`font-space-mono text-[10px] ${
+              isReady ? "text-success" : "text-haze-3"
+            }`}
+          >
+            {isReady ? "READY" : "WAITING"}
+          </span>
+        </div>
+      )}
     </motion.div>
   );
 }
@@ -274,8 +280,11 @@ export default function LobbyPage() {
 
   const { room, players, isAdmin } = data;
   const catColor = CAT_COLORS[room.category ?? "coding"] ?? "#FF6B1A";
-  const readyCount = players.filter((p) => p.status === "ready").length;
-  const allReady = players.length >= 2 && readyCount === players.length;
+  // The host referees — they don't count as a player anywhere
+  const host = players.find((p) => p.userId === room.adminId);
+  const competitors = players.filter((p) => p.userId !== room.adminId);
+  const readyCount = competitors.filter((p) => p.status === "ready").length;
+  const allReady = competitors.length >= 2 && readyCount === competitors.length;
   const canStart = isAdmin && allReady;
   const inviteLink = typeof window !== "undefined"
     ? `${window.location.origin}/join/${roomId}`
@@ -351,7 +360,7 @@ export default function LobbyPage() {
         <motion.div variants={slideUp} className="flex items-center justify-between bg-void/10 border border-void/30 px-4 py-3 mb-6">
           <div>
             <p className="font-space-mono text-[9px] text-haze-3 tracking-widest uppercase">Current Prize Pool</p>
-            <p className="font-orbitron font-black text-xl text-void mt-0.5">{players.length * 50} coins</p>
+            <p className="font-orbitron font-black text-xl text-void mt-0.5">{competitors.length * 50} coins</p>
           </div>
           <div className="text-right">
             <p className="font-space-mono text-[9px] text-haze-3">Max: {room.playerCap * 50} coins</p>
@@ -368,24 +377,25 @@ export default function LobbyPage() {
             <div className="flex items-center gap-1.5">
               <Users size={12} className="text-haze-3" />
               <span className="font-space-mono text-[10px] text-haze-3">
-                {players.length} / {room.playerCap}
+                {competitors.length} / {room.playerCap}
               </span>
             </div>
           </div>
 
           <div className="flex flex-col gap-2">
             <AnimatePresence mode="popLayout">
-              {players.map((player) => (
+              {host && <PlayerRow key={host.id} player={host} isHost />}
+              {competitors.map((player) => (
                 <PlayerRow key={player.id} player={player} />
               ))}
             </AnimatePresence>
-            {players.length < room.playerCap && (
+            {competitors.length < room.playerCap && (
               <div className="flex items-center gap-3 px-4 py-3 bg-cosmos-2/50 border border-dashed border-cosmos-4">
                 <div className="w-8 h-8 rounded-full bg-cosmos-3 border border-dashed border-cosmos-4 flex items-center justify-center shrink-0">
                   <span className="text-haze-3 text-xs">+</span>
                 </div>
                 <p className="font-space-mono text-[10px] text-haze-3">
-                  Waiting for players... ({players.length}/{room.playerCap})
+                  Waiting for players... ({competitors.length}/{room.playerCap})
                 </p>
               </div>
             )}
@@ -417,7 +427,7 @@ export default function LobbyPage() {
               disabled={!canStart || starting}
             >
               <LogIn size={16} aria-hidden="true" />
-              {canStart ? "START ARENA" : `Waiting for all players to be ready (${readyCount}/${players.length})`}
+              {canStart ? "START ARENA" : `Waiting for all players to be ready (${readyCount}/${competitors.length})`}
             </Button>
           )}
         </motion.div>
@@ -430,32 +440,53 @@ export default function LobbyPage() {
           <p className="font-space-mono text-[10px] text-void tracking-widest mb-3 uppercase">
             Invite Players
           </p>
-          <div className="flex items-center gap-2">
-            <input
-              readOnly
-              value={inviteLink}
-              className="flex-1 h-10 px-3 bg-cosmos border border-cosmos-4 text-haze-2 font-space-mono text-[11px] focus:outline-none truncate"
-              style={{ borderRadius: 0 }}
-              aria-label="Invite link"
-            />
-            <button
-              onClick={handleCopy}
-              className="h-10 px-4 bg-cosmos-3 border border-cosmos-4 text-haze-2 hover:text-haze hover:border-void transition-colors flex items-center gap-1.5 shrink-0"
-              aria-label="Copy invite link"
-            >
-              {copied ? (
-                <Check size={14} className="text-success" />
-              ) : (
-                <Copy size={14} />
-              )}
-              <span className="font-space-mono text-[10px]">
-                {copied ? "COPIED" : "COPY"}
-              </span>
-            </button>
+          <div className="flex flex-col sm:flex-row gap-5">
+            {/* Link + copy */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <input
+                  readOnly
+                  value={inviteLink}
+                  className="flex-1 h-10 px-3 bg-cosmos border border-cosmos-4 text-haze-2 font-space-mono text-[11px] focus:outline-none truncate"
+                  style={{ borderRadius: 0 }}
+                  aria-label="Invite link"
+                />
+                <button
+                  onClick={handleCopy}
+                  className="h-10 px-4 bg-cosmos-3 border border-cosmos-4 text-haze-2 hover:text-haze hover:border-void transition-colors flex items-center gap-1.5 shrink-0"
+                  aria-label="Copy invite link"
+                >
+                  {copied ? (
+                    <Check size={14} className="text-success" />
+                  ) : (
+                    <Copy size={14} />
+                  )}
+                  <span className="font-space-mono text-[10px]">
+                    {copied ? "COPIED" : "COPY"}
+                  </span>
+                </button>
+              </div>
+              <p className="font-space-mono text-[9px] text-haze-3 mt-2">
+                Share this link to invite players
+              </p>
+            </div>
+
+            {/* QR code — white quiet zone so phone cameras can read it on the dark UI */}
+            <div className="flex sm:flex-col items-center gap-3 sm:gap-2 shrink-0">
+              <div className="bg-white p-2.5" style={{ lineHeight: 0 }}>
+                <QRCodeSVG
+                  value={inviteLink}
+                  size={108}
+                  level="M"
+                  bgColor="#FFFFFF"
+                  fgColor="#0B0817"
+                />
+              </div>
+              <p className="font-space-mono text-[9px] text-haze-3 flex items-center gap-1.5">
+                <QrCode size={11} aria-hidden /> SCAN TO JOIN
+              </p>
+            </div>
           </div>
-          <p className="font-space-mono text-[9px] text-haze-3 mt-2">
-            Share this link to invite players
-          </p>
         </motion.div>
       </motion.div>
     </AppLayout>

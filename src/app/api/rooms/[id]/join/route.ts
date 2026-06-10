@@ -3,8 +3,9 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { rooms, roomPlayers } from "@/lib/schema";
-import { eq, count, and } from "drizzle-orm";
+import { eq, ne, count, and } from "drizzle-orm";
 import { getSession, unauthorized } from "@/lib/getSession";
+import { expireLobbyIfStale } from "@/lib/roomExpiry";
 import { randomUUID } from "crypto";
 
 export async function POST(
@@ -23,6 +24,9 @@ export async function POST(
     .limit(1);
 
   if (!room) return NextResponse.json({ error: "Room not found" }, { status: 404 });
+  if (await expireLobbyIfStale(room)) {
+    return NextResponse.json({ error: "This invite link has expired" }, { status: 404 });
+  }
   if (room.status !== "lobby") {
     return NextResponse.json({ error: "Room is no longer accepting players" }, { status: 409 });
   }
@@ -38,11 +42,14 @@ export async function POST(
     return NextResponse.json({ message: "Already in this room" });
   }
 
-  // Check cap
+  // Check cap — the host doesn't count as a player, so only count competitors
   const [{ count: playerCount }] = await db
     .select({ count: count() })
     .from(roomPlayers)
-    .where(eq(roomPlayers.roomId, roomId));
+    .where(and(
+      eq(roomPlayers.roomId, roomId),
+      ne(roomPlayers.userId, room.adminId)
+    ));
 
   if (playerCount >= room.playerCap) {
     return NextResponse.json({ error: "Room is full" }, { status: 409 });

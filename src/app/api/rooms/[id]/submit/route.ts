@@ -76,6 +76,10 @@ export async function POST(
   if (room.status !== "live") {
     return NextResponse.json({ error: "Room is not live" }, { status: 409 });
   }
+  // The host set the answer — they referee, they can't submit
+  if (room.adminId === session.id) {
+    return NextResponse.json({ error: "The host cannot compete in their own arena" }, { status: 403 });
+  }
 
   // Confirm player is in the room
   const [playerRow] = await db
@@ -92,6 +96,15 @@ export async function POST(
     language?: string;
     runTestsOnly?: boolean;
   };
+
+  // Anti-cheat forfeit: mark the player disqualified, no submission recorded
+  if (body.answer === "__forfeit__") {
+    await db
+      .update(roomPlayers)
+      .set({ status: "forfeited", submittedAt: new Date() })
+      .where(and(eq(roomPlayers.roomId, roomId), eq(roomPlayers.userId, session.id)));
+    return NextResponse.json({ forfeited: true });
+  }
 
   // ── Coding room ──────────────────────────────────────────────────────────
   if (room.category === "coding") {
@@ -168,14 +181,17 @@ export async function POST(
   // ── Trivia / Logic / Math rooms ──────────────────────────────────────────
   if (!body.answer) return NextResponse.json({ error: "Answer is required" }, { status: 400 });
 
-  // Get canonical answer (stored in room.taskNormalised as a special field, or check separately)
-  // For now, admin can mark answers; simple string comparison
-  const canonicalAnswer = room.taskNormalised?.includes("ANSWER:")
-    ? room.taskNormalised.split("ANSWER:")[1]?.split("\n")[0]?.trim()
-    : null;
+  // Judge against the canonical answer the creator approved (and possibly edited)
+  // before the room was created. Legacy fallback: "ANSWER:" embedded in taskNormalised.
+  const canonicalAnswer =
+    room.canonicalAnswer?.trim() ||
+    (room.taskNormalised?.includes("ANSWER:")
+      ? room.taskNormalised.split("ANSWER:")[1]?.split("\n")[0]?.trim()
+      : null);
 
+  const normalise = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
   const isCorrect = canonicalAnswer
-    ? body.answer.trim().toLowerCase() === canonicalAnswer.toLowerCase()
+    ? normalise(body.answer) === normalise(canonicalAnswer)
     : false;
 
   const [existingWinner] = await db

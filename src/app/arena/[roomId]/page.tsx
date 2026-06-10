@@ -785,7 +785,7 @@ export default function ArenaPage() {
                 players={players}
                 adminId={room.adminId}
                 roomId={roomId}
-                onEnded={() => router.replace(`/arena/${roomId}/results`)}
+                onEnded={() => router.replace("/dashboard")}
               />
             ) : isCoding ? (
               <CodeEditor
