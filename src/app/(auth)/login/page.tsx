@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, Mail, Lock, Phone, ArrowLeft } from "lucide-react";
 import {
+  signInWithPopup,
   signInWithRedirect,
   getRedirectResult,
   signInWithEmailAndPassword,
@@ -102,7 +103,29 @@ export default function LoginPage() {
     setError("");
     setPending(true);
     const p = provider === "google" ? googleProvider : githubProvider;
-    await signInWithRedirect(auth, p);
+    try {
+      const result = await signInWithPopup(auth, p);
+      const ok = await createSession(result.user);
+      if (ok) {
+        window.location.href = getNext();
+      } else {
+        setError("Sign-in failed. Please try again.");
+        setPending(false);
+      }
+    } catch (err: unknown) {
+      const code = (err as { code?: string }).code;
+      if (code === "auth/popup-blocked") {
+        // Popup blocked by browser — fall back to redirect
+        await signInWithRedirect(auth, p);
+        return;
+      }
+      if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") {
+        setPending(false);
+        return;
+      }
+      setError((err as { message: string }).message ?? "Sign-in failed. Please try again.");
+      setPending(false);
+    }
   }
 
   async function handleEmailPassword(e: React.FormEvent) {
@@ -137,7 +160,12 @@ export default function LoginPage() {
       window.localStorage.setItem("emailForSignIn", email);
       setLinkSent(true);
     } catch (err: unknown) {
-      setError((err as { message: string }).message);
+      const code = (err as { code?: string }).code;
+      if (code === "auth/operation-not-allowed") {
+        setError("Email link sign-in is not enabled on this project. Please use password or Google sign-in.");
+      } else {
+        setError((err as { message: string }).message ?? "Failed to send link. Please try again.");
+      }
     } finally {
       setPending(false);
     }

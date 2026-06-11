@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, Mail, Lock, Phone, ArrowLeft } from "lucide-react";
 import {
+  signInWithPopup,
   signInWithRedirect,
   getRedirectResult,
   createUserWithEmailAndPassword,
@@ -86,7 +87,28 @@ export default function SignupPage() {
     setError("");
     setPending(true);
     const p = provider === "google" ? googleProvider : githubProvider;
-    await signInWithRedirect(auth, p);
+    try {
+      const result = await signInWithPopup(auth, p);
+      const ok = await createSession(result.user);
+      if (ok) {
+        window.location.href = getNext();
+      } else {
+        setError("Sign-in failed. Please try again.");
+        setPending(false);
+      }
+    } catch (err: unknown) {
+      const code = (err as { code?: string }).code;
+      if (code === "auth/popup-blocked") {
+        await signInWithRedirect(auth, p);
+        return;
+      }
+      if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") {
+        setPending(false);
+        return;
+      }
+      setError((err as { message: string }).message ?? "Sign-in failed. Please try again.");
+      setPending(false);
+    }
   }
 
   async function handleEmailPassword(e: React.FormEvent) {

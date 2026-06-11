@@ -1,25 +1,22 @@
 "use client";
 
-import Link from "next/link";
 import { BountixxLogo } from "@/components/BountixxLogo";
 
 export function Footer() {
   return (
     <footer className="relative bg-cosmos overflow-hidden" style={{ borderTop: "1px solid var(--border-1)" }}>
       <div className="max-w-[1280px] mx-auto px-6 lg:px-14 py-16 relative">
-        <div className="grid grid-cols-1 md:grid-cols-[auto_1fr_auto] gap-12 items-start mb-14">
-          {/* Brand */}
-          <div className="max-w-[300px]">
-            <BountixxLogo size={32} showWordmark className="mb-4 text-haze" />
-            <p className="font-rajdhani text-sm text-haze-2 leading-relaxed">
-              The AI-powered multiplayer challenge arena. Drop any challenge. One winner claims the bounty.
-            </p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center mb-14">
+          {/* Left: empty column for balance */}
+          <div />
+
+          {/* Centre: Logo */}
+          <div className="flex justify-center">
+            <BountixxLogo size={32} showWordmark className="text-haze" />
           </div>
 
-          <div className="hidden md:block" />
-
-          {/* Socials */}
-          <div className="flex gap-3 md:pt-1">
+          {/* Right: Socials */}
+          <div className="flex justify-center md:justify-end gap-3">
             <SocialIcon label="Twitter / X" href="#">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />

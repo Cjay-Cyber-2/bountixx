@@ -60,14 +60,14 @@ export function FinalCTA() {
           initial={{ opacity: 0, y: 16 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.55, delay: 0.25 }}
-          className="flex flex-col items-center gap-5"
+          className="flex flex-col items-center gap-5 w-full"
         >
-          <Link href="/signup">
+          <Link href="/signup" className="block w-full sm:w-auto">
             <Button
               variant="primary"
               size="lg"
               magnetic
-              className="text-base px-12 h-[56px] gap-3 group"
+              className="w-full sm:w-auto text-base px-12 h-[56px] gap-3 group justify-center"
               style={{
                 background: "var(--void)",
                 borderColor: "var(--void)",
@@ -81,7 +81,7 @@ export function FinalCTA() {
 
           <Link
             href="/login"
-            className="cursor-target font-space-mono text-[11px] text-haze-3 hover:text-haze-2 transition-colors tracking-[2px] uppercase"
+            className="cursor-target font-space-mono text-[11px] text-haze-2 hover:text-haze transition-colors tracking-[2px] uppercase"
           >
             Already competing? Sign in →
           </Link>
