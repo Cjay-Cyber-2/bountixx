@@ -697,21 +697,21 @@ export default function ArenaPage() {
   const isCoding = room.category === "coding";
 
   return (
-    <div className="min-h-screen flex flex-col bg-cosmos select-none" onContextMenu={(e) => e.preventDefault()}>
+    <div className="min-h-[100dvh] flex flex-col bg-cosmos select-none" onContextMenu={(e) => e.preventDefault()}>
       <AnimatePresence>{disqualified && <DQBanner />}</AnimatePresence>
       <AnimatePresence>{timeUp && <TimeUpBanner />}</AnimatePresence>
 
       {/* ── Top bar ── */}
-      <div className="fixed top-0 inset-x-0 z-30 flex items-center justify-between px-6 h-14 bg-cosmos-2 border-b border-cosmos-4">
-        <div className="flex items-center gap-3 min-w-0">
-          <span className="font-rajdhani font-bold text-sm text-haze truncate max-w-[180px]">{room.name}</span>
+      <div className="fixed top-0 inset-x-0 z-30 flex items-center justify-between gap-2 px-4 md:px-6 h-14 bg-cosmos-2 border-b border-cosmos-4">
+        <div className="flex items-center gap-2 md:gap-3 min-w-0">
+          <span className="font-rajdhani font-bold text-sm text-haze truncate max-w-[120px] sm:max-w-[180px]">{room.name}</span>
           {room.category && (
-            <span className="font-space-mono text-[10px] px-2 py-0.5 border shrink-0" style={{ color: catColor, borderColor: `${catColor}40`, backgroundColor: `${catColor}15` }}>
+            <span className="hidden sm:inline-block font-space-mono text-[10px] px-2 py-0.5 border shrink-0" style={{ color: catColor, borderColor: `${catColor}40`, backgroundColor: `${catColor}15` }}>
               {room.category.toUpperCase()}
             </span>
           )}
           {room.difficulty && (
-            <Chip color={DIFF_CHIP_COLOR[room.difficulty]} size="xs" className="shrink-0">
+            <Chip color={DIFF_CHIP_COLOR[room.difficulty]} size="xs" className="hidden md:inline-flex shrink-0">
               {room.difficulty.toUpperCase()}
             </Chip>
           )}
@@ -720,17 +720,17 @@ export default function ArenaPage() {
         {/* Timer — only shown when the room was created with a timer */}
         {hasTimer && timeLeft !== null
           ? <Timer seconds={timeLeft} />
-          : <span className="font-space-mono text-[10px] text-haze-3 tracking-widest">NO TIMER</span>
+          : <span className="font-space-mono text-[10px] text-haze-3 tracking-widest shrink-0">NO TIMER</span>
         }
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
           <Users size={14} className="text-haze-3" aria-hidden="true" />
           <span className="font-space-mono text-xs text-haze-3">{players.filter(p => p.userId !== room.adminId).length}/{room.playerCap}</span>
         </div>
       </div>
 
       {/* ── Content ── */}
-      <div className="flex flex-col lg:flex-row flex-1 pt-14 h-[calc(100vh-56px)]">
+      <div className="flex flex-col lg:flex-row flex-1 pt-14 lg:h-[calc(100dvh-56px)]">
 
         {/* Challenge panel */}
         <div className="w-full lg:w-[28%] lg:max-w-[300px] border-b lg:border-b-0 lg:border-r border-cosmos-4 flex flex-col bg-cosmos-2 overflow-y-auto shrink-0">
