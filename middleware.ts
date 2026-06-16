@@ -6,6 +6,15 @@ const PUBLIC_PATHS = ["/", "/login", "/signup", "/api/auth"];
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  // Local dev only: set AUTH_BYPASS_DEV=true in .env.local to skip the cookie gate.
+  // Never enable in production — it disables all route protection.
+  if (
+    process.env.AUTH_BYPASS_DEV === "true" &&
+    process.env.NODE_ENV !== "production"
+  ) {
+    return NextResponse.next();
+  }
+
   const isPublic = PUBLIC_PATHS.some(
     (p) => pathname === p || pathname.startsWith(p + "/")
   );
