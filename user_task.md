@@ -42,6 +42,17 @@ Apply to **Production** and **Preview**.
 |----------|-----|
 | `DATABASE_URL` | Neon Postgres — required |
 
+### ADD one of these (required for **Analyze with AI**)
+
+The create-arena flow calls `/api/rooms/analyse`. Set **at least one** key in Vercel (Production + Preview), then **redeploy**.
+
+| Variable | Where to get it | Notes |
+|----------|-----------------|-------|
+| `GEMINI_API_KEY` | [Google AI Studio](https://aistudio.google.com/apikey) | **Preferred** — checked first if set |
+| `GROQ_API_KEY` | [Groq Console](https://console.groq.com/keys) | Used when `GEMINI_API_KEY` is not set |
+
+If neither is set, **Analyze with AI** shows an error about missing keys (not a generic network failure).
+
 ### REMOVE or leave unset (auth no longer uses Firebase)
 
 These were for the old Firebase auth system. **Clerk replaced them for login.**
@@ -169,6 +180,7 @@ Open `http://localhost:3000/login` — you should see **your** Bountixx UI, not 
 | Google button does nothing | Enable Google in Clerk Dashboard → Social connections |
 | Lands on login after Google | Check Clerk paths + `NEXT_PUBLIC_CLERK_*_REDIRECT_URL` vars |
 | Stuck on “Completing sign-in…” then `/signup#/continue` | Redeploy latest `main`; add redirect URLs in Clerk Dashboard; complete `/signup/continue` (terms checkbox if required) |
+| **Analyze with AI** fails / “could not reach service” | Add `GEMINI_API_KEY` or `GROQ_API_KEY` in Vercel → redeploy. If the key is wrong, the UI now shows the provider’s error message |
 
 ### D. Browser DevTools check
 
@@ -205,6 +217,7 @@ NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL=/dashboard
 NEXT_PUBLIC_CLERK_SIGN_IN_FORCE_REDIRECT_URL=/dashboard
 NEXT_PUBLIC_CLERK_SIGN_UP_FORCE_REDIRECT_URL=/dashboard
 NEXT_PUBLIC_APP_URL=https://YOUR-DOMAIN.com
+GEMINI_API_KEY=your-google-ai-studio-key
 ```
 
 Then **remove** the Firebase auth variables listed in Step 1 unless you need push notifications.

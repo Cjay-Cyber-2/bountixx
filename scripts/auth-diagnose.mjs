@@ -29,6 +29,8 @@ const RECOMMENDED_CLERK = [
 
 const REQUIRED_OTHER = ["DATABASE_URL"];
 
+const AI_KEYS = ["GEMINI_API_KEY", "GROQ_API_KEY"];
+
 const LEGACY_FIREBASE_AUTH = [
   "FIREBASE_PROJECT_ID",
   "FIREBASE_CLIENT_EMAIL",
@@ -97,7 +99,24 @@ function checkEnvVars() {
     console.log(`${ok ? "✓" : "✗"} ${key}: ${ok ? mask(val) : "MISSING"}`);
   }
 
-  console.log("\n=== 4. Legacy Firebase auth vars (should be REMOVED) ===\n");
+  console.log("\n=== 4. AI analysis (required for Create → Analyze with AI) ===\n");
+  const gemini = process.env.GEMINI_API_KEY?.trim();
+  const groq = process.env.GROQ_API_KEY?.trim();
+  if (gemini) {
+    console.log(`✓ GEMINI_API_KEY: ${mask(gemini)} (primary provider)`);
+  } else {
+    console.log("✗ GEMINI_API_KEY: not set");
+  }
+  if (groq) {
+    console.log(`✓ GROQ_API_KEY: ${mask(groq)}${gemini ? " (unused while Gemini is set)" : " (active provider)"}`);
+  } else {
+    console.log("✗ GROQ_API_KEY: not set");
+  }
+  if (!gemini && !groq) {
+    console.log("  ⚠ Analyze with AI will fail until GEMINI_API_KEY or GROQ_API_KEY is set in Vercel");
+  }
+
+  console.log("\n=== 5. Legacy Firebase auth vars (should be REMOVED) ===\n");
   for (const key of LEGACY_FIREBASE_AUTH) {
     const val = process.env[key];
     if (val) {
@@ -111,7 +130,7 @@ function checkEnvVars() {
 }
 
 async function checkRoutes() {
-  console.log("\n=== 5. Route checks ===\n");
+  console.log("\n=== 6. Route checks ===\n");
   try {
     const login = await fetch(`${BASE_URL}/login`, { redirect: "manual" });
     console.log(`GET /login → ${login.status}${login.status === 200 ? " (custom UI should load)" : ""}`);

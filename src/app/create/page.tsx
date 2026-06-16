@@ -9,6 +9,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { APP_GUTTERS } from "@/components/landing/_section";
 import { Button } from "@/components/ui/Button";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
+import { readApiError } from "@/lib/readApiError";
 
 /* ─── Types ─── */
 type Category = "coding" | "trivia" | "logic" | "math" | "writing" | "design" | "meme";
@@ -504,12 +505,20 @@ export default function CreatePage() {
       });
 
       if (!res.ok) {
-        const err = await res.json() as { error?: string };
-        setQuestions((prev) => prev.map((x) => x.localId === localId ? { ...x, status: "error", error: err.error ?? "Analysis failed" } : x));
+        const error = await readApiError(res);
+        setQuestions((prev) => prev.map((x) => x.localId === localId ? { ...x, status: "error", error } : x));
         return;
       }
 
-      const { analysis } = await res.json() as { analysis: AIAnalysis };
+      let analysis: AIAnalysis;
+      try {
+        const data = await res.json() as { analysis?: AIAnalysis };
+        if (!data.analysis) throw new Error("Missing analysis");
+        analysis = data.analysis;
+      } catch {
+        setQuestions((prev) => prev.map((x) => x.localId === localId ? { ...x, status: "error", error: "Invalid response from server" } : x));
+        return;
+      }
 
       if (!analysis.valid) {
         setQuestions((prev) => prev.map((x) => x.localId === localId ? { ...x, status: "invalid", analysis } : x));
@@ -517,8 +526,12 @@ export default function CreatePage() {
       }
 
       setQuestions((prev) => prev.map((x) => x.localId === localId ? { ...x, status: "done", analysis } : x));
-    } catch {
-      setQuestions((prev) => prev.map((x) => x.localId === localId ? { ...x, status: "error", error: "Could not reach AI service" } : x));
+    } catch (err) {
+      const message =
+        err instanceof TypeError
+          ? "Network error — check your connection and try again"
+          : "Could not reach AI service";
+      setQuestions((prev) => prev.map((x) => x.localId === localId ? { ...x, status: "error", error: message } : x));
     }
   }, [questions, setupData]);
 
