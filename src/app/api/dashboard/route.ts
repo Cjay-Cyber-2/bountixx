@@ -52,11 +52,12 @@ export async function GET() {
   if (recentRoomIds.length > 0) {
     const roomDetails = await db
       .select({
-        id:       rooms.id,
-        name:     rooms.name,
-        category: rooms.category,
-        status:   rooms.status,
-        endedAt:  rooms.endedAt,
+        id:        rooms.id,
+        name:      rooms.name,
+        category:  rooms.category,
+        status:    rooms.status,
+        endedAt:   rooms.endedAt,
+        prizePool: rooms.prizePool,
       })
       .from(rooms)
       .where(inArray(rooms.id, recentRoomIds));
@@ -79,7 +80,7 @@ export async function GET() {
     recentRooms = roomDetails.map((room) => {
       const sub = submissionsMap.get(room.id);
       const place = sub?.isWinner ? "1st" : "—";
-      const coins = sub?.isWinner ? 100 : 0;
+      const coins = sub?.isWinner ? (room.prizePool ?? 0) : 0;
       const joinedAt = recentRoomRows.find((r) => r.roomId === room.id)?.joinedAt;
 
       return {

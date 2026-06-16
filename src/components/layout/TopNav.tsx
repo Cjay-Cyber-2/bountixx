@@ -9,6 +9,7 @@ import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { BountixxLogo } from "@/components/BountixxLogo";
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
@@ -37,7 +38,7 @@ export function TopNav() {
 
   useEffect(() => {
     if (!user) return;
-    fetch("/api/user/me")
+    fetchWithAuth("/api/user/me")
       .then((r) => r.json())
       .then((d) => d.user && setProfile(d.user))
       .catch(() => {});
@@ -67,9 +68,8 @@ export function TopNav() {
 
       onRegistered(messaging, async (fid: string) => {
         if (!fid) return;
-        await fetch("/api/notifications/subscribe", {
+        await fetchWithAuth("/api/notifications/subscribe", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ token: fid }),
         });
         setNotifEnabled(true);

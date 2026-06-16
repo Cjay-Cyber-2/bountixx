@@ -52,7 +52,7 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }
       animate="show"
       exit="exit"
       className={cn(
-        "flex items-start gap-3 p-4 min-w-[300px] max-w-[380px]",
+        "flex items-start gap-3 p-4 w-full sm:w-auto sm:min-w-[300px] sm:max-w-[380px]",
         "bg-cosmos-2 border border-cosmos-4 border-l-4",
         border
       )}
@@ -92,7 +92,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     <ToastContext.Provider value={{ toast }}>
       {children}
       <div
-        className="fixed bottom-6 right-6 z-[9999] flex flex-col gap-2 pointer-events-none"
+        className="fixed bottom-6 inset-x-4 sm:inset-x-auto sm:right-6 z-[9999] flex flex-col gap-2 pointer-events-none"
         aria-live="polite"
         aria-atomic="false"
       >

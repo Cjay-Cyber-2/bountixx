@@ -8,18 +8,21 @@ import { Button } from "@/components/ui/Button";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { CrownMark } from "@/components/BountixxLogo";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
+import { useToast } from "@/components/ui/Toast";
 
 type FilterTab = "ALL" | "EARNED" | "SPENT" | "PURCHASED";
 type PaymentMethod = "paystack" | "stripe";
+type Transaction = { type: string; desc: string; amount: number; date: string };
 
-const TRANSACTIONS = [
-  { type: "earned", desc: "Won String Reversal Clash", amount: +300, date: "Jun 4" },
-  { type: "spent", desc: "Created arena", amount: -0, date: "Jun 4" },
-  { type: "earned", desc: "Won Regex Warfare", amount: +300, date: "Jun 2" },
-  { type: "purchased", desc: "Elite bundle — 750 coins", amount: +750, date: "May 30" },
-  { type: "spent", desc: "Created 3 arenas", amount: -0, date: "May 28" },
-  { type: "earned", desc: "Placed 2nd in Math Sprint", amount: +150, date: "May 25" },
-];
+// Maps a raw transaction type to a readable label when no reference is stored.
+const TX_LABELS: Record<string, string> = {
+  earned: "Bounty won",
+  spent: "Arena created",
+  purchased: "Coins purchased",
+  refund: "Refund",
+  bonus: "Bonus reward",
+  gifted: "Coins gifted",
+};
 
 const BUNDLES = [
   { id: "starter",    label: "Starter",    coins: 100,  priceNGN: "₦750",    priceUSD: "$0.99",  popular: false },
@@ -30,10 +33,12 @@ const BUNDLES = [
 ];
 
 export default function WalletPage() {
+  const { toast } = useToast();
   const [filter, setFilter] = useState<FilterTab>("ALL");
   const [selected, setSelected] = useState(2);
   const [balance, setBalance] = useState(0);
-  const [txList, setTxList] = useState(TRANSACTIONS);
+  const [txList, setTxList] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("paystack");
   const [paying, setPaying] = useState(false);
 
@@ -42,18 +47,19 @@ export default function WalletPage() {
       .then((r) => r.json())
       .then((d) => {
         if (d.balance !== undefined) setBalance(d.balance);
-        if (d.transactions?.length) {
+        if (Array.isArray(d.transactions)) {
           setTxList(
             d.transactions.map((t: { type: string; reference?: string; amount: number; createdAt: string }) => ({
               type: t.type,
-              desc: t.reference ?? t.type,
+              desc: t.reference?.trim() || TX_LABELS[t.type] || t.type,
               amount: t.amount,
               date: new Date(t.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
             }))
           );
         }
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   const filtered = filter === "ALL" ? txList : txList.filter((t) => t.type === filter.toLowerCase());
@@ -64,34 +70,32 @@ export default function WalletPage() {
 
     try {
       if (paymentMethod === "paystack") {
-        const res = await fetch("/api/payment/paystack/initialize", {
+        const res = await fetchWithAuth("/api/payment/paystack/initialize", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ bundleId: bundle.id }),
         });
         const data = await res.json() as { authorizationUrl?: string; error?: string };
         if (data.authorizationUrl) {
           window.location.href = data.authorizationUrl;
         } else {
-          alert(data.error ?? "Payment initialization failed");
+          toast({ type: "error", title: "Payment failed", message: data.error ?? "Could not start the Paystack checkout." });
           setPaying(false);
         }
       } else {
-        const res = await fetch("/api/payment/stripe/checkout", {
+        const res = await fetchWithAuth("/api/payment/stripe/checkout", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ bundleId: bundle.id }),
         });
         const data = await res.json() as { url?: string; error?: string };
         if (data.url) {
           window.location.href = data.url;
         } else {
-          alert(data.error ?? "Checkout session creation failed");
+          toast({ type: "error", title: "Checkout failed", message: data.error ?? "Could not start the Stripe checkout." });
           setPaying(false);
         }
       }
     } catch {
-      alert("Network error. Please try again.");
+      toast({ type: "error", title: "Network error", message: "Please check your connection and try again." });
       setPaying(false);
     }
   }
@@ -146,7 +150,18 @@ export default function WalletPage() {
 
             {/* Transactions */}
             <div className="clip-arena overflow-hidden" style={{ border: "1px solid rgba(45,27,105,0.7)" }}>
-              {filtered.length === 0 ? (
+              {loading ? (
+                Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-3.5 px-4 md:px-5 py-3.5 bg-cosmos-2 border-b border-cosmos-4 last:border-0">
+                    <div className="w-8 h-8 shrink-0 bg-cosmos-3 animate-pulse clip-arena-sm" />
+                    <div className="flex-1">
+                      <div className="h-3.5 w-40 bg-cosmos-3 animate-pulse mb-1.5" />
+                      <div className="h-2.5 w-20 bg-cosmos-3 animate-pulse" />
+                    </div>
+                    <div className="h-4 w-12 bg-cosmos-3 animate-pulse" />
+                  </div>
+                ))
+              ) : filtered.length === 0 ? (
                 <div className="p-10 text-center bg-cosmos-2">
                   <p className="font-rajdhani font-bold text-lg text-haze-2">No transactions yet</p>
                   <p className="font-rajdhani text-sm text-haze-3 mt-1">Win arenas or buy coins to get started.</p>

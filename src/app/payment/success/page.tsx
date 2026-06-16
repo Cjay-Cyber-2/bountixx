@@ -8,6 +8,7 @@ import { CheckCircle, Wallet } from "lucide-react";
 import { BountixxLogo } from "@/components/BountixxLogo";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { Button } from "@/components/ui/Button";
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
 
 type Status = "loading" | "success" | "error";
 
@@ -30,9 +31,8 @@ function PaymentSuccessInner() {
 
     // Only Paystack uses the reference param — Stripe credits are handled server-side via webhook
     if (reference) {
-      fetch("/api/payment/paystack/verify", {
+      fetchWithAuth("/api/payment/paystack/verify", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ reference }),
       })
         .then((r) => r.json())
