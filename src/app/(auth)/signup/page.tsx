@@ -1,24 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, Mail, Lock, Phone, ArrowLeft } from "lucide-react";
-import {
-  signInWithPopup,
-  signInWithRedirect,
-  getRedirectResult,
-  createUserWithEmailAndPassword,
-  sendEmailVerification,
-  sendSignInLinkToEmail,
-  signInWithPhoneNumber,
-  RecaptchaVerifier,
-  ConfirmationResult,
-  updateProfile,
-} from "firebase/auth";
-import { auth, googleProvider, githubProvider } from "@/lib/firebase";
-import { createSession } from "@/lib/createSession";
+import { useSignUp } from "@clerk/nextjs/legacy";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { BountixxLogo } from "@/components/BountixxLogo";
 import { Button } from "@/components/ui/Button";
@@ -29,13 +15,19 @@ type Method = "email-password" | "email-link" | "phone-otp";
 
 function getNext(): string {
   if (typeof window === "undefined") return "/dashboard";
-  const n = new URLSearchParams(window.location.search).get("next");
+  const n = new URLSearchParams(window.location.search).get("next")
+    ?? new URLSearchParams(window.location.search).get("redirect_url");
   return n && n.startsWith("/") ? n : "/dashboard";
 }
 
+function clerkError(err: unknown): string {
+  const e = err as { errors?: { longMessage?: string; message?: string }[]; message?: string };
+  return e?.errors?.[0]?.longMessage ?? e?.errors?.[0]?.message ?? e?.message ?? "Something went wrong. Please try again.";
+}
+
 export default function SignupPage() {
-  const router = useRouter();
-  const { user, loading } = useAuth();
+  const { loading } = useAuth();
+  const { isLoaded, signUp, setActive } = useSignUp();
 
   const [method, setMethod] = useState<Method>("email-password");
   const [show, setShow] = useState(false);
@@ -50,121 +42,115 @@ export default function SignupPage() {
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
-
-  const recaptchaRef = useRef<RecaptchaVerifier | null>(null);
-  const confirmationRef = useRef<ConfirmationResult | null>(null);
-  const recaptchaContainerRef = useRef<HTMLDivElement>(null);
-  // Removed auto-redirect to prevent loops - user must explicitly sign in/up
+  const [emailCode, setEmailCode] = useState("");
 
   function resetMethod(m: Method) {
     setMethod(m);
     setError("");
     setOtp("");
+    setEmailCode("");
     setLinkSent(false);
     setOtpSent(false);
     setVerifyEmail(false);
   }
 
-  useEffect(() => {
-    getRedirectResult(auth)
-      .then(async (result) => {
-        if (!result?.user) return;
-        setPending(true);
-        const ok = await createSession(result.user);
-        if (ok) {
-          window.location.href = getNext();
-        } else {
-          setError("Authentication failed. Please try again.");
-          setPending(false);
-        }
-      })
-      .catch((err: unknown) => {
-        if (err) setError((err as { message: string }).message);
-      });
-  }, []);
-
   async function handleOAuth(provider: "google" | "github") {
+    if (!isLoaded || !signUp) return;
     setError("");
     setPending(true);
-    const p = provider === "google" ? googleProvider : githubProvider;
     try {
-      const result = await signInWithPopup(auth, p);
-      const ok = await createSession(result.user);
-      if (ok) {
-        window.location.href = getNext();
-      } else {
-        setError("Sign-in failed. Please try again.");
-        setPending(false);
-      }
-    } catch (err: unknown) {
-      const code = (err as { code?: string }).code;
-      if (code === "auth/popup-blocked") {
-        await signInWithRedirect(auth, p);
-        return;
-      }
-      if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") {
-        setPending(false);
-        return;
-      }
-      setError((err as { message: string }).message ?? "Sign-in failed. Please try again.");
+      await signUp.authenticateWithRedirect({
+        strategy: provider === "google" ? "oauth_google" : "oauth_github",
+        redirectUrl: "/sso-callback",
+        redirectUrlComplete: getNext(),
+      });
+    } catch (err) {
+      setError(clerkError(err));
       setPending(false);
     }
   }
 
   async function handleEmailPassword(e: React.FormEvent) {
     e.preventDefault();
+    if (!isLoaded || !signUp) return;
     setPending(true);
     setError("");
     try {
-      const credential = await createUserWithEmailAndPassword(auth, email, password);
-      await updateProfile(credential.user, { displayName: username });
-      const ok = await createSession(credential.user);
-      if (!ok) {
-        setError("Session creation failed. Please try again.");
-        setPending(false);
-        return;
-      }
-      await sendEmailVerification(credential.user);
+      await signUp.create({
+        emailAddress: email,
+        password,
+        unsafeMetadata: username ? { username } : undefined,
+      });
+      await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
       setVerifyEmail(true);
-    } catch (err: unknown) {
-      setError((err as { message: string }).message);
+    } catch (err) {
+      setError(clerkError(err));
     } finally {
+      setPending(false);
+    }
+  }
+
+  async function handleVerifyEmailCode(e: React.FormEvent) {
+    e.preventDefault();
+    if (!isLoaded || !signUp) return;
+    setPending(true);
+    setError("");
+    try {
+      const res = await signUp.attemptEmailAddressVerification({ code: emailCode });
+      if (res.status === "complete") {
+        await setActive({ session: res.createdSessionId });
+        window.location.href = getNext();
+      } else {
+        setError("Invalid code. Please check your inbox and try again.");
+        setPending(false);
+      }
+    } catch (err) {
+      setError(clerkError(err));
       setPending(false);
     }
   }
 
   async function handleSendEmailLink(e: React.FormEvent) {
     e.preventDefault();
+    if (!isLoaded || !signUp) return;
     setPending(true);
     setError("");
     try {
-      const actionCodeSettings = {
-        url: `${window.location.origin}/login?next=${encodeURIComponent(getNext())}`,
-        handleCodeInApp: true,
-      };
-      await sendSignInLinkToEmail(auth, email, actionCodeSettings);
-      window.localStorage.setItem("emailForSignIn", email);
+      await signUp.create({
+        emailAddress: email,
+        unsafeMetadata: username ? { username } : undefined,
+      });
       setLinkSent(true);
-    } catch (err: unknown) {
-      setError((err as { message: string }).message);
-    } finally {
+      setPending(false);
+      const { startEmailLinkFlow } = signUp.createEmailLinkFlow();
+      const res = await startEmailLinkFlow({
+        redirectUrl: `${window.location.origin}/sso-callback`,
+      });
+      if (res.status === "complete") {
+        await setActive({ session: res.createdSessionId });
+        window.location.href = getNext();
+      }
+    } catch (err) {
+      setError(clerkError(err));
+      setLinkSent(false);
       setPending(false);
     }
   }
 
   async function handleSendPhoneOtp(e: React.FormEvent) {
     e.preventDefault();
+    if (!isLoaded || !signUp) return;
     setPending(true);
     setError("");
     try {
-      if (!recaptchaRef.current && recaptchaContainerRef.current) {
-        recaptchaRef.current = new RecaptchaVerifier(auth, recaptchaContainerRef.current, { size: "invisible" });
-      }
-      confirmationRef.current = await signInWithPhoneNumber(auth, phone, recaptchaRef.current!);
+      await signUp.create({
+        phoneNumber: phone,
+        unsafeMetadata: username ? { username } : undefined,
+      });
+      await signUp.preparePhoneNumberVerification({ strategy: "phone_code" });
       setOtpSent(true);
-    } catch (err: unknown) {
-      setError((err as { message: string }).message);
-      recaptchaRef.current = null;
+    } catch (err) {
+      setError(clerkError(err));
     } finally {
       setPending(false);
     }
@@ -172,21 +158,20 @@ export default function SignupPage() {
 
   async function handleVerifyPhoneOtp(e: React.FormEvent) {
     e.preventDefault();
-    if (!confirmationRef.current) return;
+    if (!isLoaded || !signUp) return;
     setPending(true);
     setError("");
     try {
-      const credential = await confirmationRef.current.confirm(otp);
-      if (username) await updateProfile(credential.user, { displayName: username });
-      const ok = await createSession(credential.user);
-      if (!ok) {
-        setError("Session creation failed. Please try again.");
+      const res = await signUp.attemptPhoneNumberVerification({ code: otp });
+      if (res.status === "complete") {
+        await setActive({ session: res.createdSessionId });
+        window.location.href = getNext();
+      } else {
+        setError("Invalid code. Please try again.");
         setPending(false);
-        return;
       }
-      window.location.href = getNext();
-    } catch (err: unknown) {
-      setError((err as { message: string }).message);
+    } catch (err) {
+      setError(clerkError(err));
       setPending(false);
     }
   }
@@ -201,7 +186,7 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-cosmos">
-      {/* Left panel — bountixx.svg full-bleed illustration */}
+      {/* Left panel — brand illustration */}
       <AuthBrandPanel />
 
       {/* Right panel — signup form */}
@@ -233,11 +218,11 @@ export default function SignupPage() {
           </motion.div>
 
           <motion.div variants={slideUp} className="flex flex-col gap-3 mb-6">
-            <button type="button" onClick={() => handleOAuth("google")} disabled={pending}
+            <button type="button" onClick={() => handleOAuth("google")} disabled={pending || !isLoaded}
               className="cursor-target flex items-center justify-center gap-3 h-12 border border-cosmos-4 text-haze-2 font-rajdhani font-semibold text-sm tracking-wide hover:border-haze-3 hover:text-haze transition-colors disabled:opacity-50">
               <GoogleIcon /> CONTINUE WITH GOOGLE
             </button>
-            <button type="button" onClick={() => handleOAuth("github")} disabled={pending}
+            <button type="button" onClick={() => handleOAuth("github")} disabled={pending || !isLoaded}
               className="cursor-target flex items-center justify-center gap-3 h-12 border border-cosmos-4 text-haze-2 font-rajdhani font-semibold text-sm tracking-wide hover:border-haze-3 hover:text-haze transition-colors disabled:opacity-50">
               <GitHubIcon /> CONTINUE WITH GITHUB
             </button>
@@ -284,33 +269,45 @@ export default function SignupPage() {
                 </div>
               </div>
               {error && <p className="font-rajdhani text-sm text-red-400">{error}</p>}
+              {/* Clerk bot-protection widget mounts here when enabled */}
+              <div id="clerk-captcha" />
               <Button variant="primary" size="lg" fullWidth magnetic className="mt-2" disabled={pending}>{pending ? "CREATING…" : "ENTER THE ARENA"}</Button>
             </motion.form>
           )}
           {method === "email-password" && verifyEmail && (
-            <motion.div key="ep-verify" variants={slideUp} initial="hidden" animate="show" className="text-center py-4">
-              <p className="font-zen-dots text-void text-lg mb-3">VERIFY YOUR EMAIL</p>
-              <p className="font-rajdhani text-haze-2 text-sm mb-6">We sent a verification link to <span className="text-void">{email}</span>. Click it to activate your account.</p>
-              <Link href={`/login?next=${encodeURIComponent(getNext())}`} className="font-space-mono text-[11px] text-void hover:underline">Back to sign in</Link>
-            </motion.div>
+            <motion.form key="ep-verify" variants={slideUp} initial="hidden" animate="show" onSubmit={handleVerifyEmailCode} className="flex flex-col gap-5 text-center">
+              <p className="font-zen-dots text-void text-lg">VERIFY YOUR EMAIL</p>
+              <p className="font-rajdhani text-haze-2 text-sm">We sent a 6-digit code to <span className="text-void">{email}</span>. Enter it below to activate your account.</p>
+              <input type="text" inputMode="numeric" placeholder="000000" value={emailCode} onChange={(e) => setEmailCode(e.target.value)} maxLength={6}
+                className="w-full h-12 px-4 bg-cosmos-2 border border-cosmos-4 text-haze font-rajdhani text-base text-center tracking-[8px] placeholder:text-haze-3 focus:outline-none focus:border-void focus:shadow-[0_0_0_2px_rgba(168,85,247,0.2)] transition-all" style={{ borderRadius: 0 }} />
+              {error && <p className="font-rajdhani text-sm text-red-400">{error}</p>}
+              <Button variant="primary" size="lg" fullWidth magnetic disabled={pending}>{pending ? "VERIFYING…" : "VERIFY & ENTER"}</Button>
+              <button type="button" onClick={() => { setVerifyEmail(false); setEmailCode(""); setError(""); }} className="font-space-mono text-[11px] text-haze-3 hover:text-void hover:underline">Use a different email</button>
+            </motion.form>
           )}
 
           {/* Email Magic Link */}
           {method === "email-link" && !linkSent && (
             <motion.form key="el" variants={slideUp} initial="hidden" animate="show" onSubmit={handleSendEmailLink} className="flex flex-col gap-5">
               <div>
+                <label className="block font-space-mono text-[11px] text-void tracking-[3px] mb-2 uppercase">Username</label>
+                <input type="text" placeholder="arena_name" value={username} onChange={(e) => setUsername(e.target.value)}
+                  className="w-full h-12 px-4 bg-cosmos-2 border border-cosmos-4 text-haze font-rajdhani text-base placeholder:text-haze-3 focus:outline-none focus:border-void focus:shadow-[0_0_0_2px_rgba(168,85,247,0.2)] transition-all" style={{ borderRadius: 0 }} />
+              </div>
+              <div>
                 <label className="block font-space-mono text-[11px] text-void tracking-[3px] mb-2 uppercase">Email Address</label>
                 <input type="email" placeholder="you@arena.com" value={email} onChange={(e) => setEmail(e.target.value)}
                   className="w-full h-12 px-4 bg-cosmos-2 border border-cosmos-4 text-haze font-rajdhani text-base placeholder:text-haze-3 focus:outline-none focus:border-void focus:shadow-[0_0_0_2px_rgba(168,85,247,0.2)] transition-all" style={{ borderRadius: 0 }} />
               </div>
               {error && <p className="font-rajdhani text-sm text-red-400">{error}</p>}
+              <div id="clerk-captcha" />
               <Button variant="primary" size="lg" fullWidth magnetic className="mt-2" disabled={pending}>{pending ? "SENDING…" : "SEND MAGIC LINK"}</Button>
             </motion.form>
           )}
           {method === "email-link" && linkSent && (
             <motion.div key="el-sent" variants={slideUp} initial="hidden" animate="show" className="text-center py-4">
               <p className="font-zen-dots text-void text-lg mb-3">CHECK YOUR INBOX</p>
-              <p className="font-rajdhani text-haze-2 text-sm mb-6">We sent a sign-in link to <span className="text-void">{email}</span>. Click it to enter the arena.</p>
+              <p className="font-rajdhani text-haze-2 text-sm mb-6">We sent a sign-in link to <span className="text-void">{email}</span>. Click it to enter the arena. Keep this tab open.</p>
               <button type="button" onClick={() => setLinkSent(false)} className="font-space-mono text-[11px] text-haze-3 hover:text-void hover:underline">Use a different email</button>
             </motion.div>
           )}
@@ -335,12 +332,12 @@ export default function SignupPage() {
                     className="w-full h-12 px-4 bg-cosmos-2 border border-cosmos-4 text-haze font-rajdhani text-base tracking-[6px] placeholder:text-haze-3 focus:outline-none focus:border-void focus:shadow-[0_0_0_2px_rgba(168,85,247,0.2)] transition-all" style={{ borderRadius: 0 }} />
                   <p className="font-space-mono text-[10px] text-haze-3 mt-2">
                     Code sent to {phone}.{" "}
-                    <button type="button" onClick={() => { setOtpSent(false); setOtp(""); recaptchaRef.current = null; }} className="text-void hover:underline">Resend</button>
+                    <button type="button" onClick={() => { setOtpSent(false); setOtp(""); }} className="text-void hover:underline">Resend</button>
                   </p>
                 </div>
               )}
               {error && <p className="font-rajdhani text-sm text-red-400">{error}</p>}
-              <div ref={recaptchaContainerRef} />
+              <div id="clerk-captcha" />
               <Button variant="primary" size="lg" fullWidth magnetic className="mt-2" disabled={pending}>{pending ? "SENDING…" : otpSent ? "VERIFY & JOIN" : "SEND CODE"}</Button>
             </motion.form>
           )}

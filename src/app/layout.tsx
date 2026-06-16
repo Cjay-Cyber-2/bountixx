@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Orbitron, Rajdhani, Space_Mono, Zen_Dots, Nunito } from "next/font/google";
+import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
@@ -56,22 +57,30 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html
-      lang="en"
-      className={`${orbitron.variable} ${rajdhani.variable} ${spaceMono.variable} ${zenDots.variable} ${nunito.variable} h-full`}
+    <ClerkProvider
+      signInUrl="/login"
+      signUpUrl="/signup"
+      signInFallbackRedirectUrl="/dashboard"
+      signUpFallbackRedirectUrl="/dashboard"
+      appearance={{ variables: { colorPrimary: "#a855f7" } }}
     >
-      <body className="min-h-full bg-cosmos text-haze overflow-x-hidden">
-        <AuthProvider>
-          <ThemeProvider>
-            <LenisProvider>
-              <ToastProvider>
-                <TargetCursorWrapper />
-                {children}
-              </ToastProvider>
-            </LenisProvider>
-          </ThemeProvider>
-        </AuthProvider>
-      </body>
-    </html>
+      <html
+        lang="en"
+        className={`${orbitron.variable} ${rajdhani.variable} ${spaceMono.variable} ${zenDots.variable} ${nunito.variable} h-full`}
+      >
+        <body className="min-h-full bg-cosmos text-haze overflow-x-hidden">
+          <AuthProvider>
+            <ThemeProvider>
+              <LenisProvider>
+                <ToastProvider>
+                  <TargetCursorWrapper />
+                  {children}
+                </ToastProvider>
+              </LenisProvider>
+            </ThemeProvider>
+          </AuthProvider>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

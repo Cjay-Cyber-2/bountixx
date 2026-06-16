@@ -13,7 +13,10 @@ export async function GET() {
   // Update lastSeenAt
   await db.update(users).set({ lastSeenAt: new Date() }).where(eq(users.id, session.id));
 
-  return NextResponse.json({ user: session });
+  return NextResponse.json(
+    { user: session },
+    { headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } }
+  );
 }
 
 export async function PUT(req: Request) {

@@ -5,11 +5,11 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { LayoutDashboard, PlusCircle, User, Wallet, Menu, X, Bell, BellOff, LogOut } from "lucide-react";
-import { signOut } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { useClerk } from "@clerk/nextjs";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { BountixxLogo } from "@/components/BountixxLogo";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
+import { firebaseEnabled } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
@@ -30,6 +30,7 @@ export function TopNav() {
   const pathname = usePathname();
   const router = useRouter();
   const { user } = useAuth();
+  const { signOut } = useClerk();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [signingOut, setSigningOut] = useState(false);
@@ -37,15 +38,25 @@ export function TopNav() {
   const [notifLoading, setNotifLoading] = useState(false);
 
   useEffect(() => {
+    // Clear any previous user's profile immediately so a different account
+    // never briefly shows the prior user's name/initials.
+    setProfile(null);
     if (!user) return;
+    let cancelled = false;
     fetchWithAuth("/api/user/me")
       .then((r) => r.json())
-      .then((d) => d.user && setProfile(d.user))
+      .then((d) => {
+        if (!cancelled && d.user) setProfile(d.user);
+      })
       .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
   async function handleNotificationOptIn() {
     if (notifEnabled || notifLoading) return;
+    if (!firebaseEnabled) return; // Push notifications not configured.
     if (!("Notification" in window) || !("serviceWorker" in navigator)) return;
 
     setNotifLoading(true);
@@ -56,6 +67,7 @@ export function TopNav() {
       // Dynamically import to avoid SSR module evaluation
       const { getMessaging, register, onRegistered } = await import("firebase/messaging");
       const { app } = await import("@/lib/firebase");
+      if (!app) return;
       const messaging = getMessaging(app);
 
       const swReg = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
@@ -84,11 +96,11 @@ export function TopNav() {
   async function handleLogout() {
     setSigningOut(true);
     try {
-      await signOut(auth);
-      await fetch("/api/auth/session", { method: "DELETE" });
-      router.replace("/");
+      setProfile(null);
+      await signOut({ redirectUrl: "/" });
     } catch {
       setSigningOut(false);
+      router.replace("/");
     }
   }
 

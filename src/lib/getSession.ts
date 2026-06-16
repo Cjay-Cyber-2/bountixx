@@ -1,112 +1,86 @@
-import { cookies, headers } from "next/headers";
-import { adminAuth } from "./firebase-admin";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { db } from "./db";
 import { users } from "./schema";
 import { eq } from "drizzle-orm";
 
 export type SessionUser = typeof users.$inferSelect;
 
-async function findUser(uid: string): Promise<SessionUser | null> {
-  const [user] = await db.select().from(users).where(eq(users.id, uid)).limit(1);
-  return user ?? null;
+function sanitizeUsername(raw: string): string {
+  return raw.replace(/[^a-z0-9_]/gi, "").toLowerCase() || "player";
 }
 
 /**
- * When a Firebase ID token is valid but the user row is missing from the DB
- * (e.g. DB was down during login so the /api/auth/session insert never ran),
- * create them now so they're not permanently locked out.
+ * Resolves the authenticated user via Clerk and maps them to the Neon `users`
+ * row. On the very first authenticated request after sign-up, the row is
+ * created from the Clerk profile with the 500-coin welcome bonus.
+ *
+ * Returning the same `SessionUser` shape as before means every API route that
+ * calls getSession() keeps working unchanged after the Firebase -> Clerk swap.
  */
-async function findOrCreateUser(
-  uid: string,
-  claims: { email?: string; name?: string; picture?: string }
-): Promise<SessionUser | null> {
-  const existing = await findUser(uid);
+export async function getSession(): Promise<SessionUser | null> {
+  const { userId } = await auth();
+  if (!userId) return null;
+
+  const [existing] = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
   if (existing) return existing;
 
+  // First time we've seen this Clerk user — create their Neon row.
+  let email: string | null = null;
+  let avatarUrl: string | null = null;
+  let rawUsername = userId.slice(0, 16);
+
   try {
-    const rawUsername =
-      claims.name?.replace(/\s+/g, "_").toLowerCase() ??
-      claims.email?.split("@")[0] ??
-      uid.slice(0, 16);
+    const cu = await currentUser();
+    if (cu) {
+      email =
+        cu.primaryEmailAddress?.emailAddress ??
+        cu.emailAddresses?.[0]?.emailAddress ??
+        null;
+      avatarUrl = cu.imageUrl ?? null;
+      const metaUsername =
+        typeof cu.unsafeMetadata?.username === "string"
+          ? (cu.unsafeMetadata.username as string)
+          : null;
+      rawUsername =
+        metaUsername ||
+        cu.username ||
+        [cu.firstName, cu.lastName].filter(Boolean).join("") ||
+        email?.split("@")[0] ||
+        userId.slice(0, 16);
+    }
+  } catch (err) {
+    console.error("[getSession] currentUser() failed:", err);
+  }
 
-    // Append a short uid suffix to avoid username collisions on first insert
-    const username = `${rawUsername}_${uid.slice(0, 5)}`;
+  // Append a short uid suffix to avoid username collisions on first insert.
+  const username = `${sanitizeUsername(rawUsername)}_${userId.slice(-5).toLowerCase()}`;
 
+  try {
     await db.insert(users).values({
-      id: uid,
-      email: claims.email ?? null,
+      id: userId,
+      email,
       username,
-      avatarUrl: claims.picture ?? null,
+      avatarUrl,
       coinsBalance: 500,
       xp: 0,
       rank: "recruit",
       roomsCreatedCount: 0,
     });
-
-    return await findUser(uid);
   } catch (err) {
-    console.error("[getSession] auto-create user failed:", uid, err);
-    return null;
-  }
-}
-
-/**
- * Resolves the authenticated user via:
- *   1. Authorization: Bearer <Firebase ID token>  — always fresh, sent by fetchWithAuth()
- *   2. __session httpOnly cookie                  — fallback for older sessions
- * Returns null if neither succeeds.
- */
-export async function getSession(): Promise<SessionUser | null> {
-  // ── 1. Authorization header (Firebase ID token) ──────────────────────────
-  try {
-    const headerStore = await headers();
-    const authHeader = headerStore.get("Authorization");
-
-    if (authHeader?.startsWith("Bearer ")) {
-      const idToken = authHeader.slice(7);
-      const decoded = await adminAuth.verifyIdToken(idToken);
-      const user = await findOrCreateUser(decoded.uid, decoded);
-      if (user) return user;
-      console.error("[getSession] ID token valid but user unresolvable:", decoded.uid);
-    }
-  } catch (err) {
-    // Log the real error so it shows in Vercel function logs
-    console.error("[getSession] verifyIdToken error:", err);
+    // A concurrent request may have already inserted the row — fall through and re-read.
+    console.error("[getSession] user insert failed (may already exist):", err);
   }
 
-  // ── 2. Session cookie fallback ────────────────────────────────────────────
-  try {
-    const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get("__session")?.value;
-
-    if (!sessionCookie) {
-      console.error("[getSession] no Authorization header and no __session cookie");
-      return null;
-    }
-
-    // The cookie may be EITHER a long-lived Firebase session cookie OR a raw
-    // ID token (fallback used when the service account can't mint session
-    // cookies). Try the session-cookie verifier first, then fall back to the
-    // ID-token verifier so both forms are accepted.
-    let decoded;
-    try {
-      decoded = await adminAuth.verifySessionCookie(sessionCookie, false);
-    } catch {
-      decoded = await adminAuth.verifyIdToken(sessionCookie);
-    }
-    // Use findOrCreateUser so a user whose DB row is missing (e.g. auth/session insert
-    // silently failed) is auto-created with their 500-coin welcome bonus here.
-    const user = await findOrCreateUser(decoded.uid, decoded);
-
-    if (!user) {
-      console.error("[getSession] session cookie valid but user unresolvable:", decoded.uid);
-    }
-
-    return user;
-  } catch (err) {
-    console.error("[getSession] verifySessionCookie error:", err);
-    return null;
-  }
+  const [created] = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  return created ?? null;
 }
 
 export function unauthorized() {

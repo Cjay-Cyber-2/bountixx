@@ -1,25 +1,21 @@
 "use client";
 
-import { auth } from "./firebase";
-
 /**
- * Drop-in replacement for fetch() that attaches the current Firebase ID token
- * as Authorization: Bearer <token>. Use for all authenticated API calls.
+ * Drop-in replacement for fetch() for authenticated API calls.
+ *
+ * With Clerk, the session is carried by an httpOnly cookie that the browser
+ * sends automatically on same-origin requests, so no Authorization header is
+ * needed. We force `no-store` so per-user responses (profile, balance, etc.)
+ * are never served from a stale cache for a different signed-in user.
  */
 export async function fetchWithAuth(
   input: string | URL | Request,
   init?: RequestInit
 ): Promise<Response> {
-  let token: string | null = null;
-  try {
-    token = (await auth.currentUser?.getIdToken()) ?? null;
-  } catch {
-    // proceed without token — server will fall back to session cookie
+  const headers = new Headers(init?.headers);
+  if (init?.body && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
   }
 
-  const headers = new Headers(init?.headers);
-  headers.set("Content-Type", headers.get("Content-Type") ?? "application/json");
-  if (token) headers.set("Authorization", `Bearer ${token}`);
-
-  return fetch(input, { ...init, headers });
+  return fetch(input, { ...init, headers, cache: "no-store" });
 }

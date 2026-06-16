@@ -3,8 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Lock, Trophy, Camera, Pencil, Check, X } from "lucide-react";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { storage } from "@/lib/firebase";
+import { useUser } from "@clerk/nextjs";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -57,6 +56,7 @@ type Achievement = { badgeId: string; earnedAt: string };
 
 export default function ProfilePage() {
   const { user } = useAuth();
+  const { user: clerkUser } = useUser();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
@@ -98,13 +98,15 @@ export default function ProfilePage() {
 
   async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (!file || !user) return;
+    if (!file || !clerkUser) return;
     setUploadingAvatar(true);
     try {
-      const storageRef = ref(storage, `avatars/${user.uid}/${Date.now()}_${file.name}`);
-      await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(storageRef);
+      // Clerk stores and serves the profile image (replaces Firebase Storage).
+      await clerkUser.setProfileImage({ file });
+      await clerkUser.reload();
+      const url = clerkUser.imageUrl;
 
+      // Mirror the URL into our Neon row so other players see the new avatar.
       await fetchWithAuth("/api/user/me", {
         method: "PUT",
         body: JSON.stringify({ avatarUrl: url }),

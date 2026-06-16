@@ -1,24 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, Mail, Lock, Phone, ArrowLeft } from "lucide-react";
-import {
-  signInWithPopup,
-  signInWithRedirect,
-  getRedirectResult,
-  signInWithEmailAndPassword,
-  sendSignInLinkToEmail,
-  isSignInWithEmailLink,
-  signInWithEmailLink,
-  signInWithPhoneNumber,
-  RecaptchaVerifier,
-  ConfirmationResult,
-} from "firebase/auth";
-import { auth, googleProvider, githubProvider } from "@/lib/firebase";
-import { createSession } from "@/lib/createSession";
+import { useSignIn } from "@clerk/nextjs/legacy";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { BountixxLogo } from "@/components/BountixxLogo";
 import { Button } from "@/components/ui/Button";
@@ -29,13 +15,19 @@ type Method = "email-password" | "email-link" | "phone-otp";
 
 function getNext(): string {
   if (typeof window === "undefined") return "/dashboard";
-  const n = new URLSearchParams(window.location.search).get("next");
+  const n = new URLSearchParams(window.location.search).get("next")
+    ?? new URLSearchParams(window.location.search).get("redirect_url");
   return n && n.startsWith("/") ? n : "/dashboard";
 }
 
+function clerkError(err: unknown): string {
+  const e = err as { errors?: { longMessage?: string; message?: string }[]; message?: string };
+  return e?.errors?.[0]?.longMessage ?? e?.errors?.[0]?.message ?? e?.message ?? "Something went wrong. Please try again.";
+}
+
 export default function LoginPage() {
-  const router = useRouter();
-  const { user, loading } = useAuth();
+  const { loading } = useAuth();
+  const { isLoaded, signIn, setActive } = useSignIn();
 
   const [method, setMethod] = useState<Method>("email-password");
   const [show, setShow] = useState(false);
@@ -49,29 +41,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
-
-  const recaptchaRef = useRef<RecaptchaVerifier | null>(null);
-  const confirmationRef = useRef<ConfirmationResult | null>(null);
-  const recaptchaContainerRef = useRef<HTMLDivElement>(null);
-  // Removed auto-redirect to prevent loops - user must explicitly sign in
-
-  useEffect(() => {
-    if (!isSignInWithEmailLink(auth, window.location.href)) return;
-    const stored = localStorage.getItem("emailForSignIn");
-    const addr = stored ?? window.prompt("Enter your email to confirm:") ?? "";
-    if (!addr) return;
-    signInWithEmailLink(auth, addr, window.location.href)
-      .then(async (credential) => {
-        window.localStorage.removeItem("emailForSignIn");
-        const ok = await createSession(credential.user);
-        if (!ok) {
-          setError("Session creation failed. Please try again.");
-          return;
-        }
-        window.location.href = getNext();
-      })
-      .catch((err) => setError(err.message));
-  }, [router]);
+  const phoneIdRef = useRef<string | null>(null);
 
   function resetMethod(m: Method) {
     setMethod(m);
@@ -81,109 +51,91 @@ export default function LoginPage() {
     setOtpSent(false);
   }
 
-  useEffect(() => {
-    getRedirectResult(auth)
-      .then(async (result) => {
-        if (!result?.user) return;
-        setPending(true);
-        const ok = await createSession(result.user);
-        if (ok) {
-          window.location.href = getNext();
-        } else {
-          setError("Authentication failed. Please try again.");
-          setPending(false);
-        }
-      })
-      .catch((err: unknown) => {
-        if (err) setError((err as { message: string }).message);
-      });
-  }, []);
-
   async function handleOAuth(provider: "google" | "github") {
+    if (!isLoaded || !signIn) return;
     setError("");
     setPending(true);
-    const p = provider === "google" ? googleProvider : githubProvider;
     try {
-      const result = await signInWithPopup(auth, p);
-      const ok = await createSession(result.user);
-      if (ok) {
-        window.location.href = getNext();
-      } else {
-        setError("Sign-in failed. Please try again.");
-        setPending(false);
-      }
-    } catch (err: unknown) {
-      const code = (err as { code?: string }).code;
-      if (code === "auth/popup-blocked") {
-        // Popup blocked by browser — fall back to redirect
-        await signInWithRedirect(auth, p);
-        return;
-      }
-      if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") {
-        setPending(false);
-        return;
-      }
-      setError((err as { message: string }).message ?? "Sign-in failed. Please try again.");
+      await signIn.authenticateWithRedirect({
+        strategy: provider === "google" ? "oauth_google" : "oauth_github",
+        redirectUrl: "/sso-callback",
+        redirectUrlComplete: getNext(),
+      });
+    } catch (err) {
+      setError(clerkError(err));
       setPending(false);
     }
   }
 
   async function handleEmailPassword(e: React.FormEvent) {
     e.preventDefault();
+    if (!isLoaded || !signIn) return;
     setPending(true);
     setError("");
     try {
-      const credential = await signInWithEmailAndPassword(auth, identifier, password);
-      const ok = await createSession(credential.user);
-      if (!ok) {
-        setError("Session creation failed. Please try again.");
+      const res = await signIn.create({ identifier, password });
+      if (res.status === "complete") {
+        await setActive({ session: res.createdSessionId });
+        window.location.href = getNext();
+      } else {
+        setError("Additional verification is required. Try a magic link or contact support.");
         setPending(false);
-        return;
       }
-      window.location.href = getNext();
-    } catch (err: unknown) {
-      setError((err as { message: string }).message);
+    } catch (err) {
+      setError(clerkError(err));
       setPending(false);
     }
   }
 
   async function handleSendEmailLink(e: React.FormEvent) {
     e.preventDefault();
+    if (!isLoaded || !signIn) return;
     setPending(true);
     setError("");
     try {
-      const actionCodeSettings = {
-        url: `${window.location.origin}/login?next=${encodeURIComponent(getNext())}`,
-        handleCodeInApp: true,
-      };
-      await sendSignInLinkToEmail(auth, email, actionCodeSettings);
-      window.localStorage.setItem("emailForSignIn", email);
-      setLinkSent(true);
-    } catch (err: unknown) {
-      const code = (err as { code?: string }).code;
-      if (code === "auth/operation-not-allowed") {
-        setError("Email link sign-in is not enabled on this project. Please use password or Google sign-in.");
-      } else {
-        setError((err as { message: string }).message ?? "Failed to send link. Please try again.");
+      const si = await signIn.create({ identifier: email });
+      const factor = si.supportedFirstFactors?.find((f) => f.strategy === "email_link");
+      if (!factor || !("emailAddressId" in factor)) {
+        setError("Magic link sign-in is not enabled. Please use a password or Google.");
+        setPending(false);
+        return;
       }
-    } finally {
+      setLinkSent(true);
+      setPending(false);
+      const { startEmailLinkFlow } = signIn.createEmailLinkFlow();
+      const res = await startEmailLinkFlow({
+        emailAddressId: factor.emailAddressId,
+        redirectUrl: `${window.location.origin}/sso-callback`,
+      });
+      if (res.status === "complete") {
+        await setActive({ session: res.createdSessionId });
+        window.location.href = getNext();
+      }
+    } catch (err) {
+      setError(clerkError(err));
+      setLinkSent(false);
       setPending(false);
     }
   }
 
   async function handleSendPhoneOtp(e: React.FormEvent) {
     e.preventDefault();
+    if (!isLoaded || !signIn) return;
     setPending(true);
     setError("");
     try {
-      if (!recaptchaRef.current && recaptchaContainerRef.current) {
-        recaptchaRef.current = new RecaptchaVerifier(auth, recaptchaContainerRef.current, { size: "invisible" });
+      const si = await signIn.create({ identifier: phone });
+      const factor = si.supportedFirstFactors?.find((f) => f.strategy === "phone_code");
+      if (!factor || !("phoneNumberId" in factor)) {
+        setError("Phone sign-in is not enabled for this account.");
+        setPending(false);
+        return;
       }
-      confirmationRef.current = await signInWithPhoneNumber(auth, phone, recaptchaRef.current!);
+      phoneIdRef.current = factor.phoneNumberId;
+      await signIn.prepareFirstFactor({ strategy: "phone_code", phoneNumberId: factor.phoneNumberId });
       setOtpSent(true);
-    } catch (err: unknown) {
-      setError((err as { message: string }).message);
-      recaptchaRef.current = null;
+    } catch (err) {
+      setError(clerkError(err));
     } finally {
       setPending(false);
     }
@@ -191,20 +143,20 @@ export default function LoginPage() {
 
   async function handleVerifyPhoneOtp(e: React.FormEvent) {
     e.preventDefault();
-    if (!confirmationRef.current) return;
+    if (!isLoaded || !signIn) return;
     setPending(true);
     setError("");
     try {
-      const credential = await confirmationRef.current.confirm(otp);
-      const ok = await createSession(credential.user);
-      if (!ok) {
-        setError("Session creation failed. Please try again.");
+      const res = await signIn.attemptFirstFactor({ strategy: "phone_code", code: otp });
+      if (res.status === "complete") {
+        await setActive({ session: res.createdSessionId });
+        window.location.href = getNext();
+      } else {
+        setError("Invalid code. Please try again.");
         setPending(false);
-        return;
       }
-      window.location.href = getNext();
-    } catch (err: unknown) {
-      setError((err as { message: string }).message);
+    } catch (err) {
+      setError(clerkError(err));
       setPending(false);
     }
   }
@@ -236,7 +188,6 @@ export default function LoginPage() {
             <BountixxLogo size={48} showWordmark />
           </motion.div>
 
-
           {/* Pre-heading */}
           <motion.p
             variants={slideUp}
@@ -251,11 +202,11 @@ export default function LoginPage() {
           </motion.div>
 
           <motion.div variants={slideUp} className="flex flex-col gap-3 mb-6">
-            <button type="button" onClick={() => handleOAuth("google")} disabled={pending}
+            <button type="button" onClick={() => handleOAuth("google")} disabled={pending || !isLoaded}
               className="cursor-target flex items-center justify-center gap-3 h-12 border border-cosmos-4 text-haze-2 font-rajdhani font-semibold text-sm tracking-wide hover:border-haze-3 hover:text-haze transition-colors disabled:opacity-50">
               <GoogleIcon /> CONTINUE WITH GOOGLE
             </button>
-            <button type="button" onClick={() => handleOAuth("github")} disabled={pending}
+            <button type="button" onClick={() => handleOAuth("github")} disabled={pending || !isLoaded}
               className="cursor-target flex items-center justify-center gap-3 h-12 border border-cosmos-4 text-haze-2 font-rajdhani font-semibold text-sm tracking-wide hover:border-haze-3 hover:text-haze transition-colors disabled:opacity-50">
               <GitHubIcon /> CONTINUE WITH GITHUB
             </button>
@@ -293,9 +244,6 @@ export default function LoginPage() {
                   </button>
                 </div>
               </div>
-              <div className="flex justify-end">
-                <Link href="#" className="cursor-target font-space-mono text-[11px] text-void hover:underline">Forgot password?</Link>
-              </div>
               {error && <p className="font-rajdhani text-sm text-red-400">{error}</p>}
               <Button variant="primary" size="lg" fullWidth magnetic disabled={pending}>{pending ? "SIGNING IN…" : "SIGN IN"}</Button>
             </motion.form>
@@ -315,7 +263,7 @@ export default function LoginPage() {
           {method === "email-link" && linkSent && (
             <motion.div key="el-sent" variants={slideUp} initial="hidden" animate="show" className="text-center py-4">
               <p className="font-zen-dots text-void text-lg mb-3">CHECK YOUR INBOX</p>
-              <p className="font-rajdhani text-haze-2 text-sm mb-6">We sent a sign-in link to <span className="text-void">{email}</span>. Click it to enter the arena.</p>
+              <p className="font-rajdhani text-haze-2 text-sm mb-6">We sent a sign-in link to <span className="text-void">{email}</span>. Click it to enter the arena. Keep this tab open.</p>
               <button type="button" onClick={() => setLinkSent(false)} className="font-space-mono text-[11px] text-haze-3 hover:text-void hover:underline">Use a different email</button>
             </motion.div>
           )}
@@ -334,12 +282,11 @@ export default function LoginPage() {
                     className="w-full h-12 px-4 bg-cosmos-2 border border-cosmos-4 text-haze font-rajdhani text-base tracking-[6px] placeholder:text-haze-3 focus:outline-none focus:border-void focus:shadow-[0_0_0_2px_rgba(168,85,247,0.2)] transition-all" style={{ borderRadius: 0 }} />
                   <p className="font-space-mono text-[10px] text-haze-3 mt-2">
                     Code sent to {phone}.{" "}
-                    <button type="button" onClick={() => { setOtpSent(false); setOtp(""); recaptchaRef.current = null; }} className="text-void hover:underline">Resend</button>
+                    <button type="button" onClick={() => { setOtpSent(false); setOtp(""); }} className="text-void hover:underline">Resend</button>
                   </p>
                 </div>
               )}
               {error && <p className="font-rajdhani text-sm text-red-400">{error}</p>}
-              <div ref={recaptchaContainerRef} />
               <Button variant="primary" size="lg" fullWidth magnetic disabled={pending}>{pending ? "SENDING…" : otpSent ? "VERIFY CODE" : "SEND CODE"}</Button>
             </motion.form>
           )}

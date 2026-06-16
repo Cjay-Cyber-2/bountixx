@@ -1,37 +1,44 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
-import { onAuthStateChanged, User } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { createContext, useContext } from "react";
+import { useUser } from "@clerk/nextjs";
+
+/**
+ * Compatibility shim. The app was originally written against Firebase Auth and
+ * many components read `user.uid` / `user.displayName`. This provider now wraps
+ * Clerk's `useUser()` and exposes the same minimal shape so those components
+ * keep working without changes.
+ */
+export type AuthUser = {
+  uid: string;
+  displayName: string | null;
+  email: string | null;
+  photoURL: string | null;
+};
 
 type AuthCtx = {
-  user: User | null;
+  user: AuthUser | null;
   loading: boolean;
 };
 
 const AuthContext = createContext<AuthCtx>({ user: null, loading: true });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user, isLoaded } = useUser();
 
-  useEffect(() => {
-    // AuthProvider only tracks Firebase user state.
-    // Session cookie creation is handled explicitly by auth page handlers
-    // (via createSession.ts) to avoid race conditions where setUser fires
-    // before the __session cookie is confirmed set.
-    const unsub = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser ?? null);
-      setLoading(false);
-    });
-    return unsub;
-  }, []);
+  const value: AuthCtx = {
+    loading: !isLoaded,
+    user: user
+      ? {
+          uid: user.id,
+          displayName: user.fullName ?? user.username ?? null,
+          email: user.primaryEmailAddress?.emailAddress ?? null,
+          photoURL: user.imageUrl ?? null,
+        }
+      : null,
+  };
 
-  return (
-    <AuthContext.Provider value={{ user, loading }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export const useAuth = () => useContext(AuthContext);
