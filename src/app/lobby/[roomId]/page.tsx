@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useToast } from "@/components/ui/Toast";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { staggerContainer, slideUp } from "@/lib/animations";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 
@@ -131,6 +132,7 @@ export default function LobbyPage() {
   const params = useParams();
   const roomId = params.roomId as string;
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const [data, setData] = useState<RoomData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -183,6 +185,13 @@ export default function LobbyPage() {
     const id = setInterval(() => fetchRoom(true), 2000);
     return () => clearInterval(id);
   }, [fetchRoom]);
+
+  /* ─── Keep my ready state in sync with the server (survives refresh/poll) ─── */
+  useEffect(() => {
+    if (!data || !user) return;
+    const me = data.players.find((p) => p.userId === user.uid);
+    if (me) setMyStatus(me.status === "ready" ? "ready" : "joined");
+  }, [data, user]);
 
   /* ─── Ready toggle ─── */
   async function handleReady() {
