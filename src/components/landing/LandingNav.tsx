@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { Menu, X } from "lucide-react";
 import { BountixxLogo } from "@/components/BountixxLogo";
 import { Button } from "@/components/ui/Button";
 
@@ -14,6 +15,7 @@ const NAV = [
 
 export function LandingNav() {
   const [scrolled, setScrolled] = useState(false);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -62,7 +64,7 @@ export function LandingNav() {
           </div>
 
           {/* Right cluster */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
             <Link href="/login" className="hidden sm:block">
               <Button
                 variant="ghost"
@@ -77,7 +79,7 @@ export function LandingNav() {
                 variant="primary"
                 size="sm"
                 magnetic
-                className="font-space-mono text-[11px] tracking-[2px] h-10 px-5"
+                className="font-space-mono text-[11px] tracking-[2px] h-10 px-4 sm:px-5"
                 style={{
                   background: "#FF6B1A",
                   borderColor: "#FF6B1A",
@@ -87,8 +89,51 @@ export function LandingNav() {
                 GET STARTED
               </Button>
             </Link>
+
+            {/* Mobile menu toggle */}
+            <button
+              type="button"
+              className="md:hidden text-haze-2 hover:text-haze transition-colors p-1"
+              aria-label={open ? "Close menu" : "Open menu"}
+              aria-expanded={open}
+              onClick={() => setOpen((o) => !o)}
+            >
+              {open ? <X size={22} /> : <Menu size={22} />}
+            </button>
           </div>
         </div>
+
+        {/* Mobile dropdown menu */}
+        <AnimatePresence>
+          {open && (
+            <motion.div
+              initial={{ opacity: 0, y: -12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.2 }}
+              className="md:hidden border-t border-cosmos-4"
+              style={{ background: "rgba(14,8,24,0.96)", backdropFilter: "blur(20px)" }}
+            >
+              {NAV.map(({ href, label }) => (
+                <a
+                  key={href}
+                  href={href}
+                  onClick={() => setOpen(false)}
+                  className="block px-6 py-4 font-space-mono text-[12px] tracking-[3px] uppercase text-haze-2 hover:text-haze hover:bg-cosmos-2 border-b border-cosmos-4/40 transition-colors"
+                >
+                  {label}
+                </a>
+              ))}
+              <Link
+                href="/login"
+                onClick={() => setOpen(false)}
+                className="block px-6 py-4 font-space-mono text-[12px] tracking-[3px] uppercase text-void hover:bg-cosmos-2 transition-colors"
+              >
+                Sign In
+              </Link>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.nav>
     </>
   );

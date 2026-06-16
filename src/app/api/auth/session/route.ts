@@ -49,17 +49,34 @@ export async function POST(req: Request) {
       console.error("[session/POST] DB sync failed (non-fatal):", dbErr);
     }
 
-    // Create the httpOnly session cookie
-    const sessionCookie = await adminAuth.createSessionCookie(idToken, {
-      expiresIn: SESSION_MS,
-    });
+    // Try to mint a long-lived Firebase session cookie. This requires the
+    // service account to have the "Service Account Token Creator" role
+    // (iam.serviceAccounts.signBlob). On many deployments that role is missing,
+    // which historically caused createSessionCookie to throw and bounced users
+    // straight back to the login page after a successful Google sign-in.
+    //
+    // To be resilient we fall back to storing the (already verified) ID token
+    // itself as the cookie value. getSession() knows how to verify either form.
+    let cookieValue = idToken;
+    let maxAgeSeconds = 60 * 60; // ID tokens are valid for 1 hour
+    try {
+      cookieValue = await adminAuth.createSessionCookie(idToken, {
+        expiresIn: SESSION_MS,
+      });
+      maxAgeSeconds = SESSION_MS / 1000;
+    } catch (cookieErr) {
+      console.error(
+        "[session/POST] createSessionCookie failed, falling back to ID-token cookie:",
+        cookieErr
+      );
+    }
 
     const res = NextResponse.json({ ok: true });
-    res.cookies.set("__session", sessionCookie, {
+    res.cookies.set("__session", cookieValue, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: SESSION_MS / 1000,
+      maxAge: maxAgeSeconds,
       path: "/",
     });
     return res;

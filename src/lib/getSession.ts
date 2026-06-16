@@ -84,7 +84,16 @@ export async function getSession(): Promise<SessionUser | null> {
       return null;
     }
 
-    const decoded = await adminAuth.verifySessionCookie(sessionCookie, false);
+    // The cookie may be EITHER a long-lived Firebase session cookie OR a raw
+    // ID token (fallback used when the service account can't mint session
+    // cookies). Try the session-cookie verifier first, then fall back to the
+    // ID-token verifier so both forms are accepted.
+    let decoded;
+    try {
+      decoded = await adminAuth.verifySessionCookie(sessionCookie, false);
+    } catch {
+      decoded = await adminAuth.verifyIdToken(sessionCookie);
+    }
     // Use findOrCreateUser so a user whose DB row is missing (e.g. auth/session insert
     // silently failed) is auto-created with their 500-coin welcome bonus here.
     const user = await findOrCreateUser(decoded.uid, decoded);

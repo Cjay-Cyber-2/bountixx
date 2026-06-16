@@ -6,6 +6,7 @@ import { Lock, Trophy, Camera, Pencil, Check, X } from "lucide-react";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "@/lib/firebase";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { XPBar } from "@/components/ui/XPBar";
@@ -72,9 +73,9 @@ export default function ProfilePage() {
   const fetchProfile = useCallback(async () => {
     try {
       const [profRes, statsRes, achRes] = await Promise.all([
-        fetch("/api/user/me"),
-        fetch("/api/dashboard"),
-        fetch("/api/achievements"),
+        fetchWithAuth("/api/user/me"),
+        fetchWithAuth("/api/dashboard"),
+        fetchWithAuth("/api/achievements"),
       ]);
       const profData = await profRes.json();
       const statsData = await statsRes.json();
@@ -104,9 +105,8 @@ export default function ProfilePage() {
       await uploadBytes(storageRef, file);
       const url = await getDownloadURL(storageRef);
 
-      await fetch("/api/user/me", {
+      await fetchWithAuth("/api/user/me", {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ avatarUrl: url }),
       });
 
@@ -123,9 +123,8 @@ export default function ProfilePage() {
     setSavingUsername(true);
     setUsernameError("");
     try {
-      const res = await fetch("/api/user/me", {
+      const res = await fetchWithAuth("/api/user/me", {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username: usernameInput.trim() }),
       });
       const data = await res.json();

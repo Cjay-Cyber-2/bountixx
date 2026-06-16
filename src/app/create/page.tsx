@@ -58,28 +58,34 @@ function StepIndicator({ step }: { step: Step }) {
   ];
   const activeIdx = ["setup", "questions", "review", "lobby"].indexOf(step);
   return (
-    <div className="flex items-center gap-0 mb-12">
-      {steps.map((s, i) => (
-        <div key={s.id} className="flex items-center">
-          <div className="flex items-center gap-2">
-            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
-              i < activeIdx ? "bg-success border-success" : i === activeIdx ? "border-void bg-void/20" : "border-cosmos-4 bg-transparent"
-            }`}>
-              {i < activeIdx ? (
-                <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-              ) : (
-                <span className={`font-space-mono text-[9px] font-bold ${i === activeIdx ? "text-void" : "text-haze-3"}`}>{i + 1}</span>
-              )}
+    <div className="mb-10 md:mb-12">
+      {/* Mobile: compact "Step X of 4 · LABEL" */}
+      <p className="sm:hidden font-space-mono text-[11px] tracking-[3px] text-void mb-3">
+        STEP {activeIdx + 1} OF {steps.length} · {steps[activeIdx]?.label}
+      </p>
+      <div className="flex items-center">
+        {steps.map((s, i) => (
+          <div key={s.id} className="flex items-center flex-1 last:flex-none min-w-0">
+            <div className="flex items-center gap-2 shrink-0">
+              <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+                i < activeIdx ? "bg-success border-success" : i === activeIdx ? "border-void bg-void/20" : "border-cosmos-4 bg-transparent"
+              }`}>
+                {i < activeIdx ? (
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                ) : (
+                  <span className={`font-space-mono text-[9px] font-bold ${i === activeIdx ? "text-void" : "text-haze-3"}`}>{i + 1}</span>
+                )}
+              </div>
+              <span className={`hidden sm:inline font-space-mono text-[10px] tracking-[3px] ${i === activeIdx ? "text-void" : i < activeIdx ? "text-success" : "text-haze-3"}`}>
+                {s.label}
+              </span>
             </div>
-            <span className={`font-space-mono text-[10px] tracking-[3px] ${i === activeIdx ? "text-void" : i < activeIdx ? "text-success" : "text-haze-3"}`}>
-              {s.label}
-            </span>
+            {i < steps.length - 1 && (
+              <div className={`flex-1 sm:flex-none sm:w-10 h-px mx-2 transition-all ${i < activeIdx ? "bg-success" : "bg-cosmos-4"}`} />
+            )}
           </div>
-          {i < steps.length - 1 && (
-            <div className={`w-6 sm:w-10 h-px mx-2 transition-all ${i < activeIdx ? "bg-success" : "bg-cosmos-4"}`} />
-          )}
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
@@ -105,11 +111,11 @@ function SetupStep({
   return (
     <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} className="flex flex-col gap-6">
       {/* Entry fee banner */}
-      <div className="flex items-center gap-3 bg-void/10 border border-void/30 px-4 py-3">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 bg-void/10 border border-void/30 px-4 py-3">
         <span className="font-space-mono text-[10px] text-void tracking-widest">ENTRY FEE</span>
-        <span className="flex-1 h-px bg-void/20" />
-        <span className="font-orbitron font-bold text-sm text-void">50 coins / player</span>
-        <span className="font-space-mono text-[9px] text-haze-3">charged when arena starts</span>
+        <span className="hidden sm:block flex-1 h-px bg-void/20" />
+        <span className="font-orbitron font-bold text-sm text-void">{ENTRY_FEE} coins / player</span>
+        <span className="font-space-mono text-[9px] text-haze-3 w-full sm:w-auto">charged when arena starts</span>
       </div>
 
       <div>
