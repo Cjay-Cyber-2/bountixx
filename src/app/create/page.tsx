@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Check, Copy, AlertCircle, Plus, Trash2, Loader2, ChevronRight } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { APP_GUTTERS } from "@/components/landing/_section";
 import { Button } from "@/components/ui/Button";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 
@@ -41,11 +42,11 @@ const ENTRY_FEE = 50;
 
 /* ─── Constants ─── */
 const CAT_COLORS: Record<string, string> = {
-  coding: "#FF6B1A", trivia: "#9B6BFF", logic: "#00D68F",
-  math: "#F0A500", writing: "#9B8FC0", design: "#C084FC", meme: "#F472B6",
+  coding: "#a855f7", trivia: "#9B6BFF", logic: "#8660fa", math: "#c084fc",
+  writing: "#b794f6", design: "#9B6BFF", meme: "#a855f7",
 };
 const DIFF_COLORS: Record<Difficulty, string> = {
-  rookie: "#00D68F", challenger: "#F0A500", elite: "#9B6BFF", legendary: "#FF2D55",
+  rookie: "#9B8FC0", challenger: "#a855f7", elite: "#8660fa", legendary: "#F0A500",
 };
 
 /* ─── Step indicator ─── */
@@ -109,7 +110,7 @@ function SetupStep({
   }
 
   return (
-    <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} className="flex flex-col gap-6">
+    <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} className="flex flex-col gap-7 md:gap-8">
       {/* Entry fee banner */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 bg-void/10 border border-void/30 px-4 py-3">
         <span className="font-space-mono text-[10px] text-void tracking-widest">ENTRY FEE</span>
@@ -591,7 +592,8 @@ export default function CreatePage() {
 
   return (
     <AppLayout>
-      <div className="px-5 md:px-8 lg:px-10 py-8 md:py-12 max-w-3xl mx-auto w-full">
+      <div className={`${APP_GUTTERS} py-8 md:py-12 lg:py-14`}>
+        <div className="max-w-3xl mx-auto w-full">
         <p className="font-space-mono text-[11px] text-void tracking-[3px] uppercase mb-2">New arena</p>
         <h1 className="font-zen-dots text-2xl md:text-3xl text-haze mb-2">Create your arena</h1>
         <p className="font-rajdhani text-base text-haze-2 mb-10">Set up your challenge. The AI validates and builds the rest.</p>
@@ -645,6 +647,7 @@ export default function CreatePage() {
             <LobbyView key="lobby" room={createdRoom} />
           )}
         </AnimatePresence>
+        </div>
       </div>
     </AppLayout>
   );

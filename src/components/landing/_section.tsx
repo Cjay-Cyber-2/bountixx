@@ -1,36 +1,66 @@
 "use client";
 
 /**
- * Shared landing-section primitives — one consistent cyberpunk language
- * so each section reads as deliberate, not reflexively templated.
+ * Shared landing-section layout + typography.
+ * One container width, one accent system (void purple), generous gutters.
  */
 
-import type { ReactNode } from "react";
+import type { ReactNode, CSSProperties } from "react";
 
-/** A spec-line label that carries real information (index + meta), not a bare category name. */
+/** Matches LandingNav / hero alignment — content never hugs the viewport edge. */
+export const LANDING_GUTTERS =
+  "w-full max-w-[1280px] mx-auto px-6 sm:px-8 md:px-12 lg:px-14 xl:px-16 2xl:px-20";
+
+export const APP_GUTTERS =
+  "w-full max-w-[1280px] mx-auto px-6 sm:px-8 md:px-12 lg:px-14 xl:px-16";
+
+type LandingSectionProps = {
+  id?: string;
+  children: ReactNode;
+  className?: string;
+  style?: CSSProperties;
+  variant?: "default" | "raised";
+};
+
+export function LandingSection({
+  id,
+  children,
+  className = "",
+  style,
+  variant = "default",
+}: LandingSectionProps) {
+  return (
+    <section
+      id={id}
+      className={`cyber-grid relative py-24 md:py-32 lg:py-36 overflow-hidden ${className}`}
+      style={{
+        background: variant === "raised" ? "var(--cosmos-2)" : "var(--cosmos)",
+        borderTop: variant === "raised" ? "1px solid var(--border-1)" : undefined,
+        borderBottom: variant === "raised" ? "1px solid var(--border-1)" : undefined,
+        ...style,
+      }}
+    >
+      <div className={`${LANDING_GUTTERS} relative`}>{children}</div>
+    </section>
+  );
+}
+
 export function SpecLine({
   index,
   children,
-  color = "#9B6BFF",
 }: {
   index?: string;
   children: ReactNode;
-  color?: string;
 }) {
   return (
-    <p className="font-space-mono text-[11px] tracking-[5px] uppercase flex items-center gap-3 mb-4">
-      <span className="h-px w-7" style={{ background: color, opacity: 0.7 }} aria-hidden />
-      {index && (
-        <span style={{ color }} className="tabular-nums">
-          {index}
-        </span>
-      )}
+    <p className="font-space-mono text-[11px] tracking-[5px] uppercase flex items-center gap-3 text-void">
+      <span className="h-px w-8 bg-void/60 shrink-0" aria-hidden />
+      {index && <span className="tabular-nums text-void-light">{index}</span>}
       <span className="text-haze-3">{children}</span>
     </p>
   );
 }
 
-/** Section heading — the star. Display weight, balanced wrap, with one optional accent word. */
 export function SectionHeading({
   children,
   className = "",
@@ -40,25 +70,45 @@ export function SectionHeading({
 }) {
   return (
     <h2
-      className={`font-zen-dots text-[clamp(1.65rem,4.2vw,3.25rem)] text-haze leading-[1.06] tracking-tight text-balance ${className}`}
+      className={`font-zen-dots text-[clamp(1.75rem,4vw,3.25rem)] text-haze leading-[1.12] tracking-tight text-balance ${className}`}
     >
       {children}
     </h2>
   );
 }
 
-/** A single accented word inside a heading (used sparingly, deliberately). */
+/** Purple brand accent inside headings — use at most once per heading. */
 export function Accent({ children }: { children: ReactNode }) {
+  return <span className="text-void">{children}</span>;
+}
+
+export function SectionIntro({
+  eyebrow,
+  title,
+  description,
+  extra,
+  className = "",
+}: {
+  eyebrow: string;
+  title: ReactNode;
+  description?: string;
+  extra?: string;
+  className?: string;
+}) {
   return (
-    <span
-      style={{
-        background: "linear-gradient(110deg, #FF6B1A 0%, #FF7A5C 55%, #F0A500 100%)",
-        WebkitBackgroundClip: "text",
-        WebkitTextFillColor: "transparent",
-        backgroundClip: "text",
-      }}
-    >
-      {children}
-    </span>
+    <div className={`mb-16 md:mb-20 lg:mb-24 max-w-3xl ${className}`}>
+      <SpecLine>{eyebrow}</SpecLine>
+      <SectionHeading className="mt-5 md:mt-6">{title}</SectionHeading>
+      {description && (
+        <p className="font-rajdhani text-lg md:text-xl text-haze-2 mt-6 md:mt-8 leading-relaxed max-w-[62ch]">
+          {description}
+        </p>
+      )}
+      {extra && (
+        <p className="font-rajdhani text-base text-haze-3 mt-4 leading-relaxed max-w-[62ch]">
+          {extra}
+        </p>
+      )}
+    </div>
   );
 }

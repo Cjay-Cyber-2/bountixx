@@ -6,16 +6,17 @@ import { Zap, Trophy, TrendingUp, Coins, Swords, ArrowRight } from "lucide-react
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { APP_GUTTERS } from "@/components/landing/_section";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { Button } from "@/components/ui/Button";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 
 const CATEGORY_COLORS: Record<string, string> = {
-  coding: "#FF6B1A", trivia: "#9B6BFF", logic: "#00D68F", math: "#F0A500",
+  coding: "#a855f7", trivia: "#9B6BFF", logic: "#8660fa", math: "#c084fc",
 };
 
 const RESULT_COLORS: Record<string, string> = {
-  "1st": "#F0A500", "2nd": "#9B8FC0", "3rd": "#4A3F70", "—": "#9B6BFF",
+  "1st": "#F0A500", "2nd": "#9B8FC0", "3rd": "#7A6FAE", "—": "#9B6BFF",
 };
 
 function LiveClock() {
@@ -74,7 +75,7 @@ export default function DashboardPage() {
 
   return (
     <AppLayout>
-      <div className="max-w-[1280px] mx-auto px-5 md:px-8 lg:px-10 py-8 md:py-10">
+      <div className={`${APP_GUTTERS} py-8 md:py-12 lg:py-14`}>
 
         {/* Header */}
         <motion.div

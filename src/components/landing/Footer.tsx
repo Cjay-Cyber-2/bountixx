@@ -1,11 +1,12 @@
 "use client";
 
 import { BountixxLogo } from "@/components/BountixxLogo";
+import { LANDING_GUTTERS } from "@/components/landing/_section";
 
 export function Footer() {
   return (
     <footer className="relative bg-cosmos overflow-hidden" style={{ borderTop: "1px solid var(--border-1)" }}>
-      <div className="max-w-6xl mx-auto px-6 sm:px-10 lg:px-16 py-16 relative">
+      <div className={`${LANDING_GUTTERS} py-16 md:py-20 relative`}>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center mb-14">
           {/* Left: empty column for balance */}
           <div />
