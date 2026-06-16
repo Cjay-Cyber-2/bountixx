@@ -23,30 +23,31 @@ export function Hero() {
     target: sectionRef,
     offset: ["start start", "end start"],
   });
-  const fadeOut = useTransform(scrollYProgress, [0, 0.55], [1, 0]);
+  const fadeOut = useTransform(scrollYProgress, [0, 0.6], [1, 0]);
   const animScale = useTransform(scrollYProgress, [0, 1], [1, 1.08]);
 
   return (
     <section
       ref={sectionRef}
-      className="relative h-[100vw] min-h-[600px] max-h-[1280px] flex flex-col overflow-hidden bg-cosmos"
+      className="relative min-h-[100dvh] flex flex-col overflow-hidden bg-cosmos"
       aria-label="Bountixx — Drop a challenge, claim the bounty"
     >
-      {/* ── Ambient glow (always visible) ── */}
+      {/* ── Ambient glow ── */}
       <div
         className="absolute inset-0 z-0 pointer-events-none"
         style={{
           background:
-            "radial-gradient(ellipse 80% 55% at 50% 38%, rgba(155,107,255,0.18) 0%, transparent 68%)," +
-            "radial-gradient(ellipse 60% 40% at 50% 75%, rgba(255,107,26,0.10) 0%, transparent 70%)",
+            "radial-gradient(ellipse 80% 55% at 50% 40%, rgba(155,107,255,0.20) 0%, transparent 68%)," +
+            "radial-gradient(ellipse 60% 40% at 50% 80%, rgba(255,107,26,0.10) 0%, transparent 70%)",
         }}
         aria-hidden
       />
 
-      {/* ── bountixx.json Lottie animation — imported directly, no fetch ── */}
+      {/* ── Background Lottie — contained and dimmed so it never competes with the headline ── */}
       <motion.div
-        className="absolute inset-0 z-0 pointer-events-none overflow-hidden"
+        className="absolute inset-0 z-0 pointer-events-none overflow-hidden opacity-60"
         style={{ scale: reduceMotion ? 1 : animScale }}
+        aria-hidden
       >
         <Lottie
           animationData={bountixxAnimation}
@@ -57,104 +58,101 @@ export function Hero() {
         />
       </motion.div>
 
-      {/* ── Legibility scrims (no grid) ── */}
+      {/* ── Legibility scrim ── */}
       <div className="absolute inset-0 z-[1] pointer-events-none" aria-hidden>
         <div
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(180deg, rgba(14,8,24,0.82) 0%, rgba(14,8,24,0.28) 26%, rgba(14,8,24,0.18) 50%, rgba(14,8,24,0.55) 78%, rgba(14,8,24,0.92) 100%)",
+              "linear-gradient(180deg, rgba(14,8,24,0.88) 0%, rgba(14,8,24,0.45) 30%, rgba(14,8,24,0.35) 55%, rgba(14,8,24,0.70) 82%, rgba(14,8,24,0.96) 100%)",
           }}
         />
         <div
           className="absolute inset-0"
           style={{
             background:
-              "radial-gradient(ellipse 90% 75% at 50% 50%, transparent 45%, rgba(14,8,24,0.55) 100%)",
+              "radial-gradient(ellipse 95% 80% at 50% 50%, transparent 42%, rgba(14,8,24,0.6) 100%)",
           }}
         />
       </div>
 
-      {/* ── HUD overlay ── */}
+      {/* ── HUD content — single centered column, normal flow so nothing overlaps ── */}
       <motion.div
-        className="relative z-10 flex-1 flex flex-col justify-between pointer-events-none"
+        className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-6 pt-28 pb-16 md:pt-32"
         style={{ opacity: fadeOut }}
       >
-        {/* Top */}
-        <div className="flex flex-col items-center text-center pt-24 md:pt-32 lg:pt-36 px-6 pointer-events-auto">
-          <motion.h1
-            {...fadeUp(0.3)}
-            className="font-zen-dots text-balance"
+        <motion.h1
+          {...fadeUp(0.25)}
+          className="font-zen-dots text-balance"
+          style={{
+            fontSize: "clamp(2rem, 6vw, 4.4rem)",
+            letterSpacing: "0.02em",
+            lineHeight: "1.18",
+          }}
+        >
+          <span className="text-haze">DROP A CHALLENGE.</span>
+          <br />
+          <span
             style={{
-              fontSize: "clamp(1.75rem, 5vw, 4.2rem)",
-              letterSpacing: "0.04em",
-              lineHeight: "1.25",
+              background: "linear-gradient(110deg, #FF6B1A 0%, #FF7A5C 50%, #F0A500 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              filter: "drop-shadow(0 0 26px rgba(255,107,26,0.25))",
             }}
           >
-            <span className="text-haze">DROP A CHALLENGE.</span>
-            <br />
-            <span
+            CLAIM THE BOUNTY.
+          </span>
+        </motion.h1>
+
+        <motion.p
+          {...fadeUp(0.45)}
+          className="font-rajdhani text-base md:text-xl text-haze-2 max-w-xl mt-6 leading-relaxed"
+        >
+          The AI builds the room, your rivals fill the slots, and a deterministic
+          judge crowns one winner. Settle it in thirty seconds.
+        </motion.p>
+
+        <motion.div
+          {...fadeUp(0.65)}
+          className="flex flex-col sm:flex-row items-center gap-4 mt-10"
+        >
+          <Link href="/signup">
+            <Button
+              variant="primary"
+              size="lg"
+              magnetic
+              className="text-base px-10 h-14 group relative overflow-hidden"
+              style={
+                {
+                  background: "#FF6B1A",
+                  borderColor: "#FF6B1A",
+                  boxShadow:
+                    "0 0 40px rgba(255,107,26,0.45), 0 0 80px rgba(255,107,26,0.16), inset 0 1px 0 rgba(255,255,255,0.15)",
+                } as React.CSSProperties
+              }
+            >
+              <Zap size={16} className="mr-2 transition-transform group-hover:rotate-12 group-hover:scale-110" aria-hidden />
+              ENTER THE ARENA
+            </Button>
+          </Link>
+          <Link href="#how-it-works">
+            <Button
+              variant="ghost"
+              size="lg"
+              magnetic
+              className="text-base text-haze-2 gap-2 hover:text-haze"
               style={{
-                background: "linear-gradient(110deg, #FF6B1A 0%, #FF7A5C 50%, #F0A500 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-                filter: "drop-shadow(0 0 26px rgba(255,107,26,0.25))",
+                backdropFilter: "blur(8px)",
+                background: "rgba(14,8,24,0.4)",
+                border: "1px solid rgba(45,27,105,0.6)",
               }}
             >
-              CLAIM THE BOUNTY.
-            </span>
-          </motion.h1>
-
-
-          <motion.p
-            {...fadeUp(0.5)}
-            className="font-rajdhani text-base md:text-lg text-haze-2 max-w-md mt-5 leading-relaxed"
-          >
-            Any challenge. The AI referees. The winner takes all.
-          </motion.p>
-        </div>
-
-        {/* Bottom */}
-        <div className="flex flex-col items-center gap-6 pb-10 md:pb-14 px-6 pointer-events-auto">
-          <motion.div {...fadeUp(0.7)} className="flex flex-col sm:flex-row items-center gap-4">
-            <Link href="/signup">
-              <Button
-                variant="primary"
-                size="lg"
-                magnetic
-                className="text-base px-10 h-14 group relative overflow-hidden"
-                style={
-                  {
-                    background: "#FF6B1A",
-                    borderColor: "#FF6B1A",
-                    boxShadow:
-                      "0 0 40px rgba(255,107,26,0.45), 0 0 80px rgba(255,107,26,0.16), inset 0 1px 0 rgba(255,255,255,0.15)",
-                  } as React.CSSProperties
-                }
-              >
-                <Zap size={16} className="mr-2 transition-transform group-hover:rotate-12 group-hover:scale-110" aria-hidden />
-                ENTER THE ARENA
-              </Button>
-            </Link>
-            <Link href="/dashboard">
-              <Button
-                variant="ghost"
-                size="lg"
-                magnetic
-                className="text-base text-haze-2 gap-2 hover:text-haze"
-                style={{
-                  backdropFilter: "blur(8px)",
-                  background: "rgba(14,8,24,0.4)",
-                  border: "1px solid rgba(45,27,105,0.6)",
-                }}
-              >
-                Watch a Live Room
-                <ChevronRight size={14} aria-hidden />
-              </Button>
-            </Link>
-          </motion.div>
-        </div>
+              See how it works
+              <ChevronRight size={14} aria-hidden />
+            </Button>
+          </Link>
+        </motion.div>
       </motion.div>
     </section>
   );
