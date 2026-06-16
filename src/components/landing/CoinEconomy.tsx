@@ -34,21 +34,27 @@ export function CoinEconomy() {
 
   return (
     <section
-      className="py-36 md:py-48 px-6 lg:px-14 overflow-hidden bg-cosmos"
+      className="cyber-grid relative py-28 md:py-44 px-6 sm:px-10 lg:px-16 overflow-hidden bg-cosmos"
       ref={ref}
     >
-      <div className="max-w-[1280px] mx-auto">
+      <div className="max-w-6xl mx-auto relative">
         {/* Header */}
         <div className="mb-20 md:mb-28 max-w-2xl">
-          <h2 className="font-zen-dots text-[clamp(2.2rem,5vw,3.8rem)] text-haze leading-[1.08] text-balance">
+          <p className="font-space-mono text-[11px] tracking-[5px] uppercase mb-5 flex items-center gap-3" style={{ color: "var(--cyber)" }}>
+            <span className="h-px w-8" style={{ background: "var(--cyber)", opacity: 0.6 }} aria-hidden />
+            Coins, not cash
+          </p>
+          <h2 className="font-zen-dots text-[clamp(2.2rem,5vw,3.8rem)] text-haze leading-[1.16]">
             The Bountixx{" "}
             <span style={{ color: "var(--void)" }}>economy.</span>
           </h2>
           <p className="font-rajdhani text-lg md:text-xl text-haze-2 leading-relaxed mt-6">
-            Your first 10 rooms are free. After that, creating standard rooms costs 50 coins. Participating in other players&apos; rooms is free forever.
+            Your first 10 rooms are free. After that, creating a standard room costs
+            50 coins. Joining other players&apos; rooms is free, forever.
           </p>
-          <p className="font-rajdhani text-[14px] text-haze-3 leading-relaxed mt-4 max-w-[60ch]">
-            Coins are non-transferable values inside Bountixx. They drive progression and competitive stake, not cash transactions.
+          <p className="font-rajdhani text-[15px] text-haze-3 leading-relaxed mt-4 max-w-[60ch]">
+            Coins are non-transferable values inside Bountixx. They drive
+            progression and competitive stake, not cash transactions.
           </p>
         </div>
 

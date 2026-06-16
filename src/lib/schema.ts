@@ -10,7 +10,7 @@ export const difficultyEnum = pgEnum("difficulty", ["rookie", "challenger", "eli
 export const bountyTierEnum = pgEnum("bounty_tier", ["bronze", "silver", "gold", "mythic"]);
 
 export const users = pgTable("users", {
-  id: text("id").primaryKey(),                          // Firebase UID
+  id: text("id").primaryKey(),                          // Clerk user ID (e.g. "user_...")
   email: text("email").unique(),
   username: text("username").unique().notNull(),
   avatarUrl: text("avatar_url"),

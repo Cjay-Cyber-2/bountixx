@@ -36,7 +36,7 @@ export function HowItWorks() {
   return (
     <section
       id="how-it-works"
-      className="relative py-32 md:py-44 px-6 lg:px-14 bg-cosmos overflow-hidden"
+      className="cyber-grid relative py-28 md:py-40 px-6 sm:px-10 lg:px-16 bg-cosmos overflow-hidden"
     >
       <div
         className="absolute inset-0 pointer-events-none"
@@ -44,14 +44,18 @@ export function HowItWorks() {
         aria-hidden
       />
 
-      <div className="max-w-[1100px] mx-auto relative">
+      <div className="max-w-5xl mx-auto relative">
         {/* Header */}
         <div className="mb-20 md:mb-28">
-          <h2 className="font-zen-dots text-[clamp(1.9rem,4.5vw,3.4rem)] text-haze leading-[1.1] text-balance">
+          <p className="font-space-mono text-[11px] tracking-[5px] uppercase mb-5 flex items-center gap-3" style={{ color: "var(--cyber)" }}>
+            <span className="h-px w-8" style={{ background: "var(--cyber)", opacity: 0.6 }} aria-hidden />
+            Three stages
+          </p>
+          <h2 className="font-zen-dots text-[clamp(1.9rem,4.5vw,3.4rem)] text-haze leading-[1.18]">
             How the Arena Works
           </h2>
-          <p className="font-rajdhani text-lg text-haze-2 mt-4 max-w-md leading-relaxed">
-            Three stages. Thirty seconds between you and your rivals.
+          <p className="font-rajdhani text-lg md:text-xl text-haze-2 mt-6 max-w-lg leading-relaxed">
+            Thirty seconds stand between you and your rivals. Here is the run of play.
           </p>
         </div>
 

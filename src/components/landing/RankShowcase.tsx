@@ -29,24 +29,26 @@ export function RankShowcase() {
     <section
       id="ranks"
       ref={ref}
-      className="py-28 md:py-40 px-6 lg:px-14 overflow-hidden"
+      className="cyber-grid py-28 md:py-40 px-6 sm:px-10 lg:px-16 overflow-hidden relative"
       style={{
         background: "var(--cosmos-2)",
         borderTop: "1px solid var(--border-1)",
         borderBottom: "1px solid var(--border-1)",
       }}
     >
-      <div className="max-w-[1280px] mx-auto">
+      <div className="max-w-6xl mx-auto relative">
         <div className="mb-16 md:mb-24 max-w-2xl">
-          <h2 className="font-zen-dots text-[clamp(2rem,4.5vw,3.5rem)] text-haze leading-[1.05] text-balance">
+          <p className="font-space-mono text-[11px] tracking-[5px] uppercase mb-5 flex items-center gap-3" style={{ color: "var(--cyber)" }}>
+            <span className="h-px w-8" style={{ background: "var(--cyber)", opacity: 0.6 }} aria-hidden />
+            5 ranks, 20,000 XP ceiling
+          </p>
+          <h2 className="font-zen-dots text-[clamp(2rem,4.5vw,3.5rem)] text-haze leading-[1.14]">
             Rise through{" "}
             <span style={{ color: "var(--void)" }}>the ranks.</span>
           </h2>
-          <p className="font-rajdhani text-lg text-haze-2 mt-5 max-w-xl leading-relaxed">
-            Win, place, or just finish. XP accrues either way. Each rank unlocks bigger bounty tiers and a one-time coin payout the moment you cross it.
-          </p>
-          <p className="font-space-mono text-[10px] text-haze-3 tracking-[3px] uppercase mt-6">
-            5 ranks · 20,000 XP ceiling
+          <p className="font-rajdhani text-lg md:text-xl text-haze-2 mt-6 max-w-xl leading-relaxed">
+            Win, place, or just finish, XP accrues either way. Each rank unlocks
+            bigger bounty tiers and a one-time coin payout the moment you cross it.
           </p>
         </div>
 

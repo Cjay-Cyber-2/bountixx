@@ -37,7 +37,7 @@ export function AIEngine() {
 
   return (
     <section
-      className="relative py-36 md:py-48 px-6 lg:px-14 bg-cosmos overflow-hidden"
+      className="cyber-grid relative py-28 md:py-44 px-6 sm:px-10 lg:px-16 bg-cosmos overflow-hidden"
       ref={ref}
     >
       <div
@@ -46,15 +46,19 @@ export function AIEngine() {
         aria-hidden
       />
 
-      <div className="max-w-[1180px] mx-auto relative">
+      <div className="max-w-6xl mx-auto relative">
         {/* Intro: narrative left, spec tiles right */}
-        <div className="grid lg:grid-cols-[1.1fr_1fr] gap-16 lg:gap-24 mb-28 md:mb-36 items-center">
+        <div className="grid lg:grid-cols-[1.1fr_1fr] gap-14 lg:gap-24 mb-24 md:mb-32 items-center">
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             animate={inView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
           >
-            <h2 className="font-zen-dots text-[clamp(1.9rem,4.5vw,3.4rem)] text-haze leading-[1.1] mb-8 text-balance">
+            <p className="font-space-mono text-[11px] tracking-[5px] uppercase mb-5 flex items-center gap-3" style={{ color: "var(--cyber)" }}>
+              <span className="h-px w-8" style={{ background: "var(--cyber)", opacity: 0.6 }} aria-hidden />
+              The engine
+            </p>
+            <h2 className="font-zen-dots text-[clamp(1.9rem,4.5vw,3.4rem)] text-haze leading-[1.18] mb-8">
               AI sets the stage.{" "}
               <span style={{ color: "var(--void)" }}>You claim the crown.</span>
             </h2>

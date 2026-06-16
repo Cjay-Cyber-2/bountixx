@@ -113,7 +113,7 @@ export function TopNav() {
   return (
     <>
       <header
-        className="fixed top-0 inset-x-0 z-50 h-16 border-b border-cosmos-4"
+        className="sticky top-0 inset-x-0 z-50 h-16 border-b border-cosmos-4"
         style={{ background: "var(--surface-raised)", backdropFilter: "blur(16px)" }}
       >
         <div className="max-w-[1400px] mx-auto h-full px-5 grid grid-cols-[1fr_auto_1fr] items-center">

@@ -7,36 +7,32 @@ const CATEGORIES = [
   {
     label: "Coding",
     accent: "#FF6B1A",
-    accentDim: "rgba(255,107,26,0.07)",
-    desc: "Functions, algorithms, data structures. Write directly in the sandboxed editor. JavaScript and Python supported.",
-    sample: "fn reverse(s) → s[::-1]",
+    desc: "Functions, algorithms, and data structures, written directly in a sandboxed editor. JavaScript and Python supported.",
+    sample: "fn reverse(s) -> s[::-1]",
     win: "First to pass all 20 hidden tests",
-    partial: "% of test cases passed",
+    partial: "Scored by percentage of test cases passed",
   },
   {
     label: "Trivia",
-    accent: "#a855f7",
-    accentDim: "rgba(168,85,247,0.06)",
-    desc: "General knowledge, pop culture, history. The correct answer is hashed and locked before anyone enters the room.",
-    sample: "In what year did…?",
+    accent: "#22D3EE",
+    desc: "General knowledge, pop culture, and history. The correct answer is hashed and locked before anyone enters the room.",
+    sample: "In what year did...?",
     win: "First correct submission wins",
-    partial: "N/A - correct or incorrect",
+    partial: "No partial credit, correct or incorrect",
   },
   {
     label: "Logic",
     accent: "#00D68F",
-    accentDim: "rgba(0,214,143,0.06)",
-    desc: "Puzzles, riddles, lateral thinking. The answer is objective. The trap is the obvious choice.",
-    sample: "If A < B and B < C…",
+    desc: "Puzzles, riddles, and lateral thinking. The answer is objective. The trap is always the obvious choice.",
+    sample: "If A < B and B < C...",
     win: "First correct submission wins",
-    partial: "Closest numeric or text match",
+    partial: "Closest numeric or text match on timeout",
   },
   {
     label: "Math",
     accent: "#F0A500",
-    accentDim: "rgba(240,165,0,0.06)",
-    desc: "Speed arithmetic, equations, proofs. Pure calculation against opponents who are exactly as fast.",
-    sample: "∑ x² + y , x∈[1,n]",
+    desc: "Speed arithmetic, equations, and proofs. Pure calculation against opponents who are exactly as fast as you.",
+    sample: "the sum of x squared plus y",
     win: "First correct submission wins",
     partial: "Closest numeric value on timeout",
   },
@@ -50,31 +46,35 @@ export function Categories() {
     <section
       id="categories"
       ref={ref}
-      className="relative py-36 md:py-48 px-6 lg:px-14 overflow-hidden"
-      style={{ background: "var(--cosmos-2)", borderTop: "1px solid var(--border-1)", borderBottom: "1px solid var(--border-1)" }}
+      className="cyber-grid relative py-28 md:py-40 px-6 sm:px-10 lg:px-16 overflow-hidden"
+      style={{
+        background: "var(--cosmos-2)",
+        borderTop: "1px solid var(--border-1)",
+        borderBottom: "1px solid var(--border-1)",
+      }}
     >
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{ background: "radial-gradient(ellipse 60% 50% at 90% 80%, var(--glow-1), transparent)" }}
-        aria-hidden
-      />
-
-      <div className="max-w-[1280px] mx-auto relative">
-        <div className="mb-20 md:mb-28 max-w-2xl">
-          <h2 className="font-zen-dots text-[clamp(2rem,4.8vw,3.6rem)] text-haze leading-[1.08] text-balance">
+      <div className="max-w-6xl mx-auto relative">
+        {/* Header */}
+        <div className="mb-16 md:mb-20 max-w-2xl">
+          <p className="font-space-mono text-[11px] tracking-[5px] uppercase mb-5 flex items-center gap-3" style={{ color: "var(--cyber)" }}>
+            <span className="h-px w-8" style={{ background: "var(--cyber)", opacity: 0.6 }} aria-hidden />
+            Four formats
+          </p>
+          <h2 className="font-zen-dots text-[clamp(2rem,4.6vw,3.4rem)] text-haze leading-[1.18]">
             Choose your battleground.
           </h2>
-          <p className="font-rajdhani text-lg text-haze-2 mt-5 max-w-lg leading-relaxed">
-            Four challenge formats, each with its own win condition and scoring rules.
+          <p className="font-rajdhani text-lg md:text-xl text-haze-2 mt-6 leading-relaxed">
+            Every format has its own win condition and scoring rules. Pick the
+            arena that plays to your strengths.
           </p>
         </div>
 
-        {/* Index ledger: each format is one oversized row */}
+        {/* 2x2 grid — each format gets its own breathing room */}
         <motion.div
           initial="hidden"
           animate={inView ? "show" : "hidden"}
           variants={{ show: { transition: { staggerChildren: 0.1 } } }}
-          style={{ borderTop: "1px solid var(--border-1)" }}
+          className="grid sm:grid-cols-2 gap-5 md:gap-6"
         >
           {CATEGORIES.map((cat) => (
             <motion.div
@@ -83,37 +83,41 @@ export function Categories() {
                 hidden: { opacity: 0, y: 24 },
                 show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } },
               }}
-              className="group relative grid grid-cols-1 lg:grid-cols-[minmax(220px,0.8fr)_1.4fr_1fr] gap-6 lg:gap-12 items-start py-10 md:py-12 px-2 md:px-4 transition-colors duration-300"
-              style={{ borderBottom: "1px solid var(--border-1)" }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = cat.accentDim)}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+              className="group relative flex flex-col p-8 md:p-10 transition-transform duration-300 hover:-translate-y-1"
+              style={{
+                background: "var(--cosmos)",
+                border: "1px solid var(--border-1)",
+                borderTop: `2px solid ${cat.accent}`,
+              }}
             >
-              {/* Format name, the row's anchor */}
+              {/* glow on hover */}
+              <div
+                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                style={{ background: `radial-gradient(ellipse 70% 50% at 50% 0%, ${cat.accent}14, transparent 70%)` }}
+                aria-hidden
+              />
+
               <h3
-                className="font-zen-dots leading-none transition-transform duration-300 group-hover:translate-x-2"
-                style={{ fontSize: "clamp(1.9rem, 4vw, 3rem)", color: cat.accent }}
+                className="font-zen-dots text-2xl md:text-3xl leading-none mb-5"
+                style={{ color: cat.accent }}
               >
                 {cat.label}
               </h3>
 
-              {/* Description + sample */}
-              <div>
-                <p className="font-rajdhani text-[17px] text-haze-2 leading-relaxed mb-5 max-w-[52ch]">
-                  {cat.desc}
-                </p>
-                <p className="font-space-mono text-[13px] text-haze-3">
-                  <span style={{ color: cat.accent }}>›</span>{" "}
-                  {cat.sample}
-                </p>
-              </div>
+              <p className="font-rajdhani text-[17px] text-haze-2 leading-relaxed mb-6">
+                {cat.desc}
+              </p>
 
-              {/* Win conditions */}
-              <div className="flex flex-col gap-3 lg:items-end lg:text-right">
-                <p className="font-space-mono text-[11px] uppercase tracking-wider text-haze">
+              <p className="font-space-mono text-[13px] text-haze-3 mb-8">
+                <span style={{ color: cat.accent }}>&rsaquo;</span> {cat.sample}
+              </p>
+
+              <div className="mt-auto pt-6 space-y-2.5" style={{ borderTop: "1px solid var(--border-1)" }}>
+                <p className="font-space-mono text-[11px] uppercase tracking-[2px] text-haze leading-relaxed">
                   {cat.win}
                 </p>
-                <p className="font-space-mono text-[10px] uppercase tracking-wider" style={{ color: cat.accent }}>
-                  Partial: {cat.partial}
+                <p className="font-space-mono text-[10px] uppercase tracking-[2px] leading-relaxed" style={{ color: cat.accent }}>
+                  {cat.partial}
                 </p>
               </div>
             </motion.div>

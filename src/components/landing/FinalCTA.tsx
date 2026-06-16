@@ -14,7 +14,7 @@ export function FinalCTA() {
   return (
     <section
       ref={ref}
-      className="relative py-40 px-6 lg:px-14 bg-cosmos overflow-hidden text-center"
+      className="cyber-grid relative py-32 md:py-40 px-6 sm:px-10 lg:px-16 bg-cosmos overflow-hidden text-center"
     >
       {/* Atmospheric glow */}
       <div
