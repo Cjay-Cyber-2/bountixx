@@ -1,160 +1,208 @@
-# Human setup tasks — Bountixx (Clerk auth + everything wired)
+# Bountixx — Your setup checklist (human tasks)
 
-This file lists everything **you** must do by hand (it cannot be done from code) to make the app run correctly in production after the Firebase to Clerk migration. Work top to bottom.
+This app uses **Clerk** for authentication with **your custom** `/login` and `/signup` pages.
+If you see Clerk’s hosted page at `special-wolf-28.accounts.dev`, the steps below fix that.
 
 ---
 
-## 1. Clerk — create the app and get your keys (REQUIRED)
+## What the code already does (you do NOT need to code this)
 
-1. Go to <https://dashboard.clerk.com> and create an application (or open your existing one).
-2. Copy the API keys from **Configure → API keys**:
-   - **Publishable key** — looks like `pk_live_...` (or `pk_test_...` for the dev instance)
-   - **Secret key** — looks like `sk_live_...` (or `sk_test_...`)
+- Custom Bountixx login/signup UI at `/login` and `/signup`
+- Google, GitHub, email/password, magic link, and phone OTP via Clerk
+- OAuth callback at `/sso-callback` (not Clerk’s hosted portal)
+- Protected routes via Clerk middleware (`proxy.ts`)
+- User rows synced to Neon Postgres on first sign-in
 
-### Env vars to ADD in Vercel (Project → Settings → Environment Variables)
+---
+
+## Step 1 — Fix Vercel environment variables
+
+Open **Vercel → your project → Settings → Environment Variables**.
+
+### ADD these (required for Clerk)
 
 | Variable | Value | Notes |
-|---|---|---|
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | your `pk_...` key | **Required.** Public. |
-| `CLERK_SECRET_KEY` | your `sk_...` key | **Required.** Secret. |
-| `NEXT_PUBLIC_CLERK_SIGN_IN_URL` | `/login` | Keeps Clerk pointed at our custom UI. |
-| `NEXT_PUBLIC_CLERK_SIGN_UP_URL` | `/signup` | Same. |
+|----------|-------|-------|
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | `pk_test_...` or `pk_live_...` | Clerk Dashboard → Configure → API keys |
+| `CLERK_SECRET_KEY` | `sk_test_...` or `sk_live_...` | Same page — keep secret |
+| `NEXT_PUBLIC_CLERK_SIGN_IN_URL` | `/login` | **Critical** — stops accounts.dev redirect |
+| `NEXT_PUBLIC_CLERK_SIGN_UP_URL` | `/signup` | **Critical** — stops accounts.dev redirect |
+| `NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL` | `/dashboard` | Where to go after sign-in |
+| `NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL` | `/dashboard` | Where to go after sign-up |
+| `NEXT_PUBLIC_CLERK_SIGN_IN_FORCE_REDIRECT_URL` | `/dashboard` | OAuth completion target |
+| `NEXT_PUBLIC_CLERK_SIGN_UP_FORCE_REDIRECT_URL` | `/dashboard` | OAuth completion target |
+| `NEXT_PUBLIC_APP_URL` | `https://your-production-domain.com` | Your live site URL |
 
-> Set these for **Production** and **Preview**. For local dev put them in `.env.local`.
+Apply to **Production** and **Preview**.
 
----
+### KEEP this (already set)
 
-## 2. Clerk — enable the exact sign-in / sign-up methods (REQUIRED)
+| Variable | Why |
+|----------|-----|
+| `DATABASE_URL` | Neon Postgres — required |
 
-Our custom login/signup screens call Clerk for each method, so each one must be turned on in the Clerk Dashboard or that button/tab will error. Go to **Configure → User & authentication**.
+### REMOVE or leave unset (auth no longer uses Firebase)
 
-1. **Email**
-   - Email address: **on**, set as an identifier.
-   - Verification: enable **Email verification code** (used by the password sign-up flow).
-   - Enable **Email verification link / Email link** (this powers the "Magic Link" tab).
-2. **Password**
-   - Turn **Password** on (powers the "Password" tab).
-3. **Phone**
-   - Turn **Phone number** on and enable **SMS verification code** (powers the "Phone" tab).
-   - Note: SMS may require a paid Clerk plan and can incur per-message cost.
-4. **Social connections (SSO)** → enable:
-   - **Google** (powers "Continue with Google")
-   - **GitHub** (powers "Continue with GitHub")
-   - On the **development** instance Clerk provides shared OAuth credentials automatically.
-   - On the **production** instance you MUST add your own OAuth credentials:
-     - Google: create an OAuth client in Google Cloud Console, paste Client ID/Secret into Clerk, and add Clerk's callback URL (Clerk shows it) to Google's authorized redirect URIs.
-     - GitHub: create an OAuth App in GitHub Developer Settings, paste Client ID/Secret into Clerk, set the callback URL Clerk shows.
-5. **Username**: you do **not** need to enable Clerk usernames. The username typed on sign-up is stored in the user's `unsafeMetadata` and copied into our Neon database automatically on first login.
+These were for the old Firebase auth system. **Clerk replaced them for login.**
 
-### Paths / redirect URLs
-Clerk OAuth and magic links return to **`/sso-callback`** in our app. You don't have to configure this in Clerk (it is passed at runtime), but if Clerk asks for allowed redirect origins, add your production domain (e.g. `https://your-domain.com`).
+| Variable | Action |
+|----------|--------|
+| `FIREBASE_PROJECT_ID` | **Remove** from Vercel (unless you want push notifications) |
+| `FIREBASE_CLIENT_EMAIL` | **Remove** (unless push notifications) |
+| `FIREBASE_PRIVATE_KEY` | **Remove** (unless push notifications) |
+| `NEXT_PUBLIC_FIREBASE_API_KEY` | **Remove** (unless push notifications) |
+| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | **Remove** (unless push notifications) |
+| `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | **Remove** (unless push notifications) |
+| `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | **Remove** (unless push notifications) |
+| `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | **Remove** (unless push notifications) |
+| `NEXT_PUBLIC_FIREBASE_APP_ID` | **Remove** (unless push notifications) |
 
----
-
-## 3. Clerk — production instance (REQUIRED before go-live)
-
-- The `pk_test_/sk_test_` keys work immediately on any URL (development instance).
-- For your real domain you must create/activate the **Production** instance in Clerk and complete its **DNS records** (Clerk gives you CNAMEs to add at your domain registrar). Until DNS is verified, production sign-in will not work.
-- Use the **production** `pk_live_/sk_live_` keys in Vercel Production after DNS is verified.
+> **Note:** Firebase is still in the codebase only for **optional browser push notifications**. If you are not using push alerts, delete all Firebase variables. Auth will work fine without them.
 
 ---
 
-## 4. Neon database (REQUIRED)
+## Step 2 — Configure Clerk Dashboard
 
-1. Keep your existing **`DATABASE_URL`** env var (Neon Postgres connection string, the pooled `...-pooler...` URL is fine).
-2. Apply the database schema/migrations once (from your machine with `DATABASE_URL` in `.env.local`):
-   ```bash
-   npm install
-   npm run db:migrate      # applies the SQL migrations in /drizzle
-   ```
-   If `db:migrate` reports nothing to do or you prefer to sync the schema directly, you can use:
-   ```bash
-   npx drizzle-kit push
-   ```
-3. That's it — the app creates each user's row automatically on their first login (with the 500-coin welcome bonus). User IDs are now Clerk IDs (`user_...`).
+Go to [https://dashboard.clerk.com](https://dashboard.clerk.com) → your app (**special-wolf-28**).
 
-> Note on existing data: rows created under the old Firebase UIDs will not match new Clerk IDs. For a clean cut-over this is fine (new accounts are created on first login). If you need to preserve old accounts, that requires a manual data migration (not covered here).
+### A. Paths (most important)
 
----
+**Configure → Paths**
 
-## 5. Your current Vercel env — what to change
+| Setting | Value |
+|---------|-------|
+| Sign-in URL | `/login` |
+| Sign-up URL | `/signup` |
+| After sign-in URL | `/dashboard` |
+| After sign-up URL | `/dashboard` |
 
-You said you have ~11 sensitive vars (mostly Firebase + the database). Here is what to do with each kind:
+Use the **relative paths** above if Clerk offers that option. If it requires full URLs, use:
+- `https://YOUR-DOMAIN.com/login`
+- `https://YOUR-DOMAIN.com/signup`
+- `https://YOUR-DOMAIN.com/dashboard`
 
-| Existing variable | Action |
-|---|---|
-| `DATABASE_URL` | **KEEP** — required (Neon). |
-| `NEXT_PUBLIC_FIREBASE_API_KEY` | **OPTIONAL now** — only used for push notifications. Keep if you want push; otherwise safe to delete. |
-| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | Optional (push only). |
-| `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | Optional (push only). |
-| `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | Optional (push only). |
-| `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | Optional (push only). |
-| `NEXT_PUBLIC_FIREBASE_APP_ID` | Optional (push only). |
-| `FIREBASE_PROJECT_ID` | Optional (push only, server). |
-| `FIREBASE_CLIENT_EMAIL` | Optional (push only, server). |
-| `FIREBASE_PRIVATE_KEY` | Optional (push only, server). |
+### B. Domains
 
-**Then ADD the Clerk vars from section 1.** Auth no longer uses Firebase at all — avatars and sessions are handled by Clerk. If you do not care about browser push notifications, you can delete all 9 Firebase vars.
+**Configure → Domains**
 
----
+Add your production domain (e.g. `bountixx.vercel.app` or your custom domain).
 
-## 6. Other env vars the app uses (set the ones you need)
+### C. Social sign-in providers
 
-| Variable | Required for | Notes |
-|---|---|---|
-| `NEXT_PUBLIC_APP_URL` | Payments (Stripe + Paystack redirects) | Set to your full site URL, e.g. `https://your-domain.com`. **No trailing slash.** |
-| `GROQ_API_KEY` | AI room analysis (`/create`) | Get from <https://console.groq.com>. Without it, room creation's AI step returns "AI unavailable". |
-| `STRIPE_SECRET_KEY` | USD coin purchases | From the Stripe dashboard. |
-| `STRIPE_WEBHOOK_SECRET` | Crediting coins after Stripe payment | Create a webhook endpoint in Stripe pointing to `https://your-domain.com/api/payment/stripe/webhook` and paste its signing secret. |
-| `PAYSTACK_SECRET_KEY` | NGN coin purchases | From the Paystack dashboard. |
-| `ADMIN_EMAIL` | Free room creation for the owner account | Defaults to `chijiokejoseph2022@gmail.com`. Set this to the email of the Clerk account that should be exempt from the room-creation fee. |
-| `NEXT_PUBLIC_FCM_VAPID_KEY` | Push notifications (optional) | Only if you keep Firebase push. From Firebase Console → Cloud Messaging → Web Push certificates. |
+**User & Authentication → Social connections**
 
----
+- Enable **Google**
+- Enable **GitHub** (if you want it)
+- For Google: add your OAuth client ID/secret from Google Cloud Console, **or** use Clerk’s shared credentials for development
 
-## 7. After deploying — verify (do this once live)
+### D. Email / phone / username
 
-- [ ] Sign up with **email + password** → you receive a 6-digit code → entering it lands you on the dashboard.
-- [ ] Sign up / sign in with **Google** → after choosing the account you land on the dashboard (no bounce back to login).
-- [ ] Sign in with **GitHub**.
-- [ ] **Magic Link** tab → email arrives → clicking the link signs you in.
-- [ ] **Phone** tab → SMS code arrives → entering it signs you in.
-- [ ] Two different people signing in see **their own** name/initials in the top-right (no stale "CJ").
-- [ ] Dashboard and every sub-page (Create, Wallet, Profile, Lobby) render centered and are **not** hidden under the top nav.
-- [ ] Sign out returns you to the landing page and clears the session.
-- [ ] (If configured) buy a coin bundle with Stripe/Paystack and confirm coins are credited.
+**User & Authentication → Email, Phone, Username**
+
+Enable what your UI supports:
+- Email address ✓
+- Password ✓
+- Phone number ✓ (if using phone OTP tab)
+- Username (optional — we store display username in app DB)
+
+### E. Account Portal (why you saw accounts.dev)
+
+**Account Portal** is Clerk’s hosted UI. Your app uses **custom pages** instead.
+
+You do **not** need to disable Account Portal, but you must complete Step 1 (env vars) and Step 2A (paths). Without those, Clerk falls back to `https://special-wolf-28.accounts.dev/sign-up`.
 
 ---
 
-## 8. Quick reference — final env var list
+## Step 3 — Redeploy
 
-**Required**
+After changing env vars:
+
+1. Vercel → **Deployments** → open latest deployment → **⋯** → **Redeploy**
+2. Or push any commit to trigger a new build
+
+Env vars only apply after a redeploy.
+
+---
+
+## Step 4 — Test (5 minutes)
+
+### A. Local (optional)
+
+```bash
+cp .env.example .env.local
+# Fill in Clerk keys + DATABASE_URL
+npm install
+npm run dev
+npm run auth:diagnose
 ```
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
-CLERK_SECRET_KEY
+
+Open `http://localhost:3000/login` — you should see **your** Bountixx UI, not Clerk’s card.
+
+### B. Production smoke test
+
+1. Open `https://YOUR-DOMAIN.com/login` — Bountixx “SIGN IN” page (dark theme, “CONTINUE WITH GOOGLE”)
+2. Click **Continue with Google**
+3. Complete Google OAuth
+4. You should land on `/sso-callback` briefly, then `/dashboard`
+5. You should **never** see `accounts.dev` or Clerk’s “Create your account / First name / Last name” form
+
+### C. If something fails
+
+| Symptom | Fix |
+|---------|-----|
+| Redirect to `accounts.dev` | Add `NEXT_PUBLIC_CLERK_SIGN_IN_URL` and `NEXT_PUBLIC_CLERK_SIGN_UP_URL` in Vercel, redeploy |
+| Blank login page / Clerk error | Check `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` is set |
+| 500 on API routes | Check `CLERK_SECRET_KEY` and `DATABASE_URL` |
+| Google button does nothing | Enable Google in Clerk Dashboard → Social connections |
+| Lands on login after Google | Check Clerk paths + `NEXT_PUBLIC_CLERK_*_REDIRECT_URL` vars |
+
+### D. Browser DevTools check
+
+After Google sign-in:
+- **Network** → no permanent redirect to `accounts.dev`
+- **Application → Cookies** → Clerk session cookies present (`__session` or `__clerk_*`)
+- **Console** → no Clerk “missing publishable key” errors
+
+---
+
+## Step 5 — Clerk vs Firebase summary
+
+| Feature | Provider |
+|---------|----------|
+| Sign in / sign up | **Clerk** |
+| Session / middleware | **Clerk** |
+| User profile images | **Clerk** |
+| Database user rows | **Neon** (synced via `getSession()`) |
+| Push notifications | **Firebase FCM** (optional only) |
+
+---
+
+## Quick copy-paste for Vercel
+
+Add these with your real values:
+
+```
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_xxxxxxxx
+CLERK_SECRET_KEY=sk_test_xxxxxxxx
 NEXT_PUBLIC_CLERK_SIGN_IN_URL=/login
 NEXT_PUBLIC_CLERK_SIGN_UP_URL=/signup
-DATABASE_URL
-NEXT_PUBLIC_APP_URL
+NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/dashboard
+NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL=/dashboard
+NEXT_PUBLIC_CLERK_SIGN_IN_FORCE_REDIRECT_URL=/dashboard
+NEXT_PUBLIC_CLERK_SIGN_UP_FORCE_REDIRECT_URL=/dashboard
+NEXT_PUBLIC_APP_URL=https://YOUR-DOMAIN.com
 ```
-**Recommended / feature-dependent**
-```
-GROQ_API_KEY            # AI challenge structuring
-STRIPE_SECRET_KEY       # card payments (USD)
-STRIPE_WEBHOOK_SECRET   # Stripe coin crediting
-PAYSTACK_SECRET_KEY     # payments (NGN)
-ADMIN_EMAIL             # fee-exempt owner account
-```
-**Optional (push notifications only — delete if unused)**
-```
-NEXT_PUBLIC_FIREBASE_API_KEY
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
-NEXT_PUBLIC_FIREBASE_PROJECT_ID
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
-NEXT_PUBLIC_FIREBASE_APP_ID
-FIREBASE_PROJECT_ID
-FIREBASE_CLIENT_EMAIL
-FIREBASE_PRIVATE_KEY
-NEXT_PUBLIC_FCM_VAPID_KEY
-```
+
+Then **remove** the Firebase auth variables listed in Step 1 unless you need push notifications.
+
+---
+
+## Done?
+
+When all tests pass:
+- [ ] `/login` shows Bountixx UI
+- [ ] Google sign-in reaches `/dashboard`
+- [ ] No `accounts.dev` redirects
+- [ ] Sign out works and returns to `/`
+
+If you are still stuck, run `npm run auth:diagnose` locally and share the output.

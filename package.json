@@ -9,7 +9,8 @@
     "lint": "eslint",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "auth:diagnose": "node scripts/auth-diagnose.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.102.0",

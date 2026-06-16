@@ -1,8 +1,17 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
+// Public routes — never send these to Clerk's hosted Account Portal.
+const isPublicRoute = createRouteMatcher([
+  "/",
+  "/login(.*)",
+  "/signup(.*)",
+  "/sso-callback(.*)",
+  "/api/payment/stripe/webhook(.*)",
+]);
+
 // App pages that require a signed-in user. API routes are intentionally NOT
 // listed here — they call getSession() and return a proper 401 JSON response.
-const isProtected = createRouteMatcher([
+const isProtectedRoute = createRouteMatcher([
   "/dashboard(.*)",
   "/create(.*)",
   "/arena(.*)",
@@ -14,11 +23,14 @@ const isProtected = createRouteMatcher([
 ]);
 
 export const proxy = clerkMiddleware(async (auth, req) => {
-  if (isProtected(req)) {
-    await auth.protect({
-      unauthenticatedUrl: new URL("/login", req.url).toString(),
-    });
-  }
+  if (isPublicRoute(req)) return;
+  if (!isProtectedRoute(req)) return;
+
+  // unauthenticatedUrl MUST stay on our domain. Clerk only honours custom
+  // sign-in paths when NEXT_PUBLIC_CLERK_SIGN_IN_URL is set in the environment.
+  await auth.protect({
+    unauthenticatedUrl: new URL("/login", req.url).toString(),
+  });
 });
 
 export const config = {

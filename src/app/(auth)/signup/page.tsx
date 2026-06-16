@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, Mail, Lock, Phone, ArrowLeft } from "lucide-react";
-import { useSignUp } from "@clerk/nextjs/legacy";
+import { useSignUp, useSignIn } from "@clerk/nextjs/legacy";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { BountixxLogo } from "@/components/BountixxLogo";
 import { Button } from "@/components/ui/Button";
@@ -28,6 +28,7 @@ function clerkError(err: unknown): string {
 export default function SignupPage() {
   const { loading } = useAuth();
   const { isLoaded, signUp, setActive } = useSignUp();
+  const { isLoaded: signInLoaded, signIn } = useSignIn();
 
   const [method, setMethod] = useState<Method>("email-password");
   const [show, setShow] = useState(false);
@@ -55,11 +56,14 @@ export default function SignupPage() {
   }
 
   async function handleOAuth(provider: "google" | "github") {
-    if (!isLoaded || !signUp) return;
+    // OAuth always goes through signIn — Clerk creates the account when the
+    // Google/GitHub user is new. Using signUp here sent existing users to
+    // Clerk's hosted Account Portal (accounts.dev) instead of our UI.
+    if (!signInLoaded || !signIn) return;
     setError("");
     setPending(true);
     try {
-      await signUp.authenticateWithRedirect({
+      await signIn.authenticateWithRedirect({
         strategy: provider === "google" ? "oauth_google" : "oauth_github",
         redirectUrl: "/sso-callback",
         redirectUrlComplete: getNext(),
@@ -218,11 +222,11 @@ export default function SignupPage() {
           </motion.div>
 
           <motion.div variants={slideUp} className="flex flex-col gap-3 mb-6">
-            <button type="button" onClick={() => handleOAuth("google")} disabled={pending || !isLoaded}
+            <button type="button" onClick={() => handleOAuth("google")} disabled={pending || !signInLoaded}
               className="cursor-target flex items-center justify-center gap-3 h-12 border border-cosmos-4 text-haze-2 font-rajdhani font-semibold text-sm tracking-wide hover:border-haze-3 hover:text-haze transition-colors disabled:opacity-50">
               <GoogleIcon /> CONTINUE WITH GOOGLE
             </button>
-            <button type="button" onClick={() => handleOAuth("github")} disabled={pending || !isLoaded}
+            <button type="button" onClick={() => handleOAuth("github")} disabled={pending || !signInLoaded}
               className="cursor-target flex items-center justify-center gap-3 h-12 border border-cosmos-4 text-haze-2 font-rajdhani font-semibold text-sm tracking-wide hover:border-haze-3 hover:text-haze transition-colors disabled:opacity-50">
               <GitHubIcon /> CONTINUE WITH GITHUB
             </button>
