@@ -131,11 +131,11 @@ export function RankShowcase() {
         >
           <div className="flex items-center justify-between mb-4">
             <span className="font-zen-dots text-sm text-haze tracking-wide">CHAMPION</span>
-            <span className="font-space-mono text-[11px] text-haze-3">6,820 / 10,000 XP</span>
+            <span className="font-space-mono text-[11px] text-haze-3">13,180 / 20,000 XP</span>
           </div>
-          <XPBar current={6820} max={10000} thick color="void" />
+          <XPBar current={13180} max={20000} thick color="void" />
           <p className="font-space-mono text-[10px] text-haze-3 mt-3 tracking-[1px]">
-            3,180 XP to Legendary. About 16 wins away.
+            6,820 XP to Legendary, the final rank.
           </p>
         </motion.div>
       </div>

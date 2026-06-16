@@ -27,7 +27,7 @@ const ANTI_CHEAT = [
   },
   {
     label: "Sandbox execution",
-    note: "Judge0 isolated containers run every submission. 5s timeout, 128MB RAM hard cap. No exceptions.",
+    note: "Every submission runs in an isolated sandbox container. 5s timeout, 128MB RAM hard cap. No exceptions.",
   },
 ] as const;
 
