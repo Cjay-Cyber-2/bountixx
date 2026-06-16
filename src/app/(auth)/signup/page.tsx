@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, Mail, Lock, Phone, ArrowLeft } from "lucide-react";
 import { useSignUp, useSignIn } from "@clerk/nextjs/legacy";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { clerkOAuthUrls, readNextParam } from "@/lib/clerkOAuth";
 import { BountixxLogo } from "@/components/BountixxLogo";
 import { Button } from "@/components/ui/Button";
 import { AuthBrandPanel } from "@/components/landing/AuthBrandPanel";
@@ -45,6 +46,15 @@ export default function SignupPage() {
   const [otp, setOtp] = useState("");
   const [emailCode, setEmailCode] = useState("");
 
+  // Clerk sometimes lands on /signup#/continue — send to our continue page.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.location.hash === "#/continue") {
+      const qs = window.location.search;
+      window.location.replace(`/signup/continue${qs}`);
+    }
+  }, []);
+
   function resetMethod(m: Method) {
     setMethod(m);
     setError("");
@@ -56,17 +66,15 @@ export default function SignupPage() {
   }
 
   async function handleOAuth(provider: "google" | "github") {
-    // OAuth always goes through signIn — Clerk creates the account when the
-    // Google/GitHub user is new. Using signUp here sent existing users to
-    // Clerk's hosted Account Portal (accounts.dev) instead of our UI.
     if (!signInLoaded || !signIn) return;
     setError("");
     setPending(true);
+    const urls = clerkOAuthUrls();
     try {
       await signIn.authenticateWithRedirect({
         strategy: provider === "google" ? "oauth_google" : "oauth_github",
-        redirectUrl: "/sso-callback",
-        redirectUrlComplete: getNext(),
+        redirectUrl: urls.ssoCallback,
+        redirectUrlComplete: urls.destination(readNextParam()),
       });
     } catch (err) {
       setError(clerkError(err));

@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { Eye, EyeOff, Mail, Lock, Phone, ArrowLeft } from "lucide-react";
 import { useSignIn } from "@clerk/nextjs/legacy";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { clerkOAuthUrls, readNextParam } from "@/lib/clerkOAuth";
 import { BountixxLogo } from "@/components/BountixxLogo";
 import { Button } from "@/components/ui/Button";
 import { AuthBrandPanel } from "@/components/landing/AuthBrandPanel";
@@ -55,11 +56,12 @@ export default function LoginPage() {
     if (!isLoaded || !signIn) return;
     setError("");
     setPending(true);
+    const urls = clerkOAuthUrls();
     try {
       await signIn.authenticateWithRedirect({
         strategy: provider === "google" ? "oauth_google" : "oauth_github",
-        redirectUrl: "/sso-callback",
-        redirectUrlComplete: getNext(),
+        redirectUrl: urls.ssoCallback,
+        redirectUrlComplete: urls.destination(readNextParam()),
       });
     } catch (err) {
       setError(clerkError(err));

@@ -2,22 +2,15 @@
 
 import { AuthenticateWithRedirectCallback } from "@clerk/nextjs";
 import { BountixxLogo } from "@/components/BountixxLogo";
-
-function safeNext(): string {
-  if (typeof window === "undefined") return "/dashboard";
-  const params = new URLSearchParams(window.location.search);
-  const next = params.get("redirect_url") ?? params.get("next");
-  if (next && next.startsWith("/")) return next;
-  return "/dashboard";
-}
+import { clerkOAuthUrls, readNextParam } from "@/lib/clerkOAuth";
 
 /**
- * Clerk redirects OAuth (Google / GitHub) and email-link sign-ins back here.
- * AuthenticateWithRedirectCallback finishes the flow and sends the user to
- * /dashboard (or the ?next= path) using our custom UI — not accounts.dev.
+ * Clerk OAuth callback. When sign-up needs extra fields (terms, username),
+ * users go to /signup/continue — NOT /signup#/continue.
  */
 export default function SSOCallbackPage() {
-  const destination = safeNext();
+  const urls = clerkOAuthUrls();
+  const destination = readNextParam();
 
   return (
     <div className="min-h-[100dvh] bg-cosmos flex flex-col items-center justify-center gap-6">
@@ -29,11 +22,15 @@ export default function SSOCallbackPage() {
         </p>
       </div>
       <AuthenticateWithRedirectCallback
-        signInForceRedirectUrl={destination}
-        signUpForceRedirectUrl={destination}
-        signInFallbackRedirectUrl={destination}
-        signUpFallbackRedirectUrl={destination}
+        continueSignUpUrl={urls.continueSignUp}
+        signInUrl="/login"
+        signUpUrl="/signup"
+        signInForceRedirectUrl={urls.destination(destination)}
+        signUpForceRedirectUrl={urls.destination(destination)}
+        signInFallbackRedirectUrl={urls.destination("/dashboard")}
+        signUpFallbackRedirectUrl={urls.destination("/dashboard")}
       />
+      <div id="clerk-captcha" />
     </div>
   );
 }

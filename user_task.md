@@ -10,6 +10,7 @@ If you see Clerk’s hosted page at `special-wolf-28.accounts.dev`, the steps be
 - Custom Bountixx login/signup UI at `/login` and `/signup`
 - Google, GitHub, email/password, magic link, and phone OTP via Clerk
 - OAuth callback at `/sso-callback` (not Clerk’s hosted portal)
+- Google OAuth “finish sign up” page at `/signup/continue` (terms / extra fields)
 - Protected routes via Clerk middleware (`proxy.ts`)
 - User rows synced to Neon Postgres on first sign-in
 
@@ -111,6 +112,18 @@ Enable what your UI supports:
 
 You do **not** need to disable Account Portal, but you must complete Step 1 (env vars) and Step 2A (paths). Without those, Clerk falls back to `https://special-wolf-28.accounts.dev/sign-up`.
 
+### F. Google sign-up — legal terms & extra fields
+
+If Google sign-in stuck on “Completing sign-in…” then bounced to `/signup#/continue`:
+
+1. **Configure → Redirect URLs** — add:
+   - `https://bountixx.vercel.app/sso-callback`
+   - `https://bountixx.vercel.app/signup/continue`
+2. **User & Authentication → Legal** — if “Require at sign-up” is enabled, users will see `/signup/continue` to accept terms (your UI, not Clerk’s card).
+3. **User & Authentication → Username** — set to **Optional** if you can (Bountixx stores usernames in its own database).
+
+Ensure `NEXT_PUBLIC_APP_URL=https://bountixx.vercel.app` is set in Vercel (required for OAuth redirect URLs in production).
+
 ---
 
 ## Step 3 — Redeploy
@@ -155,6 +168,7 @@ Open `http://localhost:3000/login` — you should see **your** Bountixx UI, not 
 | 500 on API routes | Check `CLERK_SECRET_KEY` and `DATABASE_URL` |
 | Google button does nothing | Enable Google in Clerk Dashboard → Social connections |
 | Lands on login after Google | Check Clerk paths + `NEXT_PUBLIC_CLERK_*_REDIRECT_URL` vars |
+| Stuck on “Completing sign-in…” then `/signup#/continue` | Redeploy latest `main`; add redirect URLs in Clerk Dashboard; complete `/signup/continue` (terms checkbox if required) |
 
 ### D. Browser DevTools check
 
