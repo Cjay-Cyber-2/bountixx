@@ -106,6 +106,19 @@ export async function POST(
     return NextResponse.json({ forfeited: true });
   }
 
+  // Integrity guard: once a player has completed or forfeited, no more recorded
+  // submissions. This stops XP farming and answer brute-forcing on a second try.
+  // Preview-only test runs (runTestsOnly) are still allowed since they record nothing.
+  if (
+    !body.runTestsOnly &&
+    (playerRow.status === "completed" || playerRow.status === "forfeited")
+  ) {
+    return NextResponse.json(
+      { error: "You have already submitted in this arena" },
+      { status: 409 }
+    );
+  }
+
   // ── Coding room ──────────────────────────────────────────────────────────
   if (room.category === "coding") {
     if (!body.code) return NextResponse.json({ error: "Code is required" }, { status: 400 });
