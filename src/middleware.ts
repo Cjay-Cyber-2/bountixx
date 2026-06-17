@@ -19,7 +19,6 @@ const isProtectedRoute = createRouteMatcher([
   "/lobby(.*)",
   "/wallet(.*)",
   "/profile(.*)",
-  "/join(.*)",
   "/payment(.*)",
 ]);
 
@@ -27,8 +26,13 @@ const isProtectedRoute = createRouteMatcher([
 // does not propagate Clerk auth headers to route handlers reliably.
 export default clerkMiddleware(async (auth, req) => {
   if (!isPublicRoute(req) && isProtectedRoute(req)) {
+    const loginUrl = new URL("/login", req.url);
+    const returnPath = `${req.nextUrl.pathname}${req.nextUrl.search}`;
+    if (returnPath && returnPath !== "/login") {
+      loginUrl.searchParams.set("next", returnPath);
+    }
     await auth.protect({
-      unauthenticatedUrl: new URL("/login", req.url).toString(),
+      unauthenticatedUrl: loginUrl.toString(),
     });
   }
 });

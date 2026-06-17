@@ -11,7 +11,7 @@ export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getSession();
+  const session = await getSession(req);
   if (!session) return unauthorized();
 
   const { id: roomId } = await params;

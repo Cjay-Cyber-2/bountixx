@@ -3,11 +3,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Users, Copy, Check, LogIn, QrCode } from "lucide-react";
-import { QRCodeSVG } from "qrcode.react";
+import { Users, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { InviteSharePanel } from "@/components/arena/InviteSharePanel";
 import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { staggerContainer, slideUp } from "@/lib/animations";
@@ -139,7 +139,6 @@ export default function LobbyPage() {
   const [myStatus, setMyStatus] = useState<"joined" | "ready">("joined");
   const [readying, setReadying] = useState(false);
   const [starting, setStarting] = useState(false);
-  const [copied, setCopied] = useState(false);
 
   /* ─── Fetch ─── */
   const fetchRoom = useCallback(
@@ -250,19 +249,6 @@ export default function LobbyPage() {
     }
   }
 
-  /* ─── Copy invite link ─── */
-  async function handleCopy() {
-    const link = `${window.location.origin}/join/${roomId}`;
-    try {
-      await navigator.clipboard.writeText(link);
-      setCopied(true);
-      toast({ type: "success", title: "Invite link copied!" });
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      toast({ type: "error", title: "Could not copy" });
-    }
-  }
-
   /* ─── Loading ─── */
   if (loading) {
     return (
@@ -295,9 +281,6 @@ export default function LobbyPage() {
   const readyCount = competitors.filter((p) => p.status === "ready").length;
   const allReady = competitors.length >= 2 && readyCount === competitors.length;
   const canStart = isAdmin && allReady;
-  const inviteLink = typeof window !== "undefined"
-    ? `${window.location.origin}/join/${roomId}`
-    : `/join/${roomId}`;
 
   /* Challenge preview: truncate at 200 chars */
   const taskText = room.taskNormalised ?? room.taskRaw;
@@ -449,53 +432,7 @@ export default function LobbyPage() {
           <p className="font-space-mono text-[10px] text-void tracking-widest mb-3 uppercase">
             Invite Players
           </p>
-          <div className="flex flex-col sm:flex-row gap-5">
-            {/* Link + copy */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <input
-                  readOnly
-                  value={inviteLink}
-                  className="flex-1 h-10 px-3 bg-cosmos border border-cosmos-4 text-haze-2 font-space-mono text-[11px] focus:outline-none truncate"
-                  style={{ borderRadius: 0 }}
-                  aria-label="Invite link"
-                />
-                <button
-                  onClick={handleCopy}
-                  className="h-10 px-4 bg-cosmos-3 border border-cosmos-4 text-haze-2 hover:text-haze hover:border-void transition-colors flex items-center gap-1.5 shrink-0"
-                  aria-label="Copy invite link"
-                >
-                  {copied ? (
-                    <Check size={14} className="text-success" />
-                  ) : (
-                    <Copy size={14} />
-                  )}
-                  <span className="font-space-mono text-[10px]">
-                    {copied ? "COPIED" : "COPY"}
-                  </span>
-                </button>
-              </div>
-              <p className="font-space-mono text-[9px] text-haze-3 mt-2">
-                Share this link to invite players
-              </p>
-            </div>
-
-            {/* QR code — white quiet zone so phone cameras can read it on the dark UI */}
-            <div className="flex sm:flex-col items-center gap-3 sm:gap-2 shrink-0">
-              <div className="bg-white p-2.5" style={{ lineHeight: 0 }}>
-                <QRCodeSVG
-                  value={inviteLink}
-                  size={108}
-                  level="M"
-                  bgColor="#FFFFFF"
-                  fgColor="#0B0817"
-                />
-              </div>
-              <p className="font-space-mono text-[9px] text-haze-3 flex items-center gap-1.5">
-                <QrCode size={11} aria-hidden /> SCAN TO JOIN
-              </p>
-            </div>
-          </div>
+          <InviteSharePanel roomId={roomId} qrSize={108} />
         </motion.div>
       </motion.div>
     </AppLayout>

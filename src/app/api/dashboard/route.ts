@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { rooms, submissions, roomPlayers, users } from "@/lib/schema";
+import { rooms, submissions, roomPlayers, users, invites } from "@/lib/schema";
 import { eq, and, desc, sql, count, gte, inArray } from "drizzle-orm";
 import { getSession, unauthorized } from "@/lib/getSession";
 import { timeAgo } from "@/lib/utils";
@@ -11,8 +11,8 @@ const CATEGORY_COLORS: Record<string, string> = {
   coding: "#FF6B1A", trivia: "#9B6BFF", logic: "#00D68F", math: "#F0A500",
 };
 
-export async function GET() {
-  const session = await getSession();
+export async function GET(req: Request) {
+  const session = await getSession(req);
   if (!session) return unauthorized();
 
   const uid = session.id;
@@ -109,6 +109,27 @@ export async function GET() {
     ))
     .limit(10);
 
+  const [activeLobby] = await db
+    .select({ id: rooms.id, name: rooms.name })
+    .from(rooms)
+    .where(and(eq(rooms.adminId, uid), eq(rooms.status, "lobby")))
+    .orderBy(desc(rooms.createdAt))
+    .limit(1);
+
+  const pendingInvites = await db
+    .select({
+      id: invites.id,
+      roomId: invites.roomId,
+      roomName: rooms.name,
+      inviterName: users.username,
+    })
+    .from(invites)
+    .leftJoin(rooms, eq(invites.roomId, rooms.id))
+    .leftJoin(users, eq(invites.inviterId, users.id))
+    .where(and(eq(invites.inviteeId, uid), eq(invites.status, "pending")))
+    .orderBy(desc(invites.createdAt))
+    .limit(5);
+
   return NextResponse.json({
     roomsCreated: session.roomsCreatedCount,
     roomsWon,
@@ -124,5 +145,14 @@ export async function GET() {
       avatarUrl: u.avatarUrl,
       initials: u.username.slice(0, 2).toUpperCase(),
     })),
+    activeLobby: activeLobby ?? null,
+    pendingInvites: pendingInvites
+      .filter((inv) => inv.roomId && inv.roomName)
+      .map((inv) => ({
+        id: inv.id,
+        roomId: inv.roomId,
+        roomName: inv.roomName!,
+        inviterName: inv.inviterName ?? "Someone",
+      })),
   });
 }

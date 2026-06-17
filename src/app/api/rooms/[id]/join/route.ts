@@ -2,17 +2,17 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { rooms, roomPlayers } from "@/lib/schema";
+import { rooms, roomPlayers, invites } from "@/lib/schema";
 import { eq, ne, count, and } from "drizzle-orm";
 import { getSession, unauthorized } from "@/lib/getSession";
 import { expireLobbyIfStale } from "@/lib/roomExpiry";
 import { randomUUID } from "crypto";
 
 export async function POST(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getSession();
+  const session = await getSession(req);
   if (!session) return unauthorized();
 
   const { id: roomId } = await params;
@@ -31,7 +31,6 @@ export async function POST(
     return NextResponse.json({ error: "Room is no longer accepting players" }, { status: 409 });
   }
 
-  // Check if already a player
   const [existing] = await db
     .select({ id: roomPlayers.id })
     .from(roomPlayers)
@@ -39,10 +38,13 @@ export async function POST(
     .limit(1);
 
   if (existing) {
+    await db
+      .update(invites)
+      .set({ status: "accepted" })
+      .where(and(eq(invites.roomId, roomId), eq(invites.inviteeId, session.id)));
     return NextResponse.json({ message: "Already in this room" });
   }
 
-  // Check cap — the host doesn't count as a player, so only count competitors
   const [{ count: playerCount }] = await db
     .select({ count: count() })
     .from(roomPlayers)
@@ -65,6 +67,11 @@ export async function POST(
       joinedAt: new Date(),
     })
     .returning();
+
+  await db
+    .update(invites)
+    .set({ status: "accepted" })
+    .where(and(eq(invites.roomId, roomId), eq(invites.inviteeId, session.id)));
 
   return NextResponse.json({ player }, { status: 201 });
 }

@@ -49,7 +49,7 @@ export default function JoinPage() {
         }
 
         // Parse response body for all other cases
-        const json = (await res.json()) as { message?: string; error?: string };
+        const json = (await res.json().catch(() => ({}))) as { message?: string; error?: string };
 
         // Already in room
         if (res.ok && json.message === "Already in this room") {
@@ -71,6 +71,14 @@ export default function JoinPage() {
         // Room full
         if (res.status === 409 && json.error === "Room is full") {
           setState({ phase: "error", message: "This arena is full. Try another room." });
+          return;
+        }
+
+        if (res.status === 404 && json.error?.toLowerCase().includes("expired")) {
+          setState({
+            phase: "error",
+            message: "This invite link expired after 30 minutes. Ask the host for a new link.",
+          });
           return;
         }
 

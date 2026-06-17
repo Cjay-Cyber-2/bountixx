@@ -25,8 +25,8 @@ export interface RoomQuestion {
   hiddenTests?: { input: string; expectedOutput: string }[];
 }
 
-export async function GET() {
-  const session = await getSession();
+export async function GET(req: Request) {
+  const session = await getSession(req);
   if (!session) return unauthorized();
 
   const created = await db
@@ -53,7 +53,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const session = await getSession();
+  const session = await getSession(req);
   if (!session) return unauthorized();
 
   try {

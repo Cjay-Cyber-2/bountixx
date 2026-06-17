@@ -10,6 +10,7 @@ import { APP_GUTTERS } from "@/components/landing/_section";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { Button } from "@/components/ui/Button";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
+import { useToast } from "@/components/ui/Toast";
 
 const CATEGORY_COLORS: Record<string, string> = {
   coding: "#a855f7", trivia: "#9B6BFF", logic: "#8660fa", math: "#c084fc",
@@ -38,10 +39,13 @@ type DashboardData = {
   coinsBalance: number;
   recentRooms: { name: string; category: string; place: string; coins: number; date: string }[];
   onlineUsers: { id: string; username: string; rank: string; avatarUrl: string | null; initials: string }[];
+  activeLobby: { id: string; name: string } | null;
+  pendingInvites: { id: string; roomId: string; roomName: string; inviterName: string }[];
 };
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -143,6 +147,35 @@ export default function DashboardPage() {
           })}
         </motion.div>
 
+        {!!data?.pendingInvites?.length && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35, duration: 0.45 }}
+            className="mb-10 p-5"
+            style={{ background: "var(--void-tint)", border: "1px solid var(--border-accent)" }}
+          >
+            <p className="font-space-mono text-[10px] text-void tracking-widest uppercase mb-3">
+              Arena invites
+            </p>
+            <div className="space-y-3">
+              {data.pendingInvites.map((inv) => (
+                <div key={inv.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <p className="font-rajdhani text-sm text-haze">
+                    <span className="text-void">@{inv.inviterName}</span> invited you to{" "}
+                    <span className="font-semibold">{inv.roomName}</span>
+                  </p>
+                  <Link href={`/join/${inv.roomId}`}>
+                    <Button variant="primary" size="sm" className="w-full sm:w-auto">
+                      Join arena
+                    </Button>
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
         {/* Create CTA + Online */}
         <div className="grid lg:grid-cols-2 gap-4 md:gap-6 mb-10">
           {/* Create arena CTA */}
@@ -222,7 +255,12 @@ export default function DashboardPage() {
                 </p>
               ) : (
                 data?.onlineUsers?.map((p) => (
-                  <OnlinePlayerRow key={p.id} player={p} />
+                  <OnlinePlayerRow
+                    key={p.id}
+                    player={p}
+                    activeLobby={data?.activeLobby ?? null}
+                    onNotify={(message, type = "info") => toast({ type, title: message })}
+                  />
                 ))
               )}
             </div>
@@ -293,10 +331,15 @@ export default function DashboardPage() {
 
 function OnlinePlayerRow({
   player,
+  activeLobby,
+  onNotify,
 }: {
   player: { id: string; username: string; rank: string; avatarUrl: string | null; initials: string };
+  activeLobby: { id: string; name: string } | null;
+  onNotify: (message: string, type?: "info" | "success" | "error") => void;
 }) {
   const [invited, setInvited] = useState(false);
+  const [loading, setLoading] = useState(false);
   const RANK_COLORS: Record<string, string> = {
     LEGENDARY: "#FF6B1A", CHAMPION: "#F0A500", ELITE: "#00D68F",
     CHALLENGER: "#9B6BFF", RECRUIT: "var(--haze-3)",
@@ -320,11 +363,34 @@ function OnlinePlayerRow({
         <p className="font-space-mono text-[9px] mt-1" style={{ color }}>{player.rank}</p>
       </div>
       <button
-        onClick={() => {
-          setInvited(true);
-          setTimeout(() => setInvited(false), 2000);
+        type="button"
+        disabled={loading}
+        onClick={async () => {
+          if (!activeLobby) {
+            onNotify("Create an arena first — then invite friends from here or the lobby.", "info");
+            return;
+          }
+          setLoading(true);
+          try {
+            const res = await fetchWithAuth(`/api/rooms/${activeLobby.id}/invite`, {
+              method: "POST",
+              body: JSON.stringify({ inviteeIds: [player.id] }),
+            });
+            const json = (await res.json()) as { error?: string; invited?: number };
+            if (!res.ok) {
+              onNotify(json.error ?? "Could not send invite", "error");
+              return;
+            }
+            setInvited(true);
+            onNotify(`Invite sent to @${player.username} for ${activeLobby.name}`, "success");
+            setTimeout(() => setInvited(false), 2500);
+          } catch {
+            onNotify("Network error sending invite", "error");
+          } finally {
+            setLoading(false);
+          }
         }}
-        className={`cursor-target shrink-0 font-space-mono text-[10px] px-3 py-1 transition-all ${
+        className={`cursor-target shrink-0 font-space-mono text-[10px] px-3 py-1 transition-all disabled:opacity-50 ${
           invited
             ? "text-success"
             : "text-haze-3 sm:opacity-0 sm:group-hover:opacity-100 hover:text-void"
@@ -334,7 +400,7 @@ function OnlinePlayerRow({
           background: invited ? "rgba(0,214,143,0.08)" : "transparent",
         }}
       >
-        {invited ? "Sent ✓" : "Invite"}
+        {invited ? "Sent ✓" : loading ? "Sending…" : "Invite"}
       </button>
     </div>
   );

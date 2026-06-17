@@ -3,8 +3,8 @@
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, Copy, AlertCircle, Plus, Trash2, Loader2, ChevronRight } from "lucide-react";
-import { QRCodeSVG } from "qrcode.react";
+import { AlertCircle, Plus, Trash2, Loader2, ChevronRight } from "lucide-react";
+import { InviteSharePanel } from "@/components/arena/InviteSharePanel";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageShell } from "@/components/landing/_section";
 import { Button } from "@/components/ui/Button";
@@ -426,14 +426,6 @@ function ReviewStep({
 /* ─── Lobby view ─── */
 function LobbyView({ room }: { room: CreatedRoom }) {
   const router = useRouter();
-  const [copied, setCopied] = useState(false);
-  const inviteLink = `${typeof window !== "undefined" ? window.location.origin : ""}/join/${room.id}`;
-
-  const copy = async () => {
-    await navigator.clipboard.writeText(inviteLink).catch(() => {});
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   return (
     <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-6">
@@ -444,23 +436,8 @@ function LobbyView({ room }: { room: CreatedRoom }) {
       </div>
 
       <div>
-        <p className="font-space-mono text-[10px] text-haze-3 tracking-widest mb-2 uppercase">Invite Link</p>
-        <div className="flex items-center gap-0 border border-cosmos-4">
-          <span className="flex-1 font-space-mono text-xs text-haze-2 px-3 py-3 bg-cosmos-2 truncate">{inviteLink}</span>
-          <button onClick={copy}
-            className={`cursor-target flex items-center gap-2 px-4 py-3 border-l border-cosmos-4 font-space-mono text-xs transition-colors ${copied ? "text-success bg-success/10" : "text-void hover:bg-void/10"}`}>
-            {copied ? <Check size={14} /> : <Copy size={14} />}
-            {copied ? "COPIED!" : "COPY"}
-          </button>
-        </div>
-
-        {/* QR — white quiet zone so phone cameras can read it on the dark UI */}
-        <div className="flex flex-col items-center gap-2 mt-5">
-          <div className="bg-white p-2.5" style={{ lineHeight: 0 }}>
-            <QRCodeSVG value={inviteLink} size={132} level="M" bgColor="#FFFFFF" fgColor="#0B0817" />
-          </div>
-          <p className="font-space-mono text-[9px] text-haze-3 tracking-widest">SCAN TO JOIN · EXPIRES IN 30 MIN</p>
-        </div>
+        <p className="font-space-mono text-[10px] text-haze-3 tracking-widest mb-3 uppercase">Invite friends</p>
+        <InviteSharePanel roomId={room.id} qrSize={132} />
       </div>
 
       <div className="flex flex-col gap-3 mt-2">

@@ -66,8 +66,8 @@ export async function getClerkUserId(req?: Request): Promise<string | null> {
  *
  * Never throws — returns null when auth or the database is unavailable.
  */
-export async function getSession(): Promise<SessionUser | null> {
-  const userId = await getClerkUserId();
+export async function getSession(req?: Request): Promise<SessionUser | null> {
+  const userId = await getClerkUserId(req);
   if (!userId) return null;
 
   try {

@@ -187,6 +187,7 @@ Open `http://localhost:3000/login` — you should see **your** Bountixx UI, not 
 | **Analyze with AI** fails / “could not reach service” | Add `GROQ_API_KEY` or `GEMINI_API_KEY` in Vercel → redeploy. Open `/api/health` to see which env check failed |
 | **Analyze with AI** — “Clerk server auth failed” | `CLERK_SECRET_KEY` missing or mismatched with your publishable key — add in Vercel Production + Preview, redeploy |
 | **Analyze with AI** — Groq/Gemini error in UI | API key invalid or rate-limited — the UI now shows the provider message |
+| **Invite link / QR not working** | Set `NEXT_PUBLIC_APP_URL=https://bountixx.vercel.app` in Vercel so links always use your production domain, then redeploy |
 
 ### D. Browser DevTools check
 
