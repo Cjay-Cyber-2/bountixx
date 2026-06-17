@@ -11,6 +11,7 @@ import { BountixxLogo } from "@/components/BountixxLogo";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { firebaseEnabled } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
+import { APP_GUTTERS } from "@/components/landing/_section";
 
 const NAV_ITEMS = [
   { href: "/dashboard",  label: "Dashboard",   icon: LayoutDashboard },
@@ -116,7 +117,7 @@ export function TopNav() {
         className="sticky top-0 inset-x-0 z-50 h-16 border-b border-cosmos-4"
         style={{ background: "var(--surface-raised)", backdropFilter: "blur(16px)" }}
       >
-        <div className="max-w-[1400px] mx-auto h-full px-5 grid grid-cols-[1fr_auto_1fr] items-center">
+        <div className={`${APP_GUTTERS} h-full grid grid-cols-[1fr_auto_1fr] items-center`}>
 
           {/* Left: Logo */}
           <div className="flex items-center">

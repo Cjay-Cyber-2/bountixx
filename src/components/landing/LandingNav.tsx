@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { BountixxLogo } from "@/components/BountixxLogo";
 import { Button } from "@/components/ui/Button";
+import { LANDING_GUTTERS } from "@/components/landing/_section";
 
 const NAV = [
   { href: "#how-it-works", label: "How It Works" },
@@ -39,7 +40,7 @@ export function LandingNav() {
             : "1px solid transparent",
         }}
       >
-        <div className="max-w-[1280px] mx-auto h-20 px-6 lg:px-14 flex items-center justify-between gap-12">
+        <div className={`${LANDING_GUTTERS} h-20 flex items-center justify-between gap-12`}>
           {/* Logo */}
           <Link href="/" aria-label="Bountixx home" className="cursor-target">
             <BountixxLogo size={36} showWordmark />

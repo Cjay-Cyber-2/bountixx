@@ -43,7 +43,7 @@ export function CoinEconomy() {
               The Bountixx <Accent>economy.</Accent>
             </>
           }
-          description="Your first 10 rooms are free. After that, creating a standard room costs 50 coins. Joining other players' rooms is free, forever."
+          description="Creating a standard arena costs 50 coins per player slot at launch. Joining other players' rooms is free, forever."
           extra="Coins are non-transferable values inside Bountixx. They drive progression and competitive stake, not cash transactions."
         />
 

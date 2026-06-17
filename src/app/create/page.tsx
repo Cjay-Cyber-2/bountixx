@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Check, Copy, AlertCircle, Plus, Trash2, Loader2, ChevronRight } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { APP_GUTTERS } from "@/components/landing/_section";
+import { PageShell } from "@/components/landing/_section";
 import { Button } from "@/components/ui/Button";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { readApiError } from "@/lib/readApiError";
@@ -181,7 +181,7 @@ function QuestionCard({
 
   return (
     <motion.div layout initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }}
-      className="bg-cosmos-2 border border-cosmos-4 p-5">
+      className="bg-cosmos-2 border border-cosmos-4 p-6 md:p-8">
       <div className="flex items-center justify-between mb-3">
         <span className="font-space-mono text-[10px] text-void tracking-widest">QUESTION {index + 1}</span>
         <div className="flex items-center gap-2">
@@ -605,11 +605,12 @@ export default function CreatePage() {
 
   return (
     <AppLayout>
-      <div className={`${APP_GUTTERS} py-8 md:py-12 lg:py-14`}>
-        <div className="max-w-3xl mx-auto w-full">
-        <p className="font-space-mono text-[11px] text-void tracking-[3px] uppercase mb-2">New arena</p>
-        <h1 className="font-zen-dots text-2xl md:text-3xl text-haze mb-2">Create your arena</h1>
-        <p className="font-rajdhani text-base text-haze-2 mb-10">Set up your challenge. The AI validates and builds the rest.</p>
+      <PageShell width="4xl">
+        <p className="font-space-mono text-[11px] text-void tracking-[3px] uppercase mb-2 text-center sm:text-left">New arena</p>
+        <h1 className="font-zen-dots text-2xl md:text-4xl text-haze mb-3 text-center sm:text-left">Create your arena</h1>
+        <p className="font-rajdhani text-base md:text-lg text-haze-2 mb-10 md:mb-12 max-w-2xl text-center sm:text-left mx-auto sm:mx-0">
+          Set up your challenge. The AI validates and builds the rest.
+        </p>
 
         <StepIndicator step={step} />
 
@@ -660,8 +661,7 @@ export default function CreatePage() {
             <LobbyView key="lobby" room={createdRoom} />
           )}
         </AnimatePresence>
-        </div>
-      </div>
+      </PageShell>
     </AppLayout>
   );
 }

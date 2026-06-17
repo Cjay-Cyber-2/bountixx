@@ -45,21 +45,21 @@ export function AIEngine() {
           aria-hidden
         />
 
-        <div className="grid lg:grid-cols-[1.05fr_1fr] gap-12 lg:gap-20 xl:gap-24 mb-20 md:mb-28 lg:mb-32 items-start">
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 xl:gap-20 mb-20 md:mb-28 lg:mb-32 items-start">
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             animate={inView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
-            className="max-w-xl"
+            className="max-w-xl mx-auto lg:mx-0 text-center lg:text-left"
           >
-            <SpecLine>The engine</SpecLine>
+            <SpecLine className="justify-center lg:justify-start">The engine</SpecLine>
             <SectionHeading className="mt-5 md:mt-6 mb-6 md:mb-8">
               AI sets the stage. <Accent>You claim the crown.</Accent>
             </SectionHeading>
-            <p className="font-rajdhani text-lg md:text-xl text-haze-2 leading-relaxed mb-5 max-w-[58ch]">
+            <p className="font-rajdhani text-lg md:text-xl text-haze-2 leading-relaxed mb-5 max-w-[58ch] mx-auto lg:mx-0">
               The AI engine is a creation assistant, not a referee. It reads raw task briefs, structures the details, and sets up test cases.
             </p>
-            <p className="font-rajdhani text-base text-haze-3 leading-relaxed max-w-[58ch]">
+            <p className="font-rajdhani text-base text-haze-3 leading-relaxed max-w-[58ch] mx-auto lg:mx-0">
               Before any lobby goes live, the room creator has full editing control over the title, difficulty, and test cases. The winner is always decided by a deterministic system.
             </p>
           </motion.div>
@@ -93,7 +93,7 @@ export function AIEngine() {
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.5, delay: 0.3 }}
         >
-          <div className="flex flex-wrap items-center gap-4 mb-8 md:mb-10">
+          <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 mb-8 md:mb-10">
             <h3 className="font-zen-dots text-2xl md:text-3xl text-haze">Anti-cheat</h3>
             <span
               className="font-space-mono text-[9px] tracking-[2px] uppercase px-2.5 py-1 rounded-sm text-void"

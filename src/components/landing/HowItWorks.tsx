@@ -47,23 +47,23 @@ export function HowItWorks() {
         className="relative z-[1]"
       />
 
-      <div ref={railRef} className="relative z-[1] mt-4 md:mt-8">
+      <div ref={railRef} className="relative z-[1] max-w-3xl mx-auto">
         <div
-          className="absolute left-[27px] md:left-[43px] top-2 bottom-2 w-px hidden sm:block"
+          className="absolute left-1/2 -translate-x-1/2 top-2 bottom-2 w-px"
           style={{ background: "var(--border-1)" }}
           aria-hidden
         />
         {!reduce && (
           <motion.div
-            className="absolute left-[27px] md:left-[43px] top-2 w-px hidden sm:block origin-top"
+            className="absolute left-1/2 -translate-x-1/2 top-2 w-px origin-top"
             style={{ height: railFill, background: "var(--void)" }}
             aria-hidden
           />
         )}
 
         <div className="flex flex-col gap-20 md:gap-28 lg:gap-32">
-          {STEPS.map((step, i) => (
-            <Stage key={step.num} step={step} flip={i % 2 === 1} />
+          {STEPS.map((step) => (
+            <Stage key={step.num} step={step} />
           ))}
         </div>
       </div>
@@ -71,23 +71,17 @@ export function HowItWorks() {
   );
 }
 
-function Stage({
-  step,
-  flip,
-}: {
-  step: (typeof STEPS)[number];
-  flip: boolean;
-}) {
+function Stage({ step }: { step: (typeof STEPS)[number] }) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-20% 0px" });
 
   return (
-    <div ref={ref} className="relative sm:pl-24 md:pl-36 lg:pl-40">
+    <div ref={ref} className="relative text-center px-4 md:px-8">
       <motion.span
         initial={{ scale: 0 }}
         animate={inView ? { scale: 1 } : {}}
         transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.15 }}
-        className="absolute left-[21px] md:left-[37px] top-6 w-[13px] h-[13px] rounded-full hidden sm:block"
+        className="relative z-[1] mx-auto mb-6 flex h-[13px] w-[13px] items-center justify-center rounded-full"
         style={{ background: "var(--cosmos)", border: "2px solid var(--void)" }}
         aria-hidden
       />
@@ -96,12 +90,12 @@ function Stage({
         initial={{ opacity: 0, y: 32 }}
         animate={inView ? { opacity: 1, y: 0 } : {}}
         transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
-        className={`flex flex-col md:flex-row md:items-baseline gap-5 md:gap-12 lg:gap-16 ${flip ? "md:flex-row-reverse md:text-right" : ""}`}
+        className="flex flex-col items-center gap-5 md:gap-6"
       >
         <span
-          className="font-orbitron font-black leading-none select-none shrink-0 tabular-nums"
+          className="font-orbitron font-black leading-none select-none tabular-nums"
           style={{
-            fontSize: "clamp(4rem, 9vw, 7.5rem)",
+            fontSize: "clamp(3.5rem, 8vw, 6.5rem)",
             color: "transparent",
             WebkitTextStroke: "1.5px var(--border-2)",
           }}
@@ -110,7 +104,7 @@ function Stage({
           {step.num}
         </span>
 
-        <div className={`max-w-[52ch] ${flip ? "md:ml-auto" : ""}`}>
+        <div className="max-w-[52ch]">
           <h3 className="font-zen-dots text-xl md:text-2xl text-haze mb-4 md:mb-5">
             {step.title}
           </h3>

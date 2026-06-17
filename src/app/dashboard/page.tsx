@@ -75,14 +75,14 @@ export default function DashboardPage() {
 
   return (
     <AppLayout>
-      <div className={`${APP_GUTTERS} py-8 md:py-12 lg:py-14`}>
+      <div className={`${APP_GUTTERS} py-8 md:py-12 lg:py-16`}>
 
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-9"
+          className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10 md:mb-12"
         >
           <div>
             <p className="font-space-mono text-[11px] text-haze-3 tracking-[3px] uppercase mb-1.5">
@@ -106,7 +106,7 @@ export default function DashboardPage() {
           initial="hidden"
           animate="show"
           variants={{ show: { transition: { staggerChildren: 0.07 } } }}
-          className="grid grid-cols-2 lg:grid-cols-4 gap-px mb-10"
+          className="grid grid-cols-2 lg:grid-cols-4 gap-px mb-12 md:mb-14"
           style={{ background: "var(--border-1)" }}
         >
           {statCards.map((s) => {

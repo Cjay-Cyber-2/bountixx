@@ -6,7 +6,7 @@ import { motion, useInView } from "framer-motion";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { Accent, LANDING_GUTTERS } from "@/components/landing/_section";
+import { Accent, LANDING_CONTENT, LANDING_GUTTERS } from "@/components/landing/_section";
 
 export function FinalCTA() {
   const ref = useRef<HTMLDivElement>(null);
@@ -34,7 +34,8 @@ export function FinalCTA() {
         }}
       />
 
-      <div className={`${LANDING_GUTTERS} relative max-w-3xl`}>
+      <div className={`${LANDING_GUTTERS} relative`}>
+        <div className={`${LANDING_CONTENT} max-w-3xl text-center`}>
         <motion.h2
           initial={{ opacity: 0, y: 36 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
@@ -50,7 +51,7 @@ export function FinalCTA() {
           transition={{ duration: 0.6, delay: 0.12 }}
           className="font-rajdhani text-lg md:text-xl text-haze-2 mb-10 md:mb-12 mx-auto max-w-lg leading-relaxed"
         >
-          No subscription. No card required. Your first 10 arenas are free. The AI structures the challenge, you bring the skill.
+          No subscription. No card required. Start with 500 welcome coins. The AI structures the challenge, you bring the skill.
         </motion.p>
 
         <motion.div
@@ -92,6 +93,7 @@ export function FinalCTA() {
         >
           No subscription · Anti-cheat AI · Coins land instantly
         </motion.p>
+        </div>
       </div>
     </section>
   );
