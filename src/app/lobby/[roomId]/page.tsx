@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { InviteSharePanel } from "@/components/arena/InviteSharePanel";
+import { OnlineFriendsList } from "@/components/arena/OnlineFriendsList";
 import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { staggerContainer, slideUp } from "@/lib/animations";
@@ -427,13 +428,37 @@ export default function LobbyPage() {
         {/* Invite section */}
         <motion.div
           variants={slideUp}
-          className="bg-cosmos-2 border border-cosmos-4 p-5"
+          className="bg-cosmos-2 border border-cosmos-4 p-5 mb-6"
         >
           <p className="font-space-mono text-[10px] text-void tracking-widest mb-3 uppercase">
             Invite Players
           </p>
           <InviteSharePanel roomId={roomId} qrSize={108} />
         </motion.div>
+
+        {isAdmin ? (
+          <motion.div
+            variants={slideUp}
+            className="bg-cosmos-2 border border-cosmos-4 p-5"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <span className="relative flex h-2 w-2" aria-hidden>
+                <span className="absolute inset-0 rounded-full bg-success animate-[livepulse_1.5s_ease-in-out_infinite]" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-success" />
+              </span>
+              <p className="font-space-mono text-[10px] text-void tracking-widest uppercase">
+                Friends online
+              </p>
+            </div>
+            <OnlineFriendsList
+              roomId={roomId}
+              variant="lobby"
+              excludeUserIds={players.map((p) => p.userId)}
+              emptyMessage="No friends online right now. Share the invite link above — they'll appear here once they're in the app."
+              onNotify={(message, type = "info") => toast({ type, title: message })}
+            />
+          </motion.div>
+        ) : null}
       </motion.div>
     </AppLayout>
   );

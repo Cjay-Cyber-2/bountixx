@@ -115,6 +115,7 @@ export async function getSession(req?: Request): Promise<SessionUser | null> {
       xp: 0,
       rank: "recruit" as const,
       roomsCreatedCount: 0,
+      lastSeenAt: new Date(),
     };
 
     try {

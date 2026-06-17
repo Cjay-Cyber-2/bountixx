@@ -11,6 +11,7 @@ import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { Button } from "@/components/ui/Button";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { useToast } from "@/components/ui/Toast";
+import { OnlineFriendsList } from "@/components/arena/OnlineFriendsList";
 
 const CATEGORY_COLORS: Record<string, string> = {
   coding: "#a855f7", trivia: "#9B6BFF", logic: "#8660fa", math: "#c084fc",
@@ -235,35 +236,18 @@ export default function DashboardPage() {
               </span>
               <span className="font-zen-dots text-base text-haze tracking-wide">Who&apos;s online</span>
               <span className="ml-auto font-space-mono text-[10px] text-haze-3">
-                {data?.onlineUsers?.length ?? 0} live
+                live
               </span>
             </div>
-            <div className="space-y-2.5">
-              {loading ? (
-                Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-cosmos-3 animate-pulse shrink-0" />
-                    <div className="flex-1">
-                      <div className="h-3 w-24 bg-cosmos-3 animate-pulse mb-1.5" />
-                      <div className="h-2 w-16 bg-cosmos-3 animate-pulse" />
-                    </div>
-                  </div>
-                ))
-              ) : !data?.onlineUsers?.length ? (
-                <p className="font-space-mono text-[10px] text-haze-3 text-center py-6">
-                  No one else online right now
-                </p>
-              ) : (
-                data?.onlineUsers?.map((p) => (
-                  <OnlinePlayerRow
-                    key={p.id}
-                    player={p}
-                    activeLobby={data?.activeLobby ?? null}
-                    onNotify={(message, type = "info") => toast({ type, title: message })}
-                  />
-                ))
-              )}
-            </div>
+            <OnlineFriendsList
+              activeLobby={data?.activeLobby ?? null}
+              onNotify={(message, type = "info") => toast({ type, title: message })}
+            />
+            {!data?.activeLobby ? (
+              <p className="font-space-mono text-[9px] text-haze-3 mt-4 text-center">
+                Create an arena to invite online friends from here.
+              </p>
+            ) : null}
           </motion.div>
         </div>
 
@@ -326,83 +310,6 @@ export default function DashboardPage() {
 
       </div>
     </AppLayout>
-  );
-}
-
-function OnlinePlayerRow({
-  player,
-  activeLobby,
-  onNotify,
-}: {
-  player: { id: string; username: string; rank: string; avatarUrl: string | null; initials: string };
-  activeLobby: { id: string; name: string } | null;
-  onNotify: (message: string, type?: "info" | "success" | "error") => void;
-}) {
-  const [invited, setInvited] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const RANK_COLORS: Record<string, string> = {
-    LEGENDARY: "#FF6B1A", CHAMPION: "#F0A500", ELITE: "#00D68F",
-    CHALLENGER: "#9B6BFF", RECRUIT: "var(--haze-3)",
-  };
-  const color = RANK_COLORS[player.rank] ?? "var(--haze-3)";
-
-  return (
-    <div className="flex items-center gap-3 group">
-      <div
-        className="w-9 h-9 rounded-full bg-cosmos-3 border-2 flex items-center justify-center shrink-0 overflow-hidden"
-        style={{ borderColor: `${color}44` }}
-      >
-        {player.avatarUrl ? (
-          <img src={player.avatarUrl} alt={player.username} className="w-full h-full object-cover" />
-        ) : (
-          <span className="font-orbitron font-bold text-[10px] text-haze">{player.initials}</span>
-        )}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="font-rajdhani font-semibold text-sm text-haze leading-none truncate">@{player.username}</p>
-        <p className="font-space-mono text-[9px] mt-1" style={{ color }}>{player.rank}</p>
-      </div>
-      <button
-        type="button"
-        disabled={loading}
-        onClick={async () => {
-          if (!activeLobby) {
-            onNotify("Create an arena first — then invite friends from here or the lobby.", "info");
-            return;
-          }
-          setLoading(true);
-          try {
-            const res = await fetchWithAuth(`/api/rooms/${activeLobby.id}/invite`, {
-              method: "POST",
-              body: JSON.stringify({ inviteeIds: [player.id] }),
-            });
-            const json = (await res.json()) as { error?: string; invited?: number };
-            if (!res.ok) {
-              onNotify(json.error ?? "Could not send invite", "error");
-              return;
-            }
-            setInvited(true);
-            onNotify(`Invite sent to @${player.username} for ${activeLobby.name}`, "success");
-            setTimeout(() => setInvited(false), 2500);
-          } catch {
-            onNotify("Network error sending invite", "error");
-          } finally {
-            setLoading(false);
-          }
-        }}
-        className={`cursor-target shrink-0 font-space-mono text-[10px] px-3 py-1 transition-all disabled:opacity-50 ${
-          invited
-            ? "text-success"
-            : "text-haze-3 sm:opacity-0 sm:group-hover:opacity-100 hover:text-void"
-        }`}
-        style={{
-          border: invited ? "1px solid rgba(0,214,143,0.4)" : "1px solid var(--border-1)",
-          background: invited ? "rgba(0,214,143,0.08)" : "transparent",
-        }}
-      >
-        {invited ? "Sent ✓" : loading ? "Sending…" : "Invite"}
-      </button>
-    </div>
   );
 }
 

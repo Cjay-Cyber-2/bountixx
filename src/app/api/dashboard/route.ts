@@ -3,8 +3,9 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { rooms, submissions, roomPlayers, users, invites } from "@/lib/schema";
-import { eq, and, desc, sql, count, gte, inArray } from "drizzle-orm";
+import { eq, and, desc, count, inArray } from "drizzle-orm";
 import { getSession, unauthorized } from "@/lib/getSession";
+import { listOnlineUsers } from "@/lib/presence";
 import { timeAgo } from "@/lib/utils";
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -93,21 +94,7 @@ export async function GET(req: Request) {
     });
   }
 
-  // Online users (last seen within 5 minutes)
-  const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-  const onlineUsers = await db
-    .select({
-      id:        users.id,
-      username:  users.username,
-      rank:      users.rank,
-      avatarUrl: users.avatarUrl,
-    })
-    .from(users)
-    .where(and(
-      gte(users.lastSeenAt, fiveMinutesAgo),
-      sql`${users.id} != ${uid}`
-    ))
-    .limit(10);
+  const onlineUsers = await listOnlineUsers(uid);
 
   const [activeLobby] = await db
     .select({ id: rooms.id, name: rooms.name })

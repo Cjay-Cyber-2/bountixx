@@ -5,13 +5,13 @@ import { db } from "@/lib/db";
 import { users } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { getSession, unauthorized } from "@/lib/getSession";
+import { touchPresence } from "@/lib/presence";
 
-export async function GET() {
-  const session = await getSession();
+export async function GET(req: Request) {
+  const session = await getSession(req);
   if (!session) return unauthorized();
 
-  // Update lastSeenAt
-  await db.update(users).set({ lastSeenAt: new Date() }).where(eq(users.id, session.id));
+  await touchPresence(session.id);
 
   return NextResponse.json(
     { user: session },
@@ -20,7 +20,7 @@ export async function GET() {
 }
 
 export async function PUT(req: Request) {
-  const session = await getSession();
+  const session = await getSession(req);
   if (!session) return unauthorized();
 
   const body = await req.json() as { username?: string; avatarUrl?: string };

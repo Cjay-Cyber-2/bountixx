@@ -1,38 +1,32 @@
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { users } from "@/lib/schema";
-import { and, gte, ne, sql } from "drizzle-orm";
 import { getSession, unauthorized } from "@/lib/getSession";
+import { listOnlineUsers, touchPresence } from "@/lib/presence";
 
-export async function GET() {
-  const session = await getSession();
+export async function GET(req: Request) {
+  const session = await getSession(req);
   if (!session) return unauthorized();
 
-  const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-
-  const onlineUsers = await db
-    .select({
-      id:        users.id,
-      username:  users.username,
-      rank:      users.rank,
-      avatarUrl: users.avatarUrl,
-    })
-    .from(users)
-    .where(and(
-      gte(users.lastSeenAt, fiveMinutesAgo),
-      sql`${users.id} != ${session.id}`
-    ))
-    .limit(20);
+  const onlineUsers = await listOnlineUsers(session.id);
 
   return NextResponse.json({
     users: onlineUsers.map((u) => ({
-      id:       u.id,
+      id: u.id,
       username: u.username,
-      rank:     u.rank.toUpperCase(),
+      rank: u.rank.toUpperCase(),
       avatarUrl: u.avatarUrl,
+      lastSeenAt: u.lastSeenAt?.toISOString() ?? null,
       initials: u.username.slice(0, 2).toUpperCase(),
     })),
   });
+}
+
+export async function POST(req: Request) {
+  const session = await getSession(req);
+  if (!session) return unauthorized();
+
+  await touchPresence(session.id);
+
+  return NextResponse.json({ ok: true });
 }
