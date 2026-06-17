@@ -7,9 +7,7 @@ import { eq, and, count, sql } from "drizzle-orm";
 import { getSession, unauthorized } from "@/lib/getSession";
 import { randomUUID } from "crypto";
 import { sendNotificationToUser } from "@/lib/sendNotification";
-
-// Piston API for code execution
-const PISTON_API = "https://emkc.org/api/v2/piston/execute";
+import { runCode } from "@/lib/codeRunner";
 
 const XP_WIN = 200;
 const XP_PARTICIPATION = 25;
@@ -19,37 +17,17 @@ async function runTests(
   language: string,
   tests: { input: string; expectedOutput: string }[]
 ): Promise<{ passed: number; total: number; results: { pass: boolean; output: string }[] }> {
-  const lang = language.toLowerCase() === "javascript" ? "javascript" : "python";
-  const version = lang === "javascript" ? "18.15.0" : "3.10.0";
-
   const results: { pass: boolean; output: string }[] = [];
 
   for (const test of tests) {
     try {
-      const res = await fetch(PISTON_API, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          language: lang,
-          version,
-          files: [{ content: code }],
-          stdin: test.input,
-          run_timeout: 5000,
-          compile_timeout: 10000,
-        }),
-      });
-
-      if (!res.ok) {
-        results.push({ pass: false, output: "Execution error" });
-        continue;
-      }
-
-      const data = await res.json();
-      const output = (data.run?.stdout ?? "").trim();
+      const run = await runCode({ language, source: code, stdin: test.input });
+      const output = (run.stdout ?? "").trim();
       const expected = test.expectedOutput.trim();
-      results.push({ pass: output === expected, output });
+      // A run that errored out (non-zero exit / compile error) never passes.
+      results.push({ pass: run.ok && output === expected, output: output || run.stderr.trim().slice(0, 200) || (run.timedOut ? "Timed out" : "No output") });
     } catch {
-      results.push({ pass: false, output: "Timeout or error" });
+      results.push({ pass: false, output: "Execution service error" });
     }
   }
 
@@ -123,6 +101,17 @@ export async function POST(
   if (room.category === "coding") {
     if (!body.code) return NextResponse.json({ error: "Code is required" }, { status: 400 });
 
+    const { codeExecutionEnabled } = await import("@/lib/codeRunner");
+    if (!codeExecutionEnabled()) {
+      return NextResponse.json(
+        { error: "Code execution is not configured. The room host must set a JUDGE0_URL (or PISTON_URL) — see user_task.md." },
+        { status: 503 }
+      );
+    }
+
+    // The room's analysed language is authoritative (the editor is locked to it).
+    const lang = room.language ?? body.language ?? "javascript";
+
     const allTests = await db
       .select()
       .from(testCases)
@@ -131,13 +120,13 @@ export async function POST(
     if (body.runTestsOnly) {
       // Only run public tests for preview
       const publicTests = allTests.filter((t) => !t.isHidden);
-      const result = await runTests(body.code, body.language ?? "javascript", publicTests);
+      const result = await runTests(body.code, lang, publicTests);
       return NextResponse.json({ testResults: result, runOnly: true });
     }
 
     // Full submission — run hidden tests
     const hiddenTests = allTests.filter((t) => t.isHidden);
-    const testResult = await runTests(body.code, body.language ?? "javascript", hiddenTests);
+    const testResult = await runTests(body.code, lang, hiddenTests);
 
     const isWinner = testResult.passed === testResult.total && testResult.total > 0;
 
@@ -155,7 +144,7 @@ export async function POST(
         roomId,
         userId:      session.id,
         code:        body.code,
-        language:    body.language ?? "javascript",
+        language:    lang,
         testsPassed: testResult.passed,
         testsTotal:  testResult.total,
         isWinner:    isWinner && !existingWinner,

@@ -9,6 +9,7 @@ import { Chip } from "@/components/ui/Chip";
 import { useArenaGuard } from "@/hooks/useArenaGuard";
 import { useToast } from "@/components/ui/Toast";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
+import { getLanguage } from "@/lib/languages";
 
 /* ─── Types ─── */
 type RoomCategory = "coding" | "trivia" | "logic" | "math" | "writing" | "design" | "meme";
@@ -47,6 +48,8 @@ interface Room {
   adminId: string;
   playerCap: number;
   timerSeconds: number | null;
+  language: string | null;
+  starterCode: string | null;
   startedAt: string | null;
   endedAt: string | null;
   createdAt: string;
@@ -83,13 +86,9 @@ const DIFF_CHIP_COLOR: Record<RoomDifficulty, "ignite" | "crown" | "void" | "suc
   legendary:  "danger",
 };
 
-function getDefaultCode(category: RoomCategory | null): string {
+function getDefaultCode(category: RoomCategory | null, language: string | null): string {
   if (category === "coding") {
-    return `// Write your solution below
-function solution(input) {
-  // Your code here
-
-}`;
+    return getLanguage(language).template;
   }
   return "";
 }
@@ -205,53 +204,78 @@ interface CodeEditorProps {
   code: string;
   setCode: (v: string) => void;
   language: string;
-  setLanguage: (v: string) => void;
   onRun: () => void;
   onSubmit: () => void;
   disabled: boolean;
   running: boolean;
   submitting: boolean;
-  category: RoomCategory | null;
 }
 
-function CodeEditor({ code, setCode, language, setLanguage, onRun, onSubmit, disabled, running, submitting, category }: CodeEditorProps) {
-  const isCoding = category === "coding";
-  const ext = language === "python" ? "py" : "js";
+function CodeEditor({ code, setCode, language, onRun, onSubmit, disabled, running, submitting }: CodeEditorProps) {
+  const spec = getLanguage(language);
+  const lineCount = Math.max(code.split("\n").length, 1);
+
+  // Tab inserts two spaces instead of moving focus, for a real editor feel.
+  function handleKey(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === "Tab") {
+      e.preventDefault();
+      const el = e.currentTarget;
+      const start = el.selectionStart;
+      const end = el.selectionEnd;
+      const next = code.slice(0, start) + "  " + code.slice(end);
+      setCode(next);
+      requestAnimationFrame(() => {
+        el.selectionStart = el.selectionEnd = start + 2;
+      });
+    }
+  }
 
   return (
     <div className="flex flex-col h-full">
+      {/* IDE-style tab bar with the locked, AI-analysed language */}
       <div className="flex items-center justify-between border-b border-cosmos-4 bg-cosmos-3 px-4">
-        <span className="font-space-mono text-xs text-haze py-2 border-b-2 border-void">solution.{ext}</span>
-        {isCoding && (
-          <select
-            value={language}
-            onChange={(e) => setLanguage(e.target.value)}
-            className="bg-cosmos border border-cosmos-4 text-haze-2 font-space-mono text-[10px] px-2 py-1 focus:outline-none focus:border-void my-1.5"
-            disabled={disabled}
-          >
-            <option value="javascript">JavaScript</option>
-            <option value="python">Python</option>
-          </select>
-        )}
+        <div className="flex items-center gap-2 py-2">
+          <span className="w-2 h-2 rounded-full bg-ignite" aria-hidden />
+          <span className="font-space-mono text-xs text-haze">solution.{spec.ext}</span>
+        </div>
+        <span
+          className="font-space-mono text-[10px] px-2 py-1 my-1.5 border text-ignite"
+          style={{ borderColor: "rgba(255,107,26,0.35)", background: "rgba(255,107,26,0.08)" }}
+          title="Language set by the AI from the challenge"
+        >
+          {spec.label}
+        </span>
       </div>
-      <textarea
-        value={code}
-        onChange={(e) => setCode(e.target.value)}
-        className="flex-1 p-4 bg-[#080612] text-haze font-space-mono text-sm resize-none focus:outline-none leading-relaxed"
-        style={{ minHeight: 280, caretColor: "var(--void)" }}
-        spellCheck={false}
-        aria-label="Code editor"
-        disabled={disabled}
-        onPaste={(e) => e.preventDefault()}
-      />
-      <div className="flex items-center justify-between px-4 py-3 bg-cosmos-3 border-t border-cosmos-4">
-        <p className="font-space-mono text-[10px] text-haze-3">Ctrl+Enter to run · Ctrl+Shift+Enter to submit</p>
-        <div className="flex items-center gap-2">
-          {isCoding && (
-            <Button variant="ghost" size="sm" onClick={onRun} disabled={disabled || running || submitting} loading={running} className="gap-1.5">
-              <Play size={12} aria-hidden="true" /> RUN TESTS
-            </Button>
-          )}
+
+      {/* Gutter + textarea */}
+      <div className="flex-1 flex overflow-hidden bg-[#080612] min-h-[280px]">
+        <div
+          aria-hidden
+          className="select-none py-4 pl-3 pr-2 text-right font-space-mono text-xs leading-relaxed text-haze-3/50 bg-[#0b0817] border-r border-cosmos-4/60"
+        >
+          {Array.from({ length: lineCount }).map((_, i) => (
+            <div key={i}>{i + 1}</div>
+          ))}
+        </div>
+        <textarea
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+          onKeyDown={handleKey}
+          className="flex-1 p-4 bg-transparent text-haze font-space-mono text-sm resize-none focus:outline-none leading-relaxed"
+          style={{ caretColor: "var(--void)" }}
+          spellCheck={false}
+          aria-label="Code editor"
+          disabled={disabled}
+          onPaste={(e) => e.preventDefault()}
+        />
+      </div>
+
+      <div className="flex items-center justify-between gap-2 px-4 py-3 bg-cosmos-3 border-t border-cosmos-4">
+        <p className="hidden sm:block font-space-mono text-[10px] text-haze-3">Ctrl+Enter run · Ctrl+Shift+Enter submit</p>
+        <div className="flex items-center gap-2 ml-auto">
+          <Button variant="ghost" size="sm" onClick={onRun} disabled={disabled || running || submitting} loading={running} className="gap-1.5">
+            <Play size={12} aria-hidden="true" /> RUN
+          </Button>
           <Button variant="primary" size="sm" onClick={onSubmit} disabled={disabled || running || submitting} loading={submitting} className="gap-1.5">
             <Upload size={12} aria-hidden="true" /> SUBMIT
           </Button>
@@ -509,7 +533,12 @@ export default function ArenaPage() {
       prevPlayersRef.current = json.players;
 
       if (!silent) {
-        setCode((prev) => (prev === "" ? getDefaultCode(json.room.category) : prev));
+        setLanguage(json.room.language ?? "javascript");
+        setCode((prev) =>
+          prev === ""
+            ? (json.room.starterCode || getDefaultCode(json.room.category, json.room.language))
+            : prev
+        );
 
         const timerSec = json.room.timerSeconds;
         if (timerSec !== null) {
@@ -790,10 +819,9 @@ export default function ArenaPage() {
             ) : isCoding ? (
               <CodeEditor
                 code={code} setCode={setCode}
-                language={language} setLanguage={setLanguage}
+                language={language}
                 onRun={handleRunTests} onSubmit={handleSubmit}
                 disabled={inputDisabled} running={running} submitting={submitting}
-                category={room.category}
               />
             ) : (
               <AnswerInput

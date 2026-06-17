@@ -8,6 +8,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/Button";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
+import { LANGUAGES, LANGUAGE_KEYS, getLanguage, type LanguageKey } from "@/lib/languages";
 
 /* ─── Types ─── */
 type Category = "coding" | "trivia" | "logic" | "math" | "writing" | "design" | "meme";
@@ -17,10 +18,15 @@ type Step = "setup" | "questions" | "review" | "lobby";
 interface AIAnalysis {
   valid: boolean;
   invalidReason?: string;
+  needsClarification?: boolean;
+  clarificationReason?: string;
+  suggestions?: string[];
   category: Category;
   title: string;
   difficulty: Difficulty;
   taskNormalised: string;
+  language?: LanguageKey | null;
+  ioFormat?: string;
   starterCode?: string;
   publicTests?: { input: string; expectedOutput: string }[];
   hiddenTests?: { input: string; expectedOutput: string }[];
@@ -30,7 +36,7 @@ interface AIAnalysis {
 interface Question {
   localId: string;
   taskRaw: string;
-  status: "idle" | "analyzing" | "done" | "error" | "invalid";
+  status: "idle" | "analyzing" | "done" | "error" | "invalid" | "clarify";
   analysis?: AIAnalysis;
   error?: string;
 }
@@ -173,9 +179,11 @@ function QuestionCard({
   onChange: (taskRaw: string) => void;
   onAnswerChange: (answer: string) => void;
   onDelete: () => void;
-  onAnalyze: () => void;
+  onAnalyze: (languageHint?: string) => void;
 }) {
   const catColor = q.analysis ? (CAT_COLORS[q.analysis.category] ?? "#9B8FC0") : "#4A3F70";
+  void arenaName;
+  const [pickLang, setPickLang] = useState<LanguageKey>("python");
 
   return (
     <motion.div layout initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }}
@@ -184,7 +192,10 @@ function QuestionCard({
         <span className="font-space-mono text-[10px] text-void tracking-widest">QUESTION {index + 1}</span>
         <div className="flex items-center gap-2">
           {q.status === "done" && q.analysis?.valid && (
-            <span className="font-space-mono text-[9px] text-success tracking-wider">✓ ANALYZED</span>
+            <span className="font-space-mono text-[9px] text-success tracking-wider">✓ READY</span>
+          )}
+          {q.status === "clarify" && (
+            <span className="font-space-mono text-[9px] text-crown tracking-wider">⚠ NEEDS INPUT</span>
           )}
           {q.status === "invalid" && (
             <span className="font-space-mono text-[9px] text-danger tracking-wider">✗ INVALID</span>
@@ -211,6 +222,58 @@ function QuestionCard({
       {q.error && <p className="font-rajdhani text-xs text-danger mt-2">{q.error}</p>}
       {q.status === "invalid" && q.analysis && (
         <p className="font-rajdhani text-xs text-danger mt-2">{q.analysis.invalidReason}</p>
+      )}
+
+      {/* Clarification needed — the task is real but the AI needs the host to decide something */}
+      {q.status === "clarify" && q.analysis && (
+        <div className="mt-3 border border-crown/30 bg-crown/5 p-4">
+          <div className="flex items-start gap-2 mb-3">
+            <AlertCircle size={14} className="text-crown shrink-0 mt-0.5" aria-hidden />
+            <p className="font-rajdhani text-sm text-haze leading-snug">{q.analysis.clarificationReason}</p>
+          </div>
+
+          {q.analysis.category === "coding" ? (
+            <>
+              <p className="font-space-mono text-[9px] text-haze-3 tracking-widest uppercase mb-2">
+                Pick the language for this challenge
+              </p>
+              <div className="flex flex-wrap gap-1.5 mb-3">
+                {LANGUAGE_KEYS.map((k) => (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => setPickLang(k)}
+                    className={`cursor-target font-space-mono text-[10px] px-2.5 py-1.5 border transition-all ${
+                      pickLang === k
+                        ? "border-void text-void bg-void/10"
+                        : "border-cosmos-4 text-haze-3 hover:text-haze-2 hover:border-void/40"
+                    }`}
+                  >
+                    {LANGUAGES[k].label}
+                  </button>
+                ))}
+              </div>
+              <Button variant="primary" size="sm" fullWidth onClick={() => onAnalyze(pickLang)}>
+                BUILD CODING ROOM IN {LANGUAGES[pickLang].label.toUpperCase()}
+              </Button>
+            </>
+          ) : (
+            <>
+              {q.analysis.suggestions && q.analysis.suggestions.length > 0 && (
+                <ul className="mb-3 space-y-1">
+                  {q.analysis.suggestions.map((s, i) => (
+                    <li key={i} className="font-rajdhani text-xs text-haze-2 flex gap-2">
+                      <span className="text-crown">›</span> {s}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <p className="font-space-mono text-[9px] text-haze-3">
+                Edit the question above to be more specific, then re-analyze.
+              </p>
+            </>
+          )}
+        </div>
       )}
 
       {/* Analysis preview */}
@@ -250,17 +313,38 @@ function QuestionCard({
             </div>
           )}
 
-          {/* Coding: AI-generated tests summary */}
+          {/* Coding: environment summary (language + I/O + tests) */}
           {q.analysis.category === "coding" && (
-            <p className="font-space-mono text-[9px] text-haze-3 mt-2">
-              AI generated {q.analysis.publicTests?.length ?? 0} public + {q.analysis.hiddenTests?.length ?? 0} hidden test cases — players win by passing them.
-            </p>
+            <div className="mt-3 border border-ignite/30 bg-ignite/5 p-3">
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <span className="font-space-mono text-[9px] text-ignite tracking-widest uppercase">Coding Environment</span>
+                <select
+                  value={q.analysis.language ?? "javascript"}
+                  onChange={(e) => onAnalyze(e.target.value)}
+                  className="bg-cosmos border border-cosmos-4 text-haze-2 font-space-mono text-[10px] px-2 py-1 focus:outline-none focus:border-ignite"
+                  aria-label="Change language"
+                >
+                  {LANGUAGE_KEYS.map((k) => (
+                    <option key={k} value={k}>{LANGUAGES[k].label}</option>
+                  ))}
+                </select>
+              </div>
+              <p className="font-rajdhani text-xs text-haze-2 mb-1.5">
+                Editor language: <span className="text-ignite font-semibold">{getLanguage(q.analysis.language).label}</span>
+              </p>
+              {q.analysis.ioFormat && (
+                <p className="font-space-mono text-[9px] text-haze-3 leading-relaxed mb-1.5">I/O: {q.analysis.ioFormat}</p>
+              )}
+              <p className="font-space-mono text-[9px] text-haze-3">
+                {q.analysis.publicTests?.length ?? 0} public + {q.analysis.hiddenTests?.length ?? 0} hidden tests · change the language to rebuild the room
+              </p>
+            </div>
           )}
         </>
       )}
 
       <button
-        onClick={onAnalyze}
+        onClick={() => onAnalyze()}
         disabled={q.status === "analyzing" || !q.taskRaw.trim()}
         className={`cursor-target mt-3 w-full h-10 flex items-center justify-center gap-2 border font-space-mono text-[10px] tracking-widest transition-all disabled:opacity-40 ${
           q.status === "done" && q.analysis?.valid
@@ -294,7 +378,7 @@ function QuestionsStep({
 }: {
   arenaName: string;
   questions: Question[];
-  onAnalyze: (localId: string) => void;
+  onAnalyze: (localId: string, languageHint?: string) => void;
   onAdd: () => void;
   onDelete: (localId: string) => void;
   onChange: (localId: string, taskRaw: string) => void;
@@ -302,7 +386,9 @@ function QuestionsStep({
   onNext: () => void;
   onBack: () => void;
 }) {
-  const allValid = questions.every((q) => q.status === "done" && q.analysis?.valid);
+  const allValid = questions.every(
+    (q) => q.status === "done" && q.analysis?.valid && !q.analysis?.needsClarification
+  );
   const anyAnalyzing = questions.some((q) => q.status === "analyzing");
 
   return (
@@ -318,7 +404,7 @@ function QuestionsStep({
             onChange={(taskRaw) => onChange(q.localId, taskRaw)}
             onAnswerChange={(answer) => onAnswerChange(q.localId, answer)}
             onDelete={() => onDelete(q.localId)}
-            onAnalyze={() => onAnalyze(q.localId)}
+            onAnalyze={(hint) => onAnalyze(q.localId, hint)}
           />
         ))}
       </AnimatePresence>
@@ -489,8 +575,8 @@ export default function CreatePage() {
   const [createError, setCreateError] = useState("");
   const [createdRoom, setCreatedRoom] = useState<CreatedRoom | null>(null);
 
-  /* ─── Analyze a single question ─── */
-  const handleAnalyze = useCallback(async (localId: string) => {
+  /* ─── Analyze a single question (optionally forcing a coding language) ─── */
+  const handleAnalyze = useCallback(async (localId: string, languageHint?: string) => {
     const q = questions.find((x) => x.localId === localId);
     if (!q || !q.taskRaw.trim()) return;
 
@@ -499,7 +585,7 @@ export default function CreatePage() {
     try {
       const res = await fetchWithAuth("/api/rooms/analyse", {
         method: "POST",
-        body: JSON.stringify({ taskRaw: q.taskRaw, arenaName: setupData?.name ?? "" }),
+        body: JSON.stringify({ taskRaw: q.taskRaw, arenaName: setupData?.name ?? "", languageHint }),
       });
 
       if (!res.ok) {
@@ -512,6 +598,12 @@ export default function CreatePage() {
 
       if (!analysis.valid) {
         setQuestions((prev) => prev.map((x) => x.localId === localId ? { ...x, status: "invalid", analysis } : x));
+        return;
+      }
+
+      // Real task, but the AI needs the host to clarify something (e.g. coding language).
+      if (analysis.needsClarification) {
+        setQuestions((prev) => prev.map((x) => x.localId === localId ? { ...x, status: "clarify", analysis } : x));
         return;
       }
 
@@ -536,6 +628,7 @@ export default function CreatePage() {
         category: q.analysis!.category,
         title: q.analysis!.title,
         difficulty: q.analysis!.difficulty,
+        language: q.analysis!.language ?? undefined,
         starterCode: q.analysis!.starterCode,
         publicTests: q.analysis!.publicTests,
         hiddenTests: q.analysis!.hiddenTests,
@@ -617,7 +710,7 @@ export default function CreatePage() {
               onAnalyze={handleAnalyze}
               onAdd={() => setQuestions((prev) => [...prev, { localId: crypto.randomUUID(), taskRaw: "", status: "idle" }])}
               onDelete={(id) => setQuestions((prev) => prev.filter((q) => q.localId !== id))}
-              onChange={(id, taskRaw) => setQuestions((prev) => prev.map((q) => q.localId === id ? { ...q, taskRaw, status: q.status === "done" || q.status === "invalid" ? "idle" : q.status } : q))}
+              onChange={(id, taskRaw) => setQuestions((prev) => prev.map((q) => q.localId === id ? { ...q, taskRaw, status: q.status === "done" || q.status === "invalid" || q.status === "clarify" ? "idle" : q.status } : q))}
               onAnswerChange={(id, answer) => setQuestions((prev) => prev.map((q) =>
                 q.localId === id && q.analysis
                   ? { ...q, analysis: { ...q.analysis, canonicalAnswer: answer } }
