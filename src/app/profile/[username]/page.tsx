@@ -7,6 +7,7 @@ import { useUser } from "@clerk/nextjs";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { APP_GUTTERS } from "@/components/landing/_section";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { XPBar } from "@/components/ui/XPBar";
 
@@ -149,7 +150,7 @@ export default function ProfilePage() {
 
   return (
     <AppLayout>
-      <div className="w-full max-w-[1280px] mx-auto min-h-[calc(100vh-76px)]">
+      <div className={`${APP_GUTTERS} min-h-[calc(100vh-76px)]`}>
         {/* Banner */}
         <div
           className="relative border-b border-cosmos-4"

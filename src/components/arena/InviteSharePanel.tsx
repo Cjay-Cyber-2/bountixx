@@ -94,7 +94,7 @@ export function InviteSharePanel({
           )}
         </div>
 
-        <div className="flex flex-col items-center gap-2 shrink-0 mx-auto sm:mx-0">
+        <div className="flex flex-col items-center gap-2 shrink-0 mx-auto">
           <div className="bg-white p-3 rounded-sm shadow-sm" style={{ lineHeight: 0 }}>
             <QRCodeSVG
               value={inviteLink}

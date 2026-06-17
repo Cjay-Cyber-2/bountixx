@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
-import { LANDING_GUTTERS, LANDING_CONTENT } from "@/components/landing/_section";
+import { LANDING_GUTTERS } from "@/components/landing/_section";
 
 const STATS = [
   { value: 14823, label: "Arenas played",  special: null  },
@@ -32,7 +32,6 @@ export function Stats() {
       />
 
       <div className={`${LANDING_GUTTERS} relative`}>
-        <div className={LANDING_CONTENT}>
         {/* Label */}
         <div className="mb-16 md:mb-20 flex flex-col sm:flex-row items-center justify-center gap-4 border-b border-cosmos-4 pb-8 text-center">
           <p className="font-space-mono text-[10px] tracking-[5px] uppercase text-haze-3">
@@ -78,7 +77,6 @@ export function Stats() {
               </p>
             </motion.div>
           ))}
-        </div>
         </div>
       </div>
     </section>

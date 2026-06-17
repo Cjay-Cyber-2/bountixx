@@ -675,7 +675,7 @@ export default function CreatePage() {
 
   return (
     <AppLayout>
-      <PageShell width="4xl">
+      <PageShell width="full">
         <p className="font-space-mono text-[11px] text-void tracking-[3px] uppercase mb-2 text-center">New arena</p>
         <h1 className="font-zen-dots text-2xl md:text-4xl text-haze mb-3 text-center">Create your arena</h1>
         <p className="font-rajdhani text-base md:text-lg text-haze-2 mb-10 md:mb-12 max-w-2xl mx-auto text-center">

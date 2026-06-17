@@ -6,7 +6,7 @@ import { Zap, Trophy, TrendingUp, Coins, Swords, ArrowRight } from "lucide-react
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { APP_GUTTERS, APP_CONTENT } from "@/components/landing/_section";
+import { APP_GUTTERS } from "@/components/landing/_section";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { Button } from "@/components/ui/Button";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
@@ -70,7 +70,6 @@ export default function DashboardPage() {
   return (
     <AppLayout>
       <div className={`${APP_GUTTERS} py-8 md:py-12 lg:py-16`}>
-        <div className={APP_CONTENT}>
 
         {/* Header */}
         <motion.div
@@ -251,8 +250,8 @@ export default function DashboardPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5, duration: 0.5 }}
         >
-          <div className="flex items-center justify-between mb-4 text-center sm:text-left">
-            <h3 className="font-zen-dots text-lg text-haze w-full sm:w-auto">Recent arenas</h3>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-4 text-center">
+            <h3 className="font-zen-dots text-lg text-haze">Recent arenas</h3>
             <Link
               href="/profile/me"
               className="cursor-target font-space-mono text-[10px] text-haze-3 hover:text-void transition-colors tracking-widest uppercase hidden sm:inline"
@@ -302,7 +301,6 @@ export default function DashboardPage() {
           )}
         </motion.div>
 
-        </div>
       </div>
     </AppLayout>
   );

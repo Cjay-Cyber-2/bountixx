@@ -9,6 +9,7 @@ import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { CrownMark } from "@/components/BountixxLogo";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { useToast } from "@/components/ui/Toast";
+import { APP_GUTTERS } from "@/components/landing/_section";
 
 type FilterTab = "ALL" | "EARNED" | "SPENT" | "PURCHASED";
 type PaymentMethod = "paystack" | "stripe";
@@ -105,7 +106,7 @@ export default function WalletPage() {
 
   return (
     <AppLayout>
-      <div className="px-5 md:px-8 lg:px-10 py-8 md:py-10 max-w-[1280px] mx-auto w-full">
+      <div className={`${APP_GUTTERS} py-8 md:py-10`}>
         <p className="font-space-mono text-[11px] text-crown tracking-[3px] uppercase mb-2">Treasury</p>
         <h1 className="font-zen-dots text-2xl md:text-3xl text-haze mb-8">Your wallet</h1>
 

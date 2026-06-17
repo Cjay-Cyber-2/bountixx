@@ -1,13 +1,12 @@
 "use client";
 
 import { BountixxLogo } from "@/components/BountixxLogo";
-import { LANDING_CONTENT, LANDING_GUTTERS } from "@/components/landing/_section";
+import { LANDING_GUTTERS } from "@/components/landing/_section";
 
 export function Footer() {
   return (
     <footer className="relative bg-cosmos overflow-hidden" style={{ borderTop: "1px solid var(--border-1)" }}>
       <div className={`${LANDING_GUTTERS} py-16 md:py-20 relative`}>
-        <div className={LANDING_CONTENT}>
         <div className="grid grid-cols-1 gap-8 items-center mb-14 text-center">
           {/* Centre: Logo */}
           <div className="flex justify-center">
@@ -45,7 +44,6 @@ export function Footer() {
           <p className="font-space-mono text-[10px] text-haze-3 tracking-[3px] uppercase">
             Built for champions · CC · MMXXVI
           </p>
-        </div>
         </div>
       </div>
     </footer>

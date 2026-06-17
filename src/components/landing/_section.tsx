@@ -2,23 +2,22 @@
 
 /**
  * Shared landing-section layout + typography.
- * One container width, one accent system (void purple), generous gutters.
+ * One full-width container with symmetric padding — no nested narrow columns.
  */
 
 import type { ReactNode, CSSProperties } from "react";
 
-/** Matches LandingNav / hero alignment — content never hugs the viewport edge. */
+/** Full-width page shell with equal side padding (no max-width cap). */
 export const LANDING_GUTTERS =
-  "w-full max-w-[1280px] mx-auto px-6 sm:px-8 md:px-12 lg:px-14 xl:px-16 2xl:px-20";
+  "w-full mx-auto px-5 sm:px-8 md:px-10 lg:px-12 xl:px-16";
 
-export const APP_GUTTERS =
-  "w-full max-w-[1280px] mx-auto px-6 sm:px-8 md:px-12 lg:px-14 xl:px-16";
+export const APP_GUTTERS = LANDING_GUTTERS;
 
-/** Centered reading column inside landing sections — stops copy hugging the left rail. */
-export const LANDING_CONTENT = "mx-auto w-full max-w-[1120px]";
+/** @deprecated Use LANDING_GUTTERS only — kept so imports don't break. */
+export const LANDING_CONTENT = "w-full";
 
-/** Same centered column for signed-in app pages (dashboard, wallet, etc.). */
-export const APP_CONTENT = LANDING_CONTENT;
+/** @deprecated Use APP_GUTTERS only — kept so imports don't break. */
+export const APP_CONTENT = "w-full";
 
 type LandingSectionProps = {
   id?: string;
@@ -46,9 +45,7 @@ export function LandingSection({
         ...style,
       }}
     >
-      <div className={`${LANDING_GUTTERS} relative`}>
-        <div className={LANDING_CONTENT}>{children}</div>
-      </div>
+      <div className={LANDING_GUTTERS}>{children}</div>
     </section>
   );
 }
@@ -118,7 +115,7 @@ export function SectionIntro({
 
   return (
     <div
-      className={`mb-16 md:mb-20 lg:mb-24 max-w-3xl ${centered ? "mx-auto text-center" : ""} ${className}`}
+      className={`mb-16 md:mb-20 lg:mb-24 w-full ${centered ? "mx-auto text-center" : ""} ${className}`}
     >
       <SpecLine className={centered ? "justify-center" : ""} centered={centered}>
         {eyebrow}
@@ -142,11 +139,11 @@ export function SectionIntro({
   );
 }
 
-/** Shared app-page frame — visible panel, aligned with TopNav gutters. */
+/** Shared app-page frame — full width of the viewport padding band. */
 export function PageShell({
   children,
   className = "",
-  width = "4xl",
+  width = "full",
   align = "center",
 }: {
   children: ReactNode;
@@ -156,29 +153,27 @@ export function PageShell({
 }) {
   const widthClass =
     width === "full"
-      ? "max-w-none"
+      ? "w-full"
       : width === "5xl"
-        ? "max-w-5xl"
+        ? "w-full max-w-5xl mx-auto"
         : width === "3xl"
-          ? "max-w-3xl"
-          : "max-w-4xl";
+          ? "w-full max-w-3xl mx-auto"
+          : "w-full max-w-4xl mx-auto";
 
   const alignClass = align === "center" ? "text-center" : "";
 
   return (
     <div className={`${APP_GUTTERS} py-8 md:py-12 lg:py-16`}>
-      <div className={APP_CONTENT}>
-        <div
-          className={`mx-auto w-full ${widthClass} border border-cosmos-4/80 px-6 py-8 sm:px-10 sm:py-10 md:px-12 md:py-12 lg:px-14 lg:py-14 ${alignClass} ${className}`}
+      <div
+        className={`${widthClass} border border-cosmos-4/80 px-5 py-8 sm:px-8 sm:py-10 md:px-10 md:py-12 lg:px-12 lg:py-14 ${alignClass} ${className}`}
         style={{
           background:
             "linear-gradient(180deg, rgba(19,12,36,0.72) 0%, rgba(14,8,24,0.96) 100%)",
           boxShadow:
             "0 0 0 1px rgba(168,85,247,0.06), 0 28px 90px rgba(0,0,0,0.38)",
         }}
-        >
-          {children}
-        </div>
+      >
+        {children}
       </div>
     </div>
   );

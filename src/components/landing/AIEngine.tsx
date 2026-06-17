@@ -68,7 +68,7 @@ export function AIEngine() {
             initial="hidden"
             animate={inView ? "show" : "hidden"}
             variants={{ show: { transition: { staggerChildren: 0.06, delayChildren: 0.15 } } }}
-            className="grid grid-cols-2 gap-px w-full max-w-3xl mx-auto"
+            className="grid grid-cols-2 gap-px w-full"
             style={{ background: "var(--border-1)", border: "1px solid var(--border-1)" }}
           >
             {SPECS.map((row) => (
@@ -104,7 +104,7 @@ export function AIEngine() {
           </div>
 
           <div
-            className="grid md:grid-cols-2 gap-px max-w-4xl mx-auto"
+            className="grid md:grid-cols-2 gap-px w-full"
             style={{ background: "var(--border-1)", border: "1px solid var(--border-1)" }}
           >
             {ANTI_CHEAT.map((ac, i) => (

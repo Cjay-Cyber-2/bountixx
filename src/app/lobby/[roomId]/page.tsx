@@ -7,6 +7,7 @@ import { Users, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { APP_GUTTERS } from "@/components/landing/_section";
 import { InviteSharePanel } from "@/components/arena/InviteSharePanel";
 import { OnlineFriendsList } from "@/components/arena/OnlineFriendsList";
 import { useToast } from "@/components/ui/Toast";
@@ -294,7 +295,7 @@ export default function LobbyPage() {
         variants={staggerContainer}
         initial="hidden"
         animate="show"
-        className="max-w-2xl mx-auto px-4 py-10"
+        className={`${APP_GUTTERS} py-10`}
       >
         {/* Header */}
         <motion.div variants={slideUp} className="mb-8">

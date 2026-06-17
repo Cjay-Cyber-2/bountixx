@@ -6,7 +6,7 @@ import { motion, useInView } from "framer-motion";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { Accent, LANDING_CONTENT, LANDING_GUTTERS } from "@/components/landing/_section";
+import { Accent, LANDING_GUTTERS } from "@/components/landing/_section";
 
 export function FinalCTA() {
   const ref = useRef<HTMLDivElement>(null);
@@ -35,7 +35,7 @@ export function FinalCTA() {
       />
 
       <div className={`${LANDING_GUTTERS} relative`}>
-        <div className={`${LANDING_CONTENT} max-w-3xl text-center`}>
+        <div className="w-full max-w-3xl mx-auto text-center">
         <motion.h2
           initial={{ opacity: 0, y: 36 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
