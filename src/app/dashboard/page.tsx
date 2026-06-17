@@ -21,23 +21,12 @@ const RESULT_COLORS: Record<string, string> = {
   "1st": "#F0A500", "2nd": "#9B8FC0", "3rd": "#7A6FAE", "—": "#9B6BFF",
 };
 
-function LiveClock() {
-  const [time, setTime] = useState("");
-  useEffect(() => {
-    const tick = () =>
-      setTime(new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, []);
-  return <span className="font-space-mono text-xs text-haze-3 tabular-nums">{time}</span>;
-}
-
 type DashboardData = {
   roomsCreated: number;
   roomsWon: number;
   totalXp: number;
   coinsBalance: number;
+  coinsUnlimited?: boolean;
   recentRooms: { name: string; category: string; place: string; coins: number; date: string }[];
   onlineUsers: { id: string; username: string; rank: string; avatarUrl: string | null; initials: string }[];
   activeLobby: { id: string; name: string } | null;
@@ -96,7 +85,6 @@ export default function DashboardPage() {
             <h1 className="font-zen-dots text-2xl md:text-3xl text-haze leading-tight">Arena Dashboard</h1>
           </div>
           <div className="flex items-center gap-4">
-            <LiveClock />
             <Link href="/create">
               <Button variant="primary" magnetic>
                 <Zap size={14} className="mr-1.5" aria-hidden />
@@ -135,6 +123,13 @@ export default function DashboardPage() {
                 </div>
                 {loading ? (
                   <div className="h-8 w-16 bg-cosmos-3 animate-pulse mb-1.5" />
+                ) : s.gold && data?.coinsUnlimited ? (
+                  <span
+                    className="font-orbitron font-black text-2xl md:text-3xl block leading-none mb-1.5"
+                    style={{ color: s.gold ? "#F0A500" : "var(--haze)" }}
+                  >
+                    ∞
+                  </span>
                 ) : (
                   <AnimatedNumber
                     value={s.value}

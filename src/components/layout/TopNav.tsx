@@ -27,6 +27,11 @@ type UserProfile = {
   rank: string;
 };
 
+type MeResponse = {
+  user?: UserProfile;
+  coinsUnlimited?: boolean;
+};
+
 export function TopNav() {
   const pathname = usePathname();
   const router = useRouter();
@@ -34,6 +39,7 @@ export function TopNav() {
   const { signOut } = useClerk();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [coinsUnlimited, setCoinsUnlimited] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [notifEnabled, setNotifEnabled] = useState(false);
   const [notifLoading, setNotifLoading] = useState(false);
@@ -42,12 +48,16 @@ export function TopNav() {
     // Clear any previous user's profile immediately so a different account
     // never briefly shows the prior user's name/initials.
     setProfile(null);
+    setCoinsUnlimited(false);
     if (!user) return;
     let cancelled = false;
     fetchWithAuth("/api/user/me")
       .then((r) => r.json())
-      .then((d) => {
-        if (!cancelled && d.user) setProfile(d.user);
+      .then((d: MeResponse) => {
+        if (!cancelled && d.user) {
+          setProfile(d.user);
+          setCoinsUnlimited(Boolean(d.coinsUnlimited));
+        }
       })
       .catch(() => {});
     return () => {
@@ -165,7 +175,7 @@ export function TopNav() {
               <div className="flex items-center gap-1.5 bg-cosmos-2 border border-cosmos-4 px-3 py-1.5">
                 <span className="text-crown text-xs" aria-hidden>◈</span>
                 <span className="font-orbitron font-bold text-sm text-crown">
-                  {profile?.coinsBalance ?? 0}
+                  {coinsUnlimited ? "∞" : (profile?.coinsBalance ?? 0)}
                 </span>
               </div>
 
@@ -262,7 +272,7 @@ export function TopNav() {
               <div className="flex items-center gap-1.5 bg-cosmos-2 border border-cosmos-4 px-3 py-1.5">
                 <span className="text-crown text-xs">◈</span>
                 <span className="font-orbitron font-bold text-sm text-crown">
-                  {profile?.coinsBalance ?? 0}
+                  {coinsUnlimited ? "∞" : (profile?.coinsBalance ?? 0)}
                 </span>
               </div>
               <span className="font-space-mono text-[10px] text-haze-3 uppercase tracking-widest">

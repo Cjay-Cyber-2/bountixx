@@ -6,6 +6,7 @@ import { users } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { getSession, unauthorized } from "@/lib/getSession";
 import { touchPresence } from "@/lib/presence";
+import { isUnlimitedCoinsEmail } from "@/lib/coins";
 
 export async function GET(req: Request) {
   const session = await getSession(req);
@@ -14,7 +15,10 @@ export async function GET(req: Request) {
   await touchPresence(session.id);
 
   return NextResponse.json(
-    { user: session },
+    {
+      user: session,
+      coinsUnlimited: isUnlimitedCoinsEmail(session.email),
+    },
     { headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } }
   );
 }
