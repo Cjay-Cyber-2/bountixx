@@ -18,7 +18,7 @@ export async function GET(req: Request) {
   const ok =
     clerkSecret &&
     clerkPublishable &&
-    !clerkProbe &&
+    clerkProbe.ok &&
     databaseUrl &&
     dbProbe.ok &&
     (groq || gemini);
@@ -29,7 +29,8 @@ export async function GET(req: Request) {
       clerk: {
         publishableKey: clerkPublishable,
         secretKey: clerkSecret,
-        serverAuth: clerkProbe ? "failed" : "ok",
+        serverAuth: clerkProbe.ok ? "ok" : "failed",
+        error: clerkProbe.ok ? null : clerkProbe.error,
       },
       database: {
         configured: databaseUrl,

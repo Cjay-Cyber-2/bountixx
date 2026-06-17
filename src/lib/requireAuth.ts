@@ -65,36 +65,35 @@ export async function requireClerkAuth(req: Request): Promise<AuthResult> {
 /**
  * Health probe for Clerk server configuration.
  */
-export async function clerkAuthHealth(req: Request): Promise<Response | null> {
-  if (!process.env.CLERK_SECRET_KEY?.trim()) {
-    return new Response(
-      JSON.stringify({
-        error:
-          "Clerk server auth failed — set CLERK_SECRET_KEY in Vercel (Production + Preview) and redeploy",
-      }),
-      { status: 503, headers: { "Content-Type": "application/json" } }
-    );
+export async function clerkAuthHealth(
+  req: Request
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const secretKey = process.env.CLERK_SECRET_KEY?.trim();
+  const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.trim();
+
+  if (!secretKey) {
+    return { ok: false, error: "CLERK_SECRET_KEY is not set" };
+  }
+  if (!publishableKey) {
+    return { ok: false, error: "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is not set" };
   }
 
   const client = clerkClient();
   if (!client) {
-    return new Response(
-      JSON.stringify({ error: "CLERK_SECRET_KEY is not configured" }),
-      { status: 503, headers: { "Content-Type": "application/json" } }
-    );
+    return { ok: false, error: "Could not create Clerk client" };
   }
 
   try {
     await client.authenticateRequest(req, {
-      secretKey: process.env.CLERK_SECRET_KEY!,
-      publishableKey: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
+      secretKey,
+      publishableKey,
+      signInUrl: process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL || "/login",
+      signUpUrl: process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL || "/signup",
     });
-    return null;
+    return { ok: true };
   } catch (err) {
-    console.error("[clerkAuthHealth] authenticateRequest failed:", err);
-    return new Response(
-      JSON.stringify({ error: "Clerk authenticateRequest failed" }),
-      { status: 503, headers: { "Content-Type": "application/json" } }
-    );
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[clerkAuthHealth] authenticateRequest failed:", message);
+    return { ok: false, error: message };
   }
 }
