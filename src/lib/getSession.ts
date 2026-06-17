@@ -1,4 +1,6 @@
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { auth, currentUser, getAuth } from "@clerk/nextjs/server";
+import { createClerkClient } from "@clerk/backend";
+import type { NextRequest } from "next/server";
 import { db } from "./db";
 import { users } from "./schema";
 import { eq } from "drizzle-orm";
@@ -21,7 +23,33 @@ function isUniqueViolation(err: unknown, column?: string): boolean {
  * Clerk user id for API routes that only need "is this request signed in?"
  * Never throws — returns null when Clerk server auth is unavailable.
  */
-export async function getClerkUserId(): Promise<string | null> {
+export async function getClerkUserId(req?: Request): Promise<string | null> {
+  if (req) {
+    try {
+      const { userId } = getAuth(req as unknown as NextRequest);
+      if (userId) return userId;
+    } catch (err) {
+      console.error("[auth] getAuth(req) failed:", err);
+    }
+
+    const secretKey = process.env.CLERK_SECRET_KEY?.trim();
+    if (secretKey) {
+      try {
+        const client = createClerkClient({ secretKey });
+        const state = await client.authenticateRequest(req, {
+          secretKey,
+          publishableKey: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
+          signInUrl: process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL || "/login",
+          signUpUrl: process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL || "/signup",
+        });
+        const userId = state.toAuth()?.userId;
+        if (userId) return userId;
+      } catch (err) {
+        console.error("[auth] authenticateRequest failed:", err);
+      }
+    }
+  }
+
   try {
     const { userId } = await auth();
     return userId ?? null;

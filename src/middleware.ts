@@ -11,7 +11,7 @@ const isPublicRoute = createRouteMatcher([
 ]);
 
 // App pages that require a signed-in user. API routes are intentionally NOT
-// listed here — they call getSession() and return a proper 401 JSON response.
+// listed here — they call getSession() / requireClerkAuth() and return 401 JSON.
 const isProtectedRoute = createRouteMatcher([
   "/dashboard(.*)",
   "/create(.*)",
@@ -23,15 +23,14 @@ const isProtectedRoute = createRouteMatcher([
   "/payment(.*)",
 ]);
 
-export const proxy = clerkMiddleware(async (auth, req) => {
-  if (isPublicRoute(req)) return;
-  if (!isProtectedRoute(req)) return;
-
-  // unauthenticatedUrl MUST stay on our domain. Clerk only honours custom
-  // sign-in paths when NEXT_PUBLIC_CLERK_SIGN_IN_URL is set in the environment.
-  await auth.protect({
-    unauthenticatedUrl: new URL("/login", req.url).toString(),
-  });
+// Clerk is validated on the Edge middleware runtime. Next.js 16 proxy.ts (Node)
+// does not propagate Clerk auth headers to route handlers reliably.
+export default clerkMiddleware(async (auth, req) => {
+  if (!isPublicRoute(req) && isProtectedRoute(req)) {
+    await auth.protect({
+      unauthenticatedUrl: new URL("/login", req.url).toString(),
+    });
+  }
 });
 
 export const config = {

@@ -11,7 +11,7 @@ import {
 } from "@/lib/aiAnalyse";
 
 export async function POST(req: Request) {
-  const authResult = await requireClerkAuth();
+  const authResult = await requireClerkAuth(req);
   if (!authResult.ok) return authResult.response;
 
   let body: { taskRaw?: string; arenaName?: string };

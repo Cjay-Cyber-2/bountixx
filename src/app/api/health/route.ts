@@ -5,14 +5,14 @@ import { clerkAuthHealth } from "@/lib/requireAuth";
 import { getDatabaseUrl, pingDatabase } from "@/lib/db";
 import { activeAiProvider } from "@/lib/aiAnalyse";
 
-export async function GET() {
+export async function GET(req: Request) {
   const clerkSecret = Boolean(process.env.CLERK_SECRET_KEY?.trim());
   const clerkPublishable = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.trim());
   const databaseUrl = Boolean(getDatabaseUrl());
   const groq = Boolean(process.env.GROQ_API_KEY?.trim());
   const gemini = Boolean(process.env.GEMINI_API_KEY?.trim());
 
-  const clerkProbe = await clerkAuthHealth();
+  const clerkProbe = await clerkAuthHealth(req);
   const dbProbe = await pingDatabase();
 
   const ok =
