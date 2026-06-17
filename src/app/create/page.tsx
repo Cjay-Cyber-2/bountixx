@@ -71,9 +71,9 @@ function StepIndicator({ step }: { step: Step }) {
       <p className="sm:hidden font-space-mono text-[11px] tracking-[3px] text-void mb-3">
         STEP {activeIdx + 1} OF {steps.length} · {steps[activeIdx]?.label}
       </p>
-      <div className="flex items-center">
+      <div className="flex items-center justify-center gap-1 sm:gap-2 flex-wrap">
         {steps.map((s, i) => (
-          <div key={s.id} className="flex items-center flex-1 last:flex-none min-w-0">
+          <div key={s.id} className="flex items-center gap-1 sm:gap-2 shrink-0">
             <div className="flex items-center gap-2 shrink-0">
               <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
                 i < activeIdx ? "bg-success border-success" : i === activeIdx ? "border-void bg-void/20" : "border-cosmos-4 bg-transparent"
@@ -89,7 +89,7 @@ function StepIndicator({ step }: { step: Step }) {
               </span>
             </div>
             {i < steps.length - 1 && (
-              <div className={`flex-1 sm:flex-none sm:w-10 h-px mx-2 transition-all ${i < activeIdx ? "bg-success" : "bg-cosmos-4"}`} />
+              <div className={`w-6 sm:w-10 h-px mx-1 sm:mx-2 transition-all ${i < activeIdx ? "bg-success" : "bg-cosmos-4"}`} />
             )}
           </div>
         ))}
@@ -119,15 +119,16 @@ function SetupStep({
   return (
     <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} className="flex flex-col gap-7 md:gap-8">
       {/* Entry fee banner */}
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 bg-void/10 border border-void/30 px-4 py-3">
-        <span className="font-space-mono text-[10px] text-void tracking-widest">ENTRY FEE</span>
-        <span className="hidden sm:block flex-1 h-px bg-void/20" />
-        <span className="font-orbitron font-bold text-sm text-void">{ENTRY_FEE} coins / player</span>
-        <span className="font-space-mono text-[9px] text-haze-3 w-full sm:w-auto">hosting is free · players pay when arena starts</span>
+      <div className="flex flex-col items-center gap-2 text-center bg-void/10 border border-void/30 px-4 py-3">
+        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
+          <span className="font-space-mono text-[10px] text-void tracking-widest">ENTRY FEE</span>
+          <span className="font-orbitron font-bold text-sm text-void">{ENTRY_FEE} coins / player</span>
+        </div>
+        <span className="font-space-mono text-[9px] text-haze-3">hosting is free · players pay when arena starts</span>
       </div>
 
       <div>
-        <label className="block font-space-mono text-[11px] text-void tracking-[3px] mb-2 uppercase">Arena Name</label>
+        <label className="block font-space-mono text-[11px] text-void tracking-[3px] mb-2 uppercase text-center">Arena Name</label>
         <input type="text" maxLength={60} placeholder="e.g. Friday Coding Battle" value={name}
           onChange={(e) => setName(e.target.value)}
           className="w-full h-12 px-4 bg-cosmos-2 border border-cosmos-4 text-haze font-rajdhani text-base placeholder:text-haze-3 focus:outline-none focus:border-void focus:shadow-[0_0_0_2px_rgba(168,85,247,0.2)] transition-all" style={{ borderRadius: 0 }} />
@@ -135,7 +136,7 @@ function SetupStep({
 
       <div className="grid grid-cols-2 gap-5">
         <div>
-          <label className="block font-space-mono text-[11px] text-void tracking-[3px] mb-2 uppercase">Players (2–20)</label>
+        <label className="block font-space-mono text-[11px] text-void tracking-[3px] mb-2 uppercase text-center">Players (2–20)</label>
           <div className="flex items-center border border-cosmos-4 bg-cosmos-2 h-12">
             <button type="button" onClick={() => setPlayers((n) => Math.max(2, n - 1))} className="cursor-target w-12 h-full text-haze-2 hover:text-void hover:bg-cosmos-3 transition-colors font-bold text-lg">−</button>
             <span className="flex-1 text-center font-orbitron font-bold text-lg text-haze">{players}</span>
@@ -144,7 +145,7 @@ function SetupStep({
           <p className="font-space-mono text-[9px] text-haze-3 mt-1">Max prize pool: {players * ENTRY_FEE} coins</p>
         </div>
         <div>
-          <label className="block font-space-mono text-[11px] text-void tracking-[3px] mb-2 uppercase">Timer</label>
+          <label className="block font-space-mono text-[11px] text-void tracking-[3px] mb-2 uppercase text-center">Timer</label>
           <button type="button" onClick={() => setTimer(!timer)} role="switch" aria-checked={timer}
             className={`cursor-target w-full h-12 flex items-center justify-center gap-2 border font-space-mono text-xs tracking-widest transition-all ${timer ? "border-void text-void bg-void/10" : "border-cosmos-4 text-haze-3"}`}>
             <span className={`w-3 h-3 rounded-full transition-colors ${timer ? "bg-void" : "bg-cosmos-4"}`} aria-hidden />
@@ -155,7 +156,7 @@ function SetupStep({
 
       {timer && (
         <div>
-          <label className="block font-space-mono text-[11px] text-void tracking-[3px] mb-2 uppercase">Duration — {timerMin} minutes</label>
+          <label className="block font-space-mono text-[11px] text-void tracking-[3px] mb-2 uppercase text-center">Duration — {timerMin} minutes</label>
           <input type="range" min={1} max={60} value={timerMin} onChange={(e) => setTimerMin(Number(e.target.value))} className="w-full accent-violet-500" />
           <div className="flex justify-between font-space-mono text-[9px] text-haze-3 mt-1"><span>1 min</span><span>60 min</span></div>
         </div>
@@ -675,9 +676,9 @@ export default function CreatePage() {
   return (
     <AppLayout>
       <PageShell width="4xl">
-        <p className="font-space-mono text-[11px] text-void tracking-[3px] uppercase mb-2 text-center sm:text-left">New arena</p>
-        <h1 className="font-zen-dots text-2xl md:text-4xl text-haze mb-3 text-center sm:text-left">Create your arena</h1>
-        <p className="font-rajdhani text-base md:text-lg text-haze-2 mb-10 md:mb-12 max-w-2xl text-center sm:text-left mx-auto sm:mx-0">
+        <p className="font-space-mono text-[11px] text-void tracking-[3px] uppercase mb-2 text-center">New arena</p>
+        <h1 className="font-zen-dots text-2xl md:text-4xl text-haze mb-3 text-center">Create your arena</h1>
+        <p className="font-rajdhani text-base md:text-lg text-haze-2 mb-10 md:mb-12 max-w-2xl mx-auto text-center">
           Set up your challenge. The AI validates and builds the rest.
         </p>
 

@@ -6,7 +6,7 @@ import { Zap, Trophy, TrendingUp, Coins, Swords, ArrowRight } from "lucide-react
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { APP_GUTTERS } from "@/components/landing/_section";
+import { APP_GUTTERS, APP_CONTENT } from "@/components/landing/_section";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { Button } from "@/components/ui/Button";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
@@ -70,13 +70,14 @@ export default function DashboardPage() {
   return (
     <AppLayout>
       <div className={`${APP_GUTTERS} py-8 md:py-12 lg:py-16`}>
+        <div className={APP_CONTENT}>
 
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10 md:mb-12"
+          className="flex flex-col items-center text-center gap-4 mb-10 md:mb-12"
         >
           <div>
             <p className="font-space-mono text-[11px] text-haze-3 tracking-[3px] uppercase mb-1.5">
@@ -84,14 +85,12 @@ export default function DashboardPage() {
             </p>
             <h1 className="font-zen-dots text-2xl md:text-3xl text-haze leading-tight">Arena Dashboard</h1>
           </div>
-          <div className="flex items-center gap-4">
-            <Link href="/create">
-              <Button variant="primary" magnetic>
-                <Zap size={14} className="mr-1.5" aria-hidden />
-                New Arena
-              </Button>
-            </Link>
-          </div>
+          <Link href="/create">
+            <Button variant="primary" magnetic>
+              <Zap size={14} className="mr-1.5" aria-hidden />
+              New Arena
+            </Button>
+          </Link>
         </motion.div>
 
         {/* Stats */}
@@ -252,11 +251,11 @@ export default function DashboardPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5, duration: 0.5 }}
         >
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-zen-dots text-lg text-haze">Recent arenas</h3>
+          <div className="flex items-center justify-between mb-4 text-center sm:text-left">
+            <h3 className="font-zen-dots text-lg text-haze w-full sm:w-auto">Recent arenas</h3>
             <Link
               href="/profile/me"
-              className="cursor-target font-space-mono text-[10px] text-haze-3 hover:text-void transition-colors tracking-widest uppercase"
+              className="cursor-target font-space-mono text-[10px] text-haze-3 hover:text-void transition-colors tracking-widest uppercase hidden sm:inline"
             >
               View all →
             </Link>
@@ -303,6 +302,7 @@ export default function DashboardPage() {
           )}
         </motion.div>
 
+        </div>
       </div>
     </AppLayout>
   );
