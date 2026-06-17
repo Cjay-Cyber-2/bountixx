@@ -17,5 +17,5 @@ export async function fetchWithAuth(
     headers.set("Content-Type", "application/json");
   }
 
-  return fetch(input, { ...init, headers, cache: "no-store" });
+  return fetch(input, { ...init, headers, cache: "no-store", credentials: "include" });
 }

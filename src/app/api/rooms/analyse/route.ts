@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 import { NextResponse } from "next/server";
-import { getSession, unauthorized } from "@/lib/getSession";
+import { requireClerkAuth } from "@/lib/requireAuth";
 import {
   AiConfigError,
   AiParseError,
@@ -11,18 +11,8 @@ import {
 } from "@/lib/aiAnalyse";
 
 export async function POST(req: Request) {
-  let session;
-  try {
-    session = await getSession();
-  } catch (err) {
-    console.error("[analyse] getSession failed:", err);
-    return NextResponse.json(
-      { error: "Session lookup failed — check DATABASE_URL and Clerk keys" },
-      { status: 500 }
-    );
-  }
-
-  if (!session) return unauthorized();
+  const authResult = await requireClerkAuth();
+  if (!authResult.ok) return authResult.response;
 
   let body: { taskRaw?: string; arenaName?: string };
   try {

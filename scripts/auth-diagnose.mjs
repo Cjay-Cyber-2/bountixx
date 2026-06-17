@@ -103,12 +103,12 @@ function checkEnvVars() {
   const gemini = process.env.GEMINI_API_KEY?.trim();
   const groq = process.env.GROQ_API_KEY?.trim();
   if (gemini) {
-    console.log(`✓ GEMINI_API_KEY: ${mask(gemini)} (primary provider)`);
+    console.log(`✓ GEMINI_API_KEY: ${mask(gemini)}${groq ? " (unused while Groq is set)" : " (active provider)"}`);
   } else {
     console.log("✗ GEMINI_API_KEY: not set");
   }
   if (groq) {
-    console.log(`✓ GROQ_API_KEY: ${mask(groq)}${gemini ? " (unused while Gemini is set)" : " (active provider)"}`);
+    console.log(`✓ GROQ_API_KEY: ${mask(groq)} (primary provider)`);
   } else {
     console.log("✗ GROQ_API_KEY: not set");
   }
@@ -155,6 +155,22 @@ async function checkRoutes() {
 
     const sso = await fetch(`${BASE_URL}/sso-callback`, { redirect: "manual" });
     console.log(`GET /sso-callback → ${sso.status} (public OAuth callback)`);
+
+    try {
+      const health = await fetch(`${BASE_URL}/api/health`, { cache: "no-store" });
+      const data = await health.json();
+      console.log(`GET /api/health → ${health.status}`);
+      console.log(`  Clerk secret: ${data.clerk?.secretKey ? "set" : "MISSING"}`);
+      console.log(`  Clerk server auth: ${data.clerk?.serverAuth ?? "unknown"}`);
+      console.log(`  Database reachable: ${data.database?.reachable ? "yes" : "no"}`);
+      if (data.database?.error) console.log(`  Database error: ${data.database.error}`);
+      console.log(`  AI provider: ${data.ai?.provider ?? "none"} (groq=${data.ai?.groq}, gemini=${data.ai?.gemini})`);
+      if (!data.ok) {
+        return { ok: false, healthFailed: true };
+      }
+    } catch (err) {
+      console.log(`⚠ /api/health check failed: ${err.message}`);
+    }
 
     return { ok: login.status === 200 };
   } catch (err) {
