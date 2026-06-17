@@ -32,6 +32,8 @@ export const rooms = pgTable("rooms", {
   category: categoryEnum("category"),
   title: text("title"),
   difficulty: difficultyEnum("difficulty"),
+  language: text("language"),          // coding rooms: the analysed programming language
+  starterCode: text("starter_code"),   // coding rooms: starter program shown in the editor
   status: roomStatusEnum("status").default("lobby").notNull(),
   adminId: text("admin_id").notNull().references(() => users.id),
   playerCap: integer("player_cap").default(2).notNull(),

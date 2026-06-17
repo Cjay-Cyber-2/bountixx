@@ -20,6 +20,7 @@ export interface RoomQuestion {
   category?: Category;
   title?: string;
   difficulty?: Difficulty;
+  language?: string;
   starterCode?: string;
   publicTests?: { input: string; expectedOutput: string }[];
   hiddenTests?: { input: string; expectedOutput: string }[];
@@ -115,6 +116,8 @@ export async function POST(req: Request) {
         category:        first.category,
         title:           first.title,
         difficulty:      first.difficulty,
+        language:        first.language,
+        starterCode:     first.starterCode,
         status:          "lobby",
         adminId:         session.id,
         playerCap:       Math.min(20, Math.max(2, body.playerCap ?? 2)),
