@@ -71,6 +71,9 @@ Clerk OAuth and magic links return to **`/sso-callback`** in our app. You don't 
    ```bash
    npx drizzle-kit push
    ```
+   > The latest migration adds `language` and `starter_code` columns to `rooms`
+   > (used to match the task room environment to the challenge). It is written
+   > with `ADD COLUMN IF NOT EXISTS`, so it is safe to run on an existing DB.
 3. That's it — the app creates each user's row automatically on their first login (with the 500-coin welcome bonus). User IDs are now Clerk IDs (`user_...`).
 
 > Note on existing data: rows created under the old Firebase UIDs will not match new Clerk IDs. For a clean cut-over this is fine (new accounts are created on first login). If you need to preserve old accounts, that requires a manual data migration (not covered here).
@@ -98,6 +101,43 @@ You said you have ~11 sensitive vars (mostly Firebase + the database). Here is w
 
 ---
 
+## 5b. Code execution for CODING arenas (REQUIRED for coding rooms)
+
+Coding challenges run players' code against the AI-generated test cases. The old
+free public Piston endpoint became **whitelist-only in Feb 2026**, so you must
+point the app at a code-execution provider. Pick ONE:
+
+### Option A — Judge0 via RapidAPI (easiest)
+1. Create a RapidAPI account, subscribe to **Judge0 CE** (there is a free tier).
+2. Copy your RapidAPI key.
+3. Set in Vercel:
+   ```
+   JUDGE0_URL=https://judge0-ce.p.rapidapi.com
+   JUDGE0_KEY=<your RapidAPI key>
+   ```
+
+### Option B — Self-hosted Judge0
+Run Judge0 (Docker) somewhere public, then:
+```
+JUDGE0_URL=https://your-judge0-host
+JUDGE0_KEY=<X-Auth-Token if you set one, otherwise leave unset>
+```
+
+### Option C — Self-hosted Piston
+Run a Piston instance, then point at its execute endpoint:
+```
+PISTON_URL=https://your-piston-host/api/v2/piston/execute
+```
+
+> If none of these is set, non-coding arenas (trivia/logic/math/text answers)
+> still work, but coding submissions return a clear "execution not configured"
+> message instead of running.
+
+Supported languages (auto-detected by the AI, locked in the editor):
+Python, JavaScript, TypeScript, Java, C++, C, Go, Rust, Ruby, PHP, C#.
+
+---
+
 ## 6. Other env vars the app uses (set the ones you need)
 
 | Variable | Required for | Notes |
@@ -121,6 +161,9 @@ You said you have ~11 sensitive vars (mostly Firebase + the database). Here is w
 - [ ] **Phone** tab → SMS code arrives → entering it signs you in.
 - [ ] Two different people signing in see **their own** name/initials in the top-right (no stale "CJ").
 - [ ] Dashboard and every sub-page (Create, Wallet, Profile, Lobby) render centered and are **not** hidden under the top nav.
+- [ ] Create a **trivia/normal-question** arena → the task room shows a simple answer text box.
+- [ ] Create a **coding** arena that names a language (e.g. "write a Python function that prints hello world") → the room opens a code editor locked to that language with starter code, and **RUN** executes against the AI test cases.
+- [ ] Create a coding arena that does **not** name a language → the AI flags it and asks you to pick one before the room can launch.
 - [ ] Sign out returns you to the landing page and clears the session.
 - [ ] (If configured) buy a coin bundle with Stripe/Paystack and confirm coins are credited.
 
@@ -139,7 +182,11 @@ NEXT_PUBLIC_APP_URL
 ```
 **Recommended / feature-dependent**
 ```
-GROQ_API_KEY            # AI challenge structuring
+GROQ_API_KEY            # AI challenge structuring + language detection
+JUDGE0_URL              # code execution for coding arenas (e.g. https://judge0-ce.p.rapidapi.com)
+JUDGE0_KEY              # RapidAPI key (or self-host auth token)
+# ...or instead of Judge0:
+# PISTON_URL            # self-hosted Piston execute endpoint
 STRIPE_SECRET_KEY       # card payments (USD)
 STRIPE_WEBHOOK_SECRET   # Stripe coin crediting
 PAYSTACK_SECRET_KEY     # payments (NGN)
