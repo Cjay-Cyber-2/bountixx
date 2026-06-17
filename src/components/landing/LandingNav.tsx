@@ -40,14 +40,14 @@ export function LandingNav() {
             : "1px solid transparent",
         }}
       >
-        <div className={`${LANDING_GUTTERS} h-20 flex items-center justify-between gap-12`}>
+        <div className={`${LANDING_GUTTERS} relative h-20 flex items-center justify-between gap-6`}>
           {/* Logo */}
-          <Link href="/" aria-label="Bountixx home" className="cursor-target">
+          <Link href="/" aria-label="Bountixx home" className="cursor-target shrink-0">
             <BountixxLogo size={36} showWordmark />
           </Link>
 
-          {/* Center nav links with wide spacing */}
-          <div className="hidden md:flex items-center gap-10">
+          {/* Center nav links — viewport-centered */}
+          <div className="hidden md:flex items-center gap-10 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
             {NAV.map(({ href, label }) => (
               <a
                 key={href}
@@ -65,7 +65,7 @@ export function LandingNav() {
           </div>
 
           {/* Right cluster */}
-          <div className="flex items-center gap-3 sm:gap-4">
+          <div className="flex items-center gap-3 sm:gap-4 shrink-0 ml-auto">
             <Link href="/login" className="hidden sm:block">
               <Button
                 variant="ghost"

@@ -45,21 +45,21 @@ export function AIEngine() {
           aria-hidden
         />
 
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 xl:gap-20 mb-20 md:mb-28 lg:mb-32 items-start">
+        <div className="flex flex-col items-center gap-12 lg:gap-16 xl:gap-20 mb-20 md:mb-28 lg:mb-32">
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             animate={inView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
-            className="max-w-xl mx-auto lg:mx-0 text-center lg:text-left"
+            className="max-w-2xl mx-auto text-center"
           >
-            <SpecLine className="justify-center lg:justify-start">The engine</SpecLine>
+            <SpecLine>The engine</SpecLine>
             <SectionHeading className="mt-5 md:mt-6 mb-6 md:mb-8">
               AI sets the stage. <Accent>You claim the crown.</Accent>
             </SectionHeading>
-            <p className="font-rajdhani text-lg md:text-xl text-haze-2 leading-relaxed mb-5 max-w-[58ch] mx-auto lg:mx-0">
+            <p className="font-rajdhani text-lg md:text-xl text-haze-2 leading-relaxed mb-5 max-w-[58ch] mx-auto">
               The AI engine is a creation assistant, not a referee. It reads raw task briefs, structures the details, and sets up test cases.
             </p>
-            <p className="font-rajdhani text-base text-haze-3 leading-relaxed max-w-[58ch] mx-auto lg:mx-0">
+            <p className="font-rajdhani text-base text-haze-3 leading-relaxed max-w-[58ch] mx-auto">
               Before any lobby goes live, the room creator has full editing control over the title, difficulty, and test cases. The winner is always decided by a deterministic system.
             </p>
           </motion.div>
@@ -68,7 +68,7 @@ export function AIEngine() {
             initial="hidden"
             animate={inView ? "show" : "hidden"}
             variants={{ show: { transition: { staggerChildren: 0.06, delayChildren: 0.15 } } }}
-            className="grid grid-cols-2 gap-px"
+            className="grid grid-cols-2 gap-px w-full max-w-3xl mx-auto"
             style={{ background: "var(--border-1)", border: "1px solid var(--border-1)" }}
           >
             {SPECS.map((row) => (
@@ -78,7 +78,7 @@ export function AIEngine() {
                   hidden: { opacity: 0 },
                   show: { opacity: 1, transition: { duration: 0.5 } },
                 }}
-                className="p-5 md:p-7 flex flex-col gap-2.5"
+                className="p-5 md:p-7 flex flex-col gap-2.5 text-center items-center"
                 style={{ background: "var(--cosmos)" }}
               >
                 <span className="font-space-mono text-[12px] text-haze leading-snug">{row.value}</span>
@@ -93,7 +93,7 @@ export function AIEngine() {
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.5, delay: 0.3 }}
         >
-          <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 mb-8 md:mb-10">
+          <div className="flex flex-wrap items-center justify-center gap-4 mb-8 md:mb-10 text-center">
             <h3 className="font-zen-dots text-2xl md:text-3xl text-haze">Anti-cheat</h3>
             <span
               className="font-space-mono text-[9px] tracking-[2px] uppercase px-2.5 py-1 rounded-sm text-void"
@@ -104,7 +104,7 @@ export function AIEngine() {
           </div>
 
           <div
-            className="grid md:grid-cols-2 gap-px"
+            className="grid md:grid-cols-2 gap-px max-w-4xl mx-auto"
             style={{ background: "var(--border-1)", border: "1px solid var(--border-1)" }}
           >
             {ANTI_CHEAT.map((ac, i) => (
@@ -113,13 +113,13 @@ export function AIEngine() {
                 initial={{ opacity: 0, y: 12 }}
                 animate={inView ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.45, delay: 0.4 + i * 0.08, ease: [0.16, 1, 0.3, 1] }}
-                className="p-7 md:p-9 lg:p-10"
+                className="p-7 md:p-9 lg:p-10 text-center"
                 style={{ background: "var(--cosmos)" }}
               >
                 <p className="font-space-mono text-[12px] tracking-[1px] uppercase mb-3 text-void">
                   {ac.label}
                 </p>
-                <p className="font-rajdhani text-[15px] md:text-base text-haze-2 leading-relaxed max-w-[48ch]">
+                <p className="font-rajdhani text-[15px] md:text-base text-haze-2 leading-relaxed max-w-[48ch] mx-auto">
                   {ac.note}
                 </p>
               </motion.div>

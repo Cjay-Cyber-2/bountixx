@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
+import { LANDING_GUTTERS, LANDING_CONTENT } from "@/components/landing/_section";
 
 const STATS = [
   { value: 14823, label: "Arenas played",  special: null  },
@@ -18,7 +19,7 @@ export function Stats() {
   return (
     <section
       ref={ref}
-      className="relative py-28 md:py-36 px-6 lg:px-14 overflow-hidden bg-cosmos-2 border-y border-cosmos-4"
+      className="relative py-28 md:py-36 overflow-hidden bg-cosmos-2 border-y border-cosmos-4"
     >
       {/* Ambient */}
       <div
@@ -30,9 +31,10 @@ export function Stats() {
         aria-hidden
       />
 
-      <div className="max-w-[1280px] mx-auto relative">
+      <div className={`${LANDING_GUTTERS} relative`}>
+        <div className={LANDING_CONTENT}>
         {/* Label */}
-        <div className="mb-16 md:mb-20 flex items-end justify-between border-b border-cosmos-4 pb-8">
+        <div className="mb-16 md:mb-20 flex flex-col sm:flex-row items-center justify-center gap-4 border-b border-cosmos-4 pb-8 text-center">
           <p className="font-space-mono text-[10px] tracking-[5px] uppercase text-haze-3">
             Live · Right now, around the world
           </p>
@@ -55,9 +57,9 @@ export function Stats() {
               initial={{ opacity: 0, y: 20 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.5, delay: i * 0.1 }}
-              className="relative p-8 md:p-12 border-b border-r border-cosmos-4"
+              className="relative p-8 md:p-12 border-b border-r border-cosmos-4 text-center"
             >
-              <div className="mb-3 h-[3.2rem] flex items-end">
+              <div className="mb-3 h-[3.2rem] flex items-end justify-center">
                 {stat.special ? (
                   <span
                     className="font-zen-dots text-4xl md:text-5xl leading-none text-haze"
@@ -76,6 +78,7 @@ export function Stats() {
               </p>
             </motion.div>
           ))}
+        </div>
         </div>
       </div>
     </section>

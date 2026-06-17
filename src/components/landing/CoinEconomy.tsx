@@ -43,12 +43,12 @@ export function CoinEconomy() {
               The Bountixx <Accent>economy.</Accent>
             </>
           }
-          description="Creating a standard arena costs 50 coins per player slot at launch. Joining other players' rooms is free, forever."
+          description="Hosting an arena is free. Each competing player pays 50 coins when the match starts — that pool goes to the winner."
           extra="Coins are non-transferable values inside Bountixx. They drive progression and competitive stake, not cash transactions."
         />
 
         <div className="mb-20 md:mb-28 lg:mb-32">
-          <div className="flex items-baseline gap-4 mb-8 md:mb-10">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-8 md:mb-10 text-center">
             <h3 className="font-zen-dots text-2xl md:text-3xl text-haze">Earning</h3>
             <span className="font-space-mono text-[10px] tracking-[3px] uppercase text-crown">◈ Coins</span>
           </div>
@@ -67,7 +67,7 @@ export function CoinEconomy() {
                   hidden: { opacity: 0, y: 16 },
                   show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } },
                 }}
-                className="p-7 md:p-9 flex flex-col gap-2"
+                className="p-7 md:p-9 flex flex-col gap-2 text-center items-center"
                 style={{ background: "var(--cosmos)" }}
               >
                 <p className="font-space-mono text-lg font-bold tabular-nums text-crown">
@@ -84,7 +84,7 @@ export function CoinEconomy() {
         </div>
 
         <div>
-          <div className="flex flex-wrap items-baseline justify-between gap-3 mb-8 md:mb-10">
+          <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center gap-3 mb-8 md:mb-10 text-center">
             <h3 className="font-zen-dots text-2xl md:text-3xl text-haze">Coin Bundles</h3>
             <span className="font-space-mono text-[9px] tracking-[2px] uppercase text-haze-3">
               Stripe · Paystack
@@ -104,7 +104,7 @@ export function CoinEconomy() {
                   hidden: { opacity: 0, y: 20 },
                   show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } },
                 }}
-                className="relative flex flex-col gap-4 p-6 md:p-7 transition-transform duration-300 hover:-translate-y-1"
+                className="relative flex flex-col items-center text-center gap-4 p-6 md:p-7 transition-transform duration-300 hover:-translate-y-1"
                 style={{
                   background: b.popular ? "var(--void-tint)" : "var(--cosmos-2)",
                   border: b.popular ? "1px solid var(--border-accent)" : "1px solid var(--border-1)",

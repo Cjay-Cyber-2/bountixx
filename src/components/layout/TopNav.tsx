@@ -127,17 +127,17 @@ export function TopNav() {
         className="sticky top-0 inset-x-0 z-50 h-16 border-b border-cosmos-4"
         style={{ background: "var(--surface-raised)", backdropFilter: "blur(16px)" }}
       >
-        <div className={`${APP_GUTTERS} h-full grid grid-cols-[1fr_auto_1fr] items-center`}>
+        <div className={`${APP_GUTTERS} relative h-full flex items-center justify-between`}>
 
           {/* Left: Logo */}
-          <div className="flex items-center">
+          <div className="flex items-center shrink-0">
             <Link href="/dashboard" className="shrink-0 cursor-target">
               <BountixxLogo size={36} showWordmark />
             </Link>
           </div>
 
-          {/* Centre: Desktop nav links — always truly centred */}
-          <nav className="hidden md:flex items-center gap-2">
+          {/* Centre: Desktop nav links — pinned to viewport center */}
+          <nav className="hidden md:flex items-center gap-2 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
             {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
               const active = pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
               return (
@@ -168,7 +168,7 @@ export function TopNav() {
           </nav>
 
           {/* Right: desktop right cluster + mobile hamburger */}
-          <div className="flex items-center justify-end gap-3">
+          <div className="flex items-center justify-end gap-3 shrink-0 ml-auto">
             {/* Desktop-only cluster */}
             <div className="hidden md:flex items-center gap-3 shrink-0">
               {/* Coin balance */}

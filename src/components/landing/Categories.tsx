@@ -61,7 +61,7 @@ export function Categories() {
                 hidden: { opacity: 0, y: 24 },
                 show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } },
               }}
-              className="group relative flex flex-col p-8 md:p-10 lg:p-11 transition-transform duration-300 hover:-translate-y-1"
+              className="group relative flex flex-col items-center text-center p-8 md:p-10 lg:p-11 transition-transform duration-300 hover:-translate-y-1"
               style={{
                 background: "var(--cosmos)",
                 border: "1px solid var(--border-1)",
@@ -85,7 +85,7 @@ export function Categories() {
                 {cat.desc}
               </p>
 
-              <p className="font-space-mono text-[13px] text-haze-3 mb-8 md:mb-10 pl-1">
+              <p className="font-space-mono text-[13px] text-haze-3 mb-8 md:mb-10">
                 <span className="text-void mr-2">&rsaquo;</span>
                 {cat.sample}
               </p>

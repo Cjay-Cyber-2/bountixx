@@ -114,7 +114,7 @@ export function RankShowcase() {
           initial={{ opacity: 0, y: 20 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ delay: 0.7, duration: 0.55 }}
-          className="max-w-xl p-7 md:p-9"
+          className="max-w-xl mx-auto p-7 md:p-9 text-center"
           style={{
             background: "var(--surface-card)",
             border: "1px solid var(--border-1)",

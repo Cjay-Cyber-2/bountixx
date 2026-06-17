@@ -8,17 +8,14 @@ export function Footer() {
     <footer className="relative bg-cosmos overflow-hidden" style={{ borderTop: "1px solid var(--border-1)" }}>
       <div className={`${LANDING_GUTTERS} py-16 md:py-20 relative`}>
         <div className={LANDING_CONTENT}>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center mb-14">
-          {/* Left: empty column for balance */}
-          <div />
-
+        <div className="grid grid-cols-1 gap-8 items-center mb-14 text-center">
           {/* Centre: Logo */}
           <div className="flex justify-center">
             <BountixxLogo size={32} showWordmark className="text-haze" />
           </div>
 
-          {/* Right: Socials */}
-          <div className="flex justify-center md:justify-end gap-3">
+          {/* Socials */}
+          <div className="flex justify-center gap-3">
             <SocialIcon label="Twitter / X" href="#">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
@@ -39,7 +36,7 @@ export function Footer() {
 
         {/* Bottom strip */}
         <div
-          className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-8"
+          className="flex flex-col items-center justify-center gap-3 pt-8 text-center"
           style={{ borderTop: "1px solid var(--border-1)" }}
         >
           <p className="font-space-mono text-[10px] text-haze-3 tracking-wider">
