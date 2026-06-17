@@ -53,6 +53,28 @@ The create-arena flow calls `/api/rooms/analyse`. Set **at least one** key in Ve
 
 If neither is set, **Analyze with AI** shows an error about missing keys (not a generic network failure).
 
+### ADD for CODING arenas (code execution)
+
+Coding challenges run players' code against AI-generated test cases. The old free public Piston endpoint became **whitelist-only in Feb 2026**, so you must point the app at a code-execution provider. Pick ONE (Production + Preview), then redeploy:
+
+| Option | Variables | Notes |
+|--------|-----------|-------|
+| **Judge0 via RapidAPI** (easiest) | `JUDGE0_URL=https://judge0-ce.p.rapidapi.com` + `JUDGE0_KEY=<your RapidAPI key>` | Subscribe to "Judge0 CE" on RapidAPI (free tier available). |
+| **Self-hosted Judge0** | `JUDGE0_URL=https://your-judge0` + `JUDGE0_KEY=<X-Auth-Token or empty>` | Run Judge0 with Docker. |
+| **Self-hosted Piston** | `PISTON_URL=https://your-piston/api/v2/piston/execute` | Run Piston with Docker. |
+
+If none is set, non-coding arenas (trivia / logic / math / text answers) still work, but coding submissions return a clear "execution not configured" message. Supported languages (auto-detected by the AI and locked in the editor): Python, JavaScript, TypeScript, Java, C++, C, Go, Rust, Ruby, PHP, C#.
+
+### Database migration (run once)
+
+The schema gained `language` and `starter_code` columns on `rooms` (used to match the task room to the challenge). Apply migrations from your machine with `DATABASE_URL` set:
+
+```bash
+npm run db:migrate    # or: npx drizzle-kit push
+```
+
+The migration uses `ADD COLUMN IF NOT EXISTS`, so it is safe on an existing database.
+
 Use Neon’s **pooled** connection string in `DATABASE_URL` (host contains `-pooler`) for Vercel serverless. It must include `?sslmode=require`.
 
 After deploy, open `https://YOUR-DOMAIN.com/api/health` — every check should be green before testing Analyze with AI.

@@ -14,25 +14,31 @@ export async function POST(req: Request) {
   const authResult = await requireClerkAuth(req);
   if (!authResult.ok) return authResult.response;
 
-  let body: { taskRaw?: string; arenaName?: string };
+  let body: { taskRaw?: string; arenaName?: string; languageHint?: string };
   try {
-    body = (await req.json()) as { taskRaw?: string; arenaName?: string };
+    body = (await req.json()) as { taskRaw?: string; arenaName?: string; languageHint?: string };
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const { taskRaw, arenaName } = body;
+  const { taskRaw, arenaName, languageHint } = body;
 
   if (!taskRaw?.trim()) {
     return NextResponse.json({ error: "Task text is required" }, { status: 400 });
   }
 
-  const userMessage = arenaName
-    ? `Arena: "${arenaName}"\n\nChallenge:\n${taskRaw}`
-    : `Challenge:\n${taskRaw}`;
+  const userMessage = [
+    arenaName ? `Arena: "${arenaName}"` : null,
+    languageHint
+      ? `The host has chosen this programming language for the coding challenge: "${languageHint}". Treat the language as specified and do NOT ask for clarification about the language.`
+      : null,
+    `Challenge:\n${taskRaw}`,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
 
   try {
-    const analysis = await analyseChallenge(userMessage);
+    const analysis = await analyseChallenge(userMessage, languageHint);
     return NextResponse.json({ analysis });
   } catch (err) {
     if (err instanceof AiConfigError) {
