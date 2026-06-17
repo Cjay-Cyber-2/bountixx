@@ -6,10 +6,8 @@ import { rooms, roomPlayers, testCases, users, submissions, coinTransactions } f
 import { eq, and, sql } from "drizzle-orm";
 import { getSession, unauthorized } from "@/lib/getSession";
 import { expireLobbyIfStale } from "@/lib/roomExpiry";
+import { ENTRY_FEE, isEntryFeeExempt, hasAffordableEntry } from "@/lib/coins";
 import { randomUUID } from "crypto";
-
-const ENTRY_FEE = 50;
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "chijiokejoseph2022@gmail.com";
 
 export async function GET(
   _req: Request,
@@ -156,13 +154,17 @@ export async function PATCH(
 
     // Exempt from the entry fee and never kicked:
     //  - the room host (they referee, they don't compete)
-    //  - the unlimited admin account
+    //  - the unlimited owner account
     const isExempt = (p: { userId: string; email: string | null }) =>
-      p.userId === room.adminId || p.email === ADMIN_EMAIL;
+      isEntryFeeExempt(p.userId, room.adminId, p.email);
 
     const competitors = playerRows.filter((p) => p.userId !== room.adminId);
-    const broke = competitors.filter((p) => (p.coinsBalance ?? 0) < ENTRY_FEE && !isExempt(p));
-    const eligible = competitors.filter((p) => (p.coinsBalance ?? 0) >= ENTRY_FEE || isExempt(p));
+    const broke = competitors.filter(
+      (p) => !hasAffordableEntry(p.coinsBalance ?? 0, p.email) && !isExempt(p),
+    );
+    const eligible = competitors.filter(
+      (p) => hasAffordableEntry(p.coinsBalance ?? 0, p.email) || isExempt(p),
+    );
 
     // 2. Remove broke players from the room
     for (const p of broke) {

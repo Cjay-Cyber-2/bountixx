@@ -117,7 +117,7 @@ function SetupStep({
         <span className="font-space-mono text-[10px] text-void tracking-widest">ENTRY FEE</span>
         <span className="hidden sm:block flex-1 h-px bg-void/20" />
         <span className="font-orbitron font-bold text-sm text-void">{ENTRY_FEE} coins / player</span>
-        <span className="font-space-mono text-[9px] text-haze-3 w-full sm:w-auto">charged when arena starts</span>
+        <span className="font-space-mono text-[9px] text-haze-3 w-full sm:w-auto">hosting is free · players pay when arena starts</span>
       </div>
 
       <div>

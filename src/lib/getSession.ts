@@ -1,9 +1,15 @@
 import { auth, currentUser, getAuth } from "@clerk/nextjs/server";
 import { createClerkClient } from "@clerk/backend";
 import type { NextRequest } from "next/server";
+import { randomUUID } from "crypto";
 import { db } from "./db";
-import { users } from "./schema";
+import { coinTransactions, users } from "./schema";
 import { eq } from "drizzle-orm";
+import {
+  isUnlimitedCoinsEmail,
+  STARTER_COINS,
+  UNLIMITED_COINS_BALANCE,
+} from "./coins";
 
 export type SessionUser = typeof users.$inferSelect;
 
@@ -17,6 +23,76 @@ function isUniqueViolation(err: unknown, column?: string): boolean {
   if (!lower.includes("unique") && !lower.includes("duplicate")) return false;
   if (!column) return true;
   return lower.includes(column);
+}
+
+async function readClerkProfile() {
+  let email: string | null = null;
+  let avatarUrl: string | null = null;
+  let rawUsername = "";
+
+  try {
+    const cu = await currentUser();
+    if (cu) {
+      email =
+        cu.primaryEmailAddress?.emailAddress ??
+        cu.emailAddresses?.[0]?.emailAddress ??
+        null;
+      avatarUrl = cu.imageUrl ?? null;
+      const metaUsername =
+        typeof cu.unsafeMetadata?.username === "string"
+          ? (cu.unsafeMetadata.username as string)
+          : null;
+      rawUsername =
+        metaUsername ||
+        cu.username ||
+        [cu.firstName, cu.lastName].filter(Boolean).join("") ||
+        email?.split("@")[0] ||
+        "";
+    }
+  } catch (err) {
+    console.error("[getSession] currentUser() failed:", err);
+  }
+
+  return { email, avatarUrl, rawUsername };
+}
+
+async function normalizeUserCoins(
+  user: SessionUser,
+  clerkEmail: string | null,
+): Promise<SessionUser> {
+  const email = clerkEmail ?? user.email;
+  const updates: Partial<typeof users.$inferInsert> = {};
+
+  if (email && email !== user.email) {
+    updates.email = email;
+  }
+
+  if (isUnlimitedCoinsEmail(email)) {
+    if (user.coinsBalance < UNLIMITED_COINS_BALANCE) {
+      updates.coinsBalance = UNLIMITED_COINS_BALANCE;
+    }
+  } else if (user.coinsBalance === 0) {
+    updates.coinsBalance = STARTER_COINS;
+    await db.insert(coinTransactions).values({
+      id: randomUUID(),
+      userId: user.id,
+      amount: STARTER_COINS,
+      type: "gifted",
+      reference: "welcome_bonus",
+    });
+  }
+
+  if (Object.keys(updates).length === 0) {
+    return user;
+  }
+
+  const [updated] = await db
+    .update(users)
+    .set(updates)
+    .where(eq(users.id, user.id))
+    .returning();
+
+  return updated ?? { ...user, ...updates };
 }
 
 /**
@@ -71,47 +147,28 @@ export async function getSession(req?: Request): Promise<SessionUser | null> {
   if (!userId) return null;
 
   try {
+    const { email, avatarUrl, rawUsername } = await readClerkProfile();
+
     const [existing] = await db
       .select()
       .from(users)
       .where(eq(users.id, userId))
       .limit(1);
-    if (existing) return existing;
 
-    let email: string | null = null;
-    let avatarUrl: string | null = null;
-    let rawUsername = userId.slice(0, 16);
-
-    try {
-      const cu = await currentUser();
-      if (cu) {
-        email =
-          cu.primaryEmailAddress?.emailAddress ??
-          cu.emailAddresses?.[0]?.emailAddress ??
-          null;
-        avatarUrl = cu.imageUrl ?? null;
-        const metaUsername =
-          typeof cu.unsafeMetadata?.username === "string"
-            ? (cu.unsafeMetadata.username as string)
-            : null;
-        rawUsername =
-          metaUsername ||
-          cu.username ||
-          [cu.firstName, cu.lastName].filter(Boolean).join("") ||
-          email?.split("@")[0] ||
-          userId.slice(0, 16);
-      }
-    } catch (err) {
-      console.error("[getSession] currentUser() failed:", err);
+    if (existing) {
+      return normalizeUserCoins(existing, email);
     }
 
-    const username = `${sanitizeUsername(rawUsername)}_${userId.slice(-5).toLowerCase()}`;
+    const username = `${sanitizeUsername(rawUsername || userId.slice(0, 16))}_${userId.slice(-5).toLowerCase()}`;
+    const startingCoins = isUnlimitedCoinsEmail(email)
+      ? UNLIMITED_COINS_BALANCE
+      : STARTER_COINS;
 
     const baseRow = {
       id: userId,
       username,
       avatarUrl,
-      coinsBalance: 500,
+      coinsBalance: startingCoins,
       xp: 0,
       rank: "recruit" as const,
       roomsCreatedCount: 0,
@@ -144,7 +201,20 @@ export async function getSession(req?: Request): Promise<SessionUser | null> {
       .from(users)
       .where(eq(users.id, userId))
       .limit(1);
-    return created ?? null;
+
+    if (!created) return null;
+
+    if (!isUnlimitedCoinsEmail(email) && startingCoins > 0) {
+      await db.insert(coinTransactions).values({
+        id: randomUUID(),
+        userId: created.id,
+        amount: startingCoins,
+        type: "gifted",
+        reference: "welcome_bonus",
+      });
+    }
+
+    return created;
   } catch (err) {
     console.error("[getSession] database error:", err);
     return null;

@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { rooms, submissions, roomPlayers, users, invites } from "@/lib/schema";
 import { eq, and, desc, count, inArray } from "drizzle-orm";
 import { getSession, unauthorized } from "@/lib/getSession";
+import { isUnlimitedCoinsEmail } from "@/lib/coins";
 import { listOnlineUsers } from "@/lib/presence";
 import { timeAgo } from "@/lib/utils";
 
@@ -124,6 +125,7 @@ export async function GET(req: Request) {
     winRate,
     totalXp: session.xp,
     coinsBalance: session.coinsBalance,
+    coinsUnlimited: isUnlimitedCoinsEmail(session.email),
     recentRooms,
     onlineUsers: onlineUsers.map((u) => ({
       id: u.id,
