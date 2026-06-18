@@ -2,8 +2,9 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { clerkAuthHealth } from "@/lib/requireAuth";
-import { getDatabaseUrl, pingDatabase } from "@/lib/db";
+import { pingDatabase, getDatabaseUrl } from "@/lib/db";
 import { activeAiProvider } from "@/lib/aiAnalyse";
+import { ensureDatabaseSchema } from "@/lib/ensureSchema";
 
 export async function GET(req: Request) {
   const clerkSecret = Boolean(process.env.CLERK_SECRET_KEY?.trim());
@@ -15,12 +16,24 @@ export async function GET(req: Request) {
   const clerkProbe = await clerkAuthHealth(req);
   const dbProbe = await pingDatabase();
 
+  let schemaOk = false;
+  let schemaError: string | null = null;
+  if (databaseUrl && dbProbe.ok) {
+    try {
+      await ensureDatabaseSchema();
+      schemaOk = true;
+    } catch (err) {
+      schemaError = err instanceof Error ? err.message : String(err);
+    }
+  }
+
   const ok =
     clerkSecret &&
     clerkPublishable &&
     clerkProbe.ok &&
     databaseUrl &&
     dbProbe.ok &&
+    schemaOk &&
     (groq || gemini);
 
   return NextResponse.json(
@@ -35,7 +48,8 @@ export async function GET(req: Request) {
       database: {
         configured: databaseUrl,
         reachable: dbProbe.ok,
-        error: dbProbe.ok ? null : dbProbe.error,
+        schema: schemaOk ? "ok" : "failed",
+        error: dbProbe.ok ? schemaError : dbProbe.error,
       },
       ai: {
         provider: activeAiProvider(),

@@ -9,6 +9,7 @@
     "lint": "eslint",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "db:patch": "node scripts/migrate-db.mjs",
     "db:studio": "drizzle-kit studio",
     "auth:diagnose": "node scripts/auth-diagnose.mjs"
   },

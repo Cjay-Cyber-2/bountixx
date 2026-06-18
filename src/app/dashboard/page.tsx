@@ -69,7 +69,8 @@ export default function DashboardPage() {
 
   return (
     <AppLayout>
-      <div className={`${APP_GUTTERS} py-8 md:py-12 lg:py-16`}>
+      <div className={`${APP_GUTTERS} py-8 md:py-12 lg:py-16 flex justify-center`}>
+        <div className="w-full max-w-5xl">
 
         {/* Header */}
         <motion.div
@@ -301,6 +302,7 @@ export default function DashboardPage() {
           )}
         </motion.div>
 
+        </div>
       </div>
     </AppLayout>
   );

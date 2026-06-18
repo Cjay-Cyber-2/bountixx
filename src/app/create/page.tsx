@@ -47,6 +47,18 @@ interface CreatedRoom { id: string; name: string; status: string; }
 
 const ENTRY_FEE = 50;
 
+function StepActions({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col sm:flex-row gap-3 mt-6 w-full max-w-md mx-auto">
+      {children}
+    </div>
+  );
+}
+
 /* ─── Constants ─── */
 const CAT_COLORS: Record<string, string> = {
   coding: "#a855f7", trivia: "#9B6BFF", logic: "#8660fa", math: "#c084fc",
@@ -162,10 +174,12 @@ function SetupStep({
         </div>
       )}
 
-      {error && <p className="flex items-center gap-2 font-rajdhani text-sm text-danger"><AlertCircle size={14} /> {error}</p>}
-      <Button variant="primary" size="lg" fullWidth magnetic onClick={handleNext}>
-        NEXT — ADD QUESTIONS <ChevronRight size={16} />
-      </Button>
+      {error && <p className="flex items-center justify-center gap-2 font-rajdhani text-sm text-danger"><AlertCircle size={14} /> {error}</p>}
+      <StepActions>
+        <Button variant="primary" size="lg" className="w-full sm:flex-1" magnetic onClick={handleNext}>
+          NEXT — ADD QUESTIONS <ChevronRight size={16} />
+        </Button>
+      </StepActions>
     </motion.div>
   );
 }
@@ -425,12 +439,12 @@ function QuestionsStep({
         </p>
       )}
 
-      <div className="flex gap-3 mt-2">
-        <Button variant="secondary" size="md" onClick={onBack} className="flex-1">← BACK</Button>
-        <Button variant="primary" size="md" onClick={onNext} disabled={!allValid || anyAnalyzing} className="flex-2 flex-grow">
+      <StepActions>
+        <Button variant="secondary" size="md" onClick={onBack} className="w-full sm:flex-1">← BACK</Button>
+        <Button variant="primary" size="md" onClick={onNext} disabled={!allValid || anyAnalyzing} className="w-full sm:flex-1">
           REVIEW & LAUNCH →
         </Button>
-      </div>
+      </StepActions>
     </motion.div>
   );
 }
@@ -456,15 +470,17 @@ function ReviewStep({
   const maxPrizePool = ENTRY_FEE * playerCap;
 
   return (
-    <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} className="flex flex-col gap-5">
-      <div className="bg-cosmos-2 border border-cosmos-4 p-5">
+    <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} className="flex flex-col gap-6">
+      <div className="bg-cosmos-2 border border-cosmos-4 p-5 md:p-6">
         <p className="font-space-mono text-[10px] text-void tracking-widest mb-3 uppercase">Arena Summary</p>
         <div className="flex flex-col gap-2 font-space-mono text-xs">
           <div className="flex justify-between"><span className="text-haze-3">Name</span><span className="text-haze">{arenaName}</span></div>
           <div className="flex justify-between"><span className="text-haze-3">Questions</span><span className="text-haze">{questions.length}</span></div>
           <div className="flex justify-between"><span className="text-haze-3">Entry fee</span><span className="text-void">{ENTRY_FEE} coins per player</span></div>
           <div className="flex justify-between"><span className="text-haze-3">Max prize pool</span><span className="text-crown font-bold">{maxPrizePool} coins</span></div>
-          <p className="text-haze-3 text-[9px] pt-1 border-t border-cosmos-4">Coins are deducted from each player when the arena starts. Winner takes the full pool.</p>
+          <p className="text-haze-3 text-[9px] pt-2 border-t border-cosmos-4 mt-2">
+            Hosting is free. Each competing player pays {ENTRY_FEE} coins when the arena starts — winner takes the pool.
+          </p>
         </div>
       </div>
 
@@ -498,14 +514,18 @@ function ReviewStep({
         })}
       </div>
 
-      {createError && <p className="flex items-center gap-2 font-rajdhani text-sm text-danger"><AlertCircle size={14} /> {createError}</p>}
+      {createError && (
+        <p className="flex items-center justify-center gap-2 font-rajdhani text-sm text-danger text-center">
+          <AlertCircle size={14} /> {createError}
+        </p>
+      )}
 
-      <div className="flex gap-3 mt-2">
-        <Button variant="secondary" size="md" onClick={onBack} className="flex-1">← BACK</Button>
-        <Button variant="primary" size="lg" onClick={onLaunch} disabled={creating} loading={creating} className="flex-grow">
+      <StepActions>
+        <Button variant="secondary" size="md" onClick={onBack} className="w-full sm:flex-1">← BACK</Button>
+        <Button variant="primary" size="lg" onClick={onLaunch} disabled={creating} loading={creating} className="w-full sm:flex-1">
           {creating ? "CREATING…" : "CREATE ARENA (FREE) →"}
         </Button>
-      </div>
+      </StepActions>
     </motion.div>
   );
 }
@@ -675,10 +695,10 @@ export default function CreatePage() {
 
   return (
     <AppLayout>
-      <PageShell width="full">
-        <p className="font-space-mono text-[11px] text-void tracking-[3px] uppercase mb-2 text-center">New arena</p>
-        <h1 className="font-zen-dots text-2xl md:text-4xl text-haze mb-3 text-center">Create your arena</h1>
-        <p className="font-rajdhani text-base md:text-lg text-haze-2 mb-10 md:mb-12 max-w-2xl mx-auto text-center">
+      <PageShell>
+        <p className="font-space-mono text-[11px] text-void tracking-[3px] uppercase mb-3 text-center">New arena</p>
+        <h1 className="font-zen-dots text-2xl md:text-3xl text-haze mb-4 text-center">Create your arena</h1>
+        <p className="font-rajdhani text-base md:text-lg text-haze-2 mb-10 md:mb-12 max-w-xl mx-auto text-center leading-relaxed">
           Set up your challenge. The AI validates and builds the rest.
         </p>
 

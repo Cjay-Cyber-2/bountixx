@@ -10,6 +10,7 @@ import {
   STARTER_COINS,
   UNLIMITED_COINS_BALANCE,
 } from "./coins";
+import { ensureDatabaseSchema } from "./ensureSchema";
 
 export type SessionUser = typeof users.$inferSelect;
 
@@ -73,13 +74,17 @@ async function normalizeUserCoins(
     }
   } else if (user.coinsBalance === 0) {
     updates.coinsBalance = STARTER_COINS;
-    await db.insert(coinTransactions).values({
-      id: randomUUID(),
-      userId: user.id,
-      amount: STARTER_COINS,
-      type: "gifted",
-      reference: "welcome_bonus",
-    });
+    try {
+      await db.insert(coinTransactions).values({
+        id: randomUUID(),
+        userId: user.id,
+        amount: STARTER_COINS,
+        type: "gifted",
+        reference: "welcome_bonus",
+      });
+    } catch (err) {
+      console.error("[getSession] welcome bonus tx failed:", err);
+    }
   }
 
   if (Object.keys(updates).length === 0) {
@@ -147,6 +152,7 @@ export async function getSession(req?: Request): Promise<SessionUser | null> {
   if (!userId) return null;
 
   try {
+    await ensureDatabaseSchema();
     const { email, avatarUrl, rawUsername } = await readClerkProfile();
 
     const [existing] = await db
@@ -226,6 +232,17 @@ export function unauthorized() {
     status: 401,
     headers: { "Content-Type": "application/json" },
   });
+}
+
+export function sessionUnavailable(message?: string) {
+  return new Response(
+    JSON.stringify({
+      error:
+        message ??
+        "Account setup failed — sign out and sign back in. If this continues, check DATABASE_URL in Vercel.",
+    }),
+    { status: 503, headers: { "Content-Type": "application/json" } },
+  );
 }
 
 export function clerkMisconfigured() {

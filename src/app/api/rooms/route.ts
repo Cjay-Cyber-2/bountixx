@@ -5,7 +5,9 @@ import { db } from "@/lib/db";
 import { rooms, roomPlayers, users } from "@/lib/schema";
 import { eq, desc, sql } from "drizzle-orm";
 // sql kept for roomsCreatedCount increment
-import { getSession, unauthorized } from "@/lib/getSession";
+import { getSession, unauthorized, sessionUnavailable } from "@/lib/getSession";
+import { requireClerkAuth } from "@/lib/requireAuth";
+import { ensureDatabaseSchema } from "@/lib/ensureSchema";
 import { randomUUID } from "crypto";
 
 type Category = "coding" | "trivia" | "logic" | "math" | "writing" | "design" | "meme";
@@ -54,8 +56,22 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const authResult = await requireClerkAuth(req);
+  if (!authResult.ok) return authResult.response;
+
+  try {
+    await ensureDatabaseSchema();
+  } catch (err) {
+    console.error("[POST /api/rooms] schema migration failed:", err);
+    return sessionUnavailable(
+      "Database schema update failed — run npm run db:patch against your Neon DATABASE_URL, then redeploy.",
+    );
+  }
+
   const session = await getSession(req);
-  if (!session) return unauthorized();
+  if (!session) {
+    return sessionUnavailable();
+  }
 
   try {
     const body = await req.json() as {
@@ -154,7 +170,7 @@ export async function POST(req: Request) {
     const msg = raw instanceof Error ? raw.message : String(raw);
     // Map known PostgreSQL error codes to friendly messages
     const friendly: Record<string, string> = {
-      "42703": "Database schema is outdated — open your Neon dashboard and run the SQL below, then try again:\nALTER TABLE rooms ADD COLUMN IF NOT EXISTS questions_json text;\nALTER TABLE rooms ADD COLUMN IF NOT EXISTS prize_pool integer DEFAULT 0 NOT NULL;",
+      "42703": "Database column missing — redeploy the latest version (schema auto-patches on create). If it persists, run: npm run db:patch",
       "23503": "Account setup incomplete — please sign out, sign back in, and try again.",
       "23505": "A room with this ID already exists — please try again.",
     };

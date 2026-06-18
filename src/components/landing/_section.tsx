@@ -139,11 +139,11 @@ export function SectionIntro({
   );
 }
 
-/** Shared app-page frame — full width of the viewport padding band. */
+/** Shared app-page frame — centered form column, not full-bleed. */
 export function PageShell({
   children,
   className = "",
-  width = "full",
+  width = "3xl",
   align = "center",
 }: {
   children: ReactNode;
@@ -163,9 +163,9 @@ export function PageShell({
   const alignClass = align === "center" ? "text-center" : "";
 
   return (
-    <div className={`${APP_GUTTERS} py-8 md:py-12 lg:py-16`}>
+    <div className={`${APP_GUTTERS} py-10 md:py-14 flex justify-center`}>
       <div
-        className={`${widthClass} border border-cosmos-4/80 px-5 py-8 sm:px-8 sm:py-10 md:px-10 md:py-12 lg:px-12 lg:py-14 ${alignClass} ${className}`}
+        className={`${widthClass} border border-cosmos-4/80 px-6 py-10 sm:px-8 md:px-10 md:py-12 ${alignClass} ${className}`}
         style={{
           background:
             "linear-gradient(180deg, rgba(19,12,36,0.72) 0%, rgba(14,8,24,0.96) 100%)",
