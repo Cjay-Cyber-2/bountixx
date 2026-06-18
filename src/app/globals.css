@@ -81,7 +81,7 @@ html { scroll-behavior: auto; }
 body {
   background: var(--cosmos);
   color: var(--haze);
-  font-family: var(--font-rajdhani, 'Rajdhani'), sans-serif;
+  font-family: var(--font-body), "Chakra Petch", sans-serif;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
@@ -95,12 +95,30 @@ body {
 /* ─── Focus ─── */
 :focus-visible { outline: 2px solid var(--void); outline-offset: 2px; }
 
-/* ─── Typography helpers ─── */
-.font-orbitron   { font-family: var(--font-orbitron, 'Orbitron'), monospace; }
-.font-rajdhani   { font-family: var(--font-rajdhani, 'Rajdhani'), sans-serif; }
-.font-zen-dots   { font-family: var(--font-zen-dots, 'Zen Dots'), cursive; }
-.font-space-mono { font-family: var(--font-space-mono, 'Space Mono'), monospace; }
-.font-nunito     { font-family: var(--font-nunito, 'Nunito'), sans-serif; }
+/* ─── Typography (Bountixx arena stack) ─── */
+.font-body,
+.font-rajdhani {
+  font-family: var(--font-body), "Chakra Petch", sans-serif;
+}
+
+.font-display,
+.font-zen-dots,
+.font-nunito {
+  font-family: var(--font-display), "Tourney", sans-serif;
+  letter-spacing: 0.02em;
+}
+
+.font-stats,
+.font-orbitron {
+  font-family: var(--font-stats), "Oxanium", sans-serif;
+  letter-spacing: 0.04em;
+}
+
+.font-mono,
+.font-space-mono {
+  font-family: var(--font-mono), "Share Tech Mono", monospace;
+  letter-spacing: 0.06em;
+}
 
 /* ─── Clip-path ─── */
 .clip-arena    { clip-path: var(--clip-arena); }

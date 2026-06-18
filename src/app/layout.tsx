@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Orbitron, Rajdhani, Space_Mono, Zen_Dots, Nunito } from "next/font/google";
+import { Tourney, Chakra_Petch, Oxanium, Share_Tech_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 import { AuthProvider } from "@/components/providers/AuthProvider";
@@ -8,38 +8,35 @@ import { LenisProvider } from "@/components/providers/LenisProvider";
 import { ToastProvider } from "@/components/ui/Toast";
 import { TargetCursorWrapper } from "@/components/ui/TargetCursor";
 
-const orbitron = Orbitron({
-  variable: "--font-orbitron",
+/** Arena display — tournament poster energy for heroes & section titles */
+const fontDisplay = Tourney({
+  variable: "--font-display",
   subsets: ["latin"],
-  weight: ["400", "700", "900"],
+  weight: ["400", "500", "600", "700", "800"],
   display: "swap",
 });
 
-const rajdhani = Rajdhani({
-  variable: "--font-rajdhani",
+/** Body copy — angular tech-gaming sans, readable but unmistakable */
+const fontBody = Chakra_Petch({
+  variable: "--font-body",
   subsets: ["latin"],
-  weight: ["400", "600", "700"],
+  weight: ["300", "400", "500", "600", "700"],
   display: "swap",
 });
 
-const spaceMono = Space_Mono({
-  variable: "--font-space-mono",
+/** Stats, scores, coin counts — esports HUD numerals */
+const fontStats = Oxanium({
+  variable: "--font-stats",
   subsets: ["latin"],
-  weight: ["400", "700"],
+  weight: ["400", "500", "600", "700", "800"],
   display: "swap",
 });
 
-const zenDots = Zen_Dots({
-  variable: "--font-zen-dots",
+/** Labels, eyebrows, terminal chrome */
+const fontMono = Share_Tech_Mono({
+  variable: "--font-mono",
   subsets: ["latin"],
   weight: "400",
-  display: "swap",
-});
-
-const nunito = Nunito({
-  variable: "--font-nunito",
-  subsets: ["latin"],
-  weight: ["400", "700", "800", "900"],
   display: "swap",
 });
 
@@ -76,9 +73,9 @@ export default function RootLayout({
     >
       <html
         lang="en"
-        className={`${orbitron.variable} ${rajdhani.variable} ${spaceMono.variable} ${zenDots.variable} ${nunito.variable} h-full`}
+        className={`${fontDisplay.variable} ${fontBody.variable} ${fontStats.variable} ${fontMono.variable} h-full`}
       >
-        <body className="min-h-full bg-cosmos text-haze overflow-x-hidden">
+        <body className="min-h-full bg-cosmos text-haze overflow-x-hidden font-body antialiased">
           <AuthProvider>
             <ThemeProvider>
               <LenisProvider>
