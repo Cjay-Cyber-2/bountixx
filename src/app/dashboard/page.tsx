@@ -61,10 +61,10 @@ export default function DashboardPage() {
   }, [fetchData]);
 
   const statCards = [
-    { label: "Rooms created",  value: data?.roomsCreated  ?? 0, icon: Swords,     accent: "var(--plum)",  accentRaw: "#5C0A46" },
-    { label: "Rooms won",      value: data?.roomsWon      ?? 0, icon: Trophy,     accent: "var(--plum)",  accentRaw: "#5C0A46" },
-    { label: "Total XP",       value: data?.totalXp       ?? 0, icon: TrendingUp,  accent: "var(--plum)",  accentRaw: "#5C0A46" },
-    { label: "Coin balance",   value: data?.coinsBalance  ?? 0, icon: Coins,      accent: "#A67C3D",      accentRaw: "#A67C3D", gold: true },
+    { label: "Rooms created",  value: data?.roomsCreated  ?? 0, icon: Swords,     accent: "var(--brand-primary)",  accentRaw: "#F92313" },
+    { label: "Rooms won",      value: data?.roomsWon      ?? 0, icon: Trophy,     accent: "var(--brand-primary)",  accentRaw: "#F92313" },
+    { label: "Total XP",       value: data?.totalXp       ?? 0, icon: TrendingUp,  accent: "var(--brand-primary)",  accentRaw: "#F92313" },
+    { label: "Coin balance",   value: data?.coinsBalance  ?? 0, icon: Coins,      accent: "var(--brand-primary)",  accentRaw: "#F92313", gold: true },
   ];
 
   return (

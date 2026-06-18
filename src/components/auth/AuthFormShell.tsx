@@ -83,7 +83,7 @@ export function OAuthButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="cursor-target flex items-center justify-center gap-3 h-11 w-full rounded-xl border border-[var(--border-2)] bg-[var(--surface-inset)] text-haze font-medium text-sm hover:border-[var(--border-accent)] hover:bg-[var(--surface-hover)] transition-colors disabled:opacity-50"
+      className="cursor-target flex items-center justify-center gap-3 h-11 w-full rounded-xl border border-[var(--border-2)] bg-[var(--surface-inset)] text-haze font-medium text-sm hover:border-[var(--border-accent)] hover:bg-[var(--surface-hover)] transition-[background-color,border-color,color] duration-300 disabled:opacity-50"
     >
       {children}
     </button>

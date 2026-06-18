@@ -16,11 +16,11 @@ const variantClasses = {
   primary:
     "bg-[var(--btn-primary-bg)] text-[var(--btn-primary-fg)] font-semibold hover:bg-[var(--btn-primary-hover)] shadow-sm",
   secondary:
-    "bg-transparent border border-[var(--border-accent)] text-haze font-semibold hover:bg-[var(--void-tint)]",
+    "bg-transparent border border-[var(--border-accent)] text-[var(--accent)] font-semibold hover:bg-[var(--void-tint)]",
   ghost:
     "bg-transparent text-haze-2 font-medium hover:text-haze hover:bg-[var(--surface-hover)]",
   danger:
-    "bg-danger/10 border border-danger/40 text-danger font-semibold hover:bg-danger/18",
+    "bg-[var(--void-tint)] border border-[var(--border-accent)] text-[var(--accent)] font-semibold hover:bg-[var(--void-tint-hover)]",
 };
 
 const sizeClasses = {
@@ -59,7 +59,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={combinedRef}
         className={cn(
           "cursor-target relative inline-flex items-center justify-center gap-2",
-          "transition-all duration-200 select-none",
+          "transition-[background-color,border-color,color,box-shadow,transform] duration-300 select-none",
           "disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none",
           "active:scale-[0.98]",
           variantClasses[variant],

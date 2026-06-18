@@ -164,7 +164,8 @@ export function PageShell({
         className={`${widthClass} mx-auto rounded-2xl border border-[var(--border-1)] px-6 py-8 sm:px-10 sm:py-10 md:px-12 md:py-12 ${alignClass} ${className}`}
         style={{
           background: "var(--surface-card)",
-          boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 12px 40px rgba(0,0,0,0.08)",
+          boxShadow: "0 1px 3px rgba(78, 39, 37, 0.06), 0 8px 32px rgba(78, 39, 37, 0.08)",
+          transition: "var(--theme-transition)",
         }}
       >
         {children}

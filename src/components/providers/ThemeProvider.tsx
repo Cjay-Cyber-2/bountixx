@@ -33,12 +33,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const initial = getInitialTheme();
     setThemeState(initial);
     document.documentElement.setAttribute("data-theme", initial);
+    document.documentElement.style.colorScheme = initial;
     setMounted(true);
   }, []);
 
   const setTheme = useCallback((next: Theme) => {
     setThemeState(next);
     document.documentElement.setAttribute("data-theme", next);
+    document.documentElement.style.colorScheme = next;
     localStorage.setItem(STORAGE_KEY, next);
   }, []);
 
@@ -46,6 +48,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setThemeState((prev) => {
       const next: Theme = prev === "dark" ? "light" : "dark";
       document.documentElement.setAttribute("data-theme", next);
+      document.documentElement.style.colorScheme = next;
       localStorage.setItem(STORAGE_KEY, next);
       return next;
     });

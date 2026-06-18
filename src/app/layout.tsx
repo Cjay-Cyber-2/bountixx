@@ -70,7 +70,7 @@ export const metadata: Metadata = {
 export const viewport = {
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#DDEAE1" },
-    { media: "(prefers-color-scheme: dark)", color: "#0C080A" },
+    { media: "(prefers-color-scheme: dark)", color: "#120C0B" },
   ],
 };
 
@@ -93,13 +93,20 @@ export default function RootLayout({
       signUpForceRedirectUrl={
         process.env.NEXT_PUBLIC_CLERK_SIGN_UP_FORCE_REDIRECT_URL ?? "/dashboard"
       }
-      appearance={{ variables: { colorPrimary: "#5C0A46" } }}
+      appearance={{ variables: { colorPrimary: "#F92313" } }}
     >
       <html
         lang="en"
         className={`${fontDisplay.variable} ${fontBody.variable} ${fontStats.variable} ${fontMono.variable} ${fontLegacyDisplay.variable} ${fontLegacyBody.variable} h-full`}
         suppressHydrationWarning
       >
+        <head>
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `(function(){try{var t=localStorage.getItem("bountixx-theme");if(t==="light"||t==="dark"){document.documentElement.setAttribute("data-theme",t);document.documentElement.style.colorScheme=t}}catch(e){}})();`,
+            }}
+          />
+        </head>
         <body className="min-h-full bg-cosmos text-haze overflow-x-hidden font-body antialiased">
           <AuthProvider>
             <ThemeProvider>

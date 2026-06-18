@@ -61,11 +61,11 @@ function StepActions({
 
 /* ─── Constants ─── */
 const CAT_COLORS: Record<string, string> = {
-  coding: "#5C0A46", trivia: "#7A2A62", logic: "#5C0A46", math: "#7A2A62",
-  writing: "#5C0A46", design: "#7A2A62", meme: "#5C0A46",
+  coding: "#F92313", trivia: "#4E2725", logic: "#F92313", math: "#4E2725",
+  writing: "#F92313", design: "#4E2725", meme: "#F92313",
 };
 const DIFF_COLORS: Record<Difficulty, string> = {
-  rookie: "#8FA89C", challenger: "#5C0A46", elite: "#7A2A62", legendary: "#A67C3D",
+  rookie: "#DDEAE1", challenger: "#F92313", elite: "#4E2725", legendary: "#F92313",
 };
 
 /* ─── Step indicator ─── */
@@ -87,20 +87,20 @@ function StepIndicator({ step }: { step: Step }) {
           <div key={s.id} className="flex items-center gap-2 sm:gap-3 shrink-0">
             <div className="flex items-center gap-2 shrink-0">
               <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
-                i < activeIdx ? "bg-success border-success text-white" : i === activeIdx ? "border-plum bg-[var(--void-tint)]" : "border-[var(--border-2)] bg-transparent"
+                i < activeIdx ? "bg-[var(--brand-primary)] border-[var(--brand-primary)] text-white" : i === activeIdx ? "border-[var(--brand-primary)] bg-[var(--void-tint)]" : "border-[var(--border-2)] bg-transparent"
               }`}>
                 {i < activeIdx ? (
                   <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
                 ) : (
-                  <span className={`text-[10px] font-semibold tabular-nums ${i === activeIdx ? "text-plum" : "text-haze-3"}`}>{i + 1}</span>
+                  <span className={`text-[10px] font-semibold tabular-nums ${i === activeIdx ? "text-[var(--brand-primary)]" : "text-haze-3"}`}>{i + 1}</span>
                 )}
               </div>
-              <span className={`hidden sm:inline text-xs font-medium ${i === activeIdx ? "text-haze" : i < activeIdx ? "text-success" : "text-haze-3"}`}>
+              <span className={`hidden sm:inline text-xs font-medium ${i === activeIdx ? "text-haze" : i < activeIdx ? "text-[var(--brand-primary)]" : "text-haze-3"}`}>
                 {s.label.charAt(0) + s.label.slice(1).toLowerCase()}
               </span>
             </div>
             {i < steps.length - 1 && (
-              <div className={`w-8 sm:w-12 h-px transition-all ${i < activeIdx ? "bg-success" : "bg-[var(--border-2)]"}`} />
+              <div className={`w-8 sm:w-12 h-px transition-all ${i < activeIdx ? "bg-[var(--brand-primary)]" : "bg-[var(--border-2)]"}`} />
             )}
           </div>
         ))}
@@ -168,7 +168,7 @@ function SetupStep({
       {timer && (
         <div>
           <label className="bx-label">Duration — {timerMin} minutes</label>
-          <input type="range" min={1} max={60} value={timerMin} onChange={(e) => setTimerMin(Number(e.target.value))} className="w-full accent-[#5C0A46]" />
+          <input type="range" min={1} max={60} value={timerMin} onChange={(e) => setTimerMin(Number(e.target.value))} className="w-full accent-[#F92313]" />
           <div className="flex justify-between text-xs text-haze-3 mt-2"><span>1 min</span><span>60 min</span></div>
         </div>
       )}
