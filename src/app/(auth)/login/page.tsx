@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, Mail, Lock, Phone } from "lucide-react";
 import { useSignIn } from "@clerk/nextjs/legacy";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { clerkOAuthUrls, readNextParam } from "@/lib/clerkOAuth";
+import { clerkError, isSessionExistsError } from "@/lib/clerkError";
+import { useRedirectIfSignedIn } from "@/hooks/useRedirectIfSignedIn";
 import { Button } from "@/components/ui/Button";
 import { AuthBrandPanel } from "@/components/landing/AuthBrandPanel";
 import {
@@ -29,14 +31,12 @@ function getNext(): string {
   return n && n.startsWith("/") ? n : "/dashboard";
 }
 
-function clerkError(err: unknown): string {
-  const e = err as { errors?: { longMessage?: string; message?: string }[]; message?: string };
-  return e?.errors?.[0]?.longMessage ?? e?.errors?.[0]?.message ?? e?.message ?? "Something went wrong. Please try again.";
-}
-
 export default function LoginPage() {
-  const { loading } = useAuth();
+  const { loading, user } = useAuth();
   const { isLoaded, signIn, setActive } = useSignIn();
+  const nextPath = getNext();
+
+  useRedirectIfSignedIn(nextPath);
 
   const [method, setMethod] = useState<Method>("email-password");
   const [show, setShow] = useState(false);
@@ -62,6 +62,10 @@ export default function LoginPage() {
 
   async function handleOAuth(provider: "google" | "github") {
     if (!isLoaded || !signIn) return;
+    if (user) {
+      window.location.replace(nextPath);
+      return;
+    }
     setError("");
     setPending(true);
     const urls = clerkOAuthUrls();
@@ -72,6 +76,10 @@ export default function LoginPage() {
         redirectUrlComplete: urls.destination(readNextParam()),
       });
     } catch (err) {
+      if (isSessionExistsError(err)) {
+        window.location.replace(nextPath);
+        return;
+      }
       setError(clerkError(err));
       setPending(false);
     }
@@ -177,7 +185,7 @@ export default function LoginPage() {
     { id: "phone-otp", label: "Phone", icon: <Phone size={13} /> },
   ];
 
-  if (loading) return null;
+  if (loading || user) return null;
 
   return (
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-cosmos">

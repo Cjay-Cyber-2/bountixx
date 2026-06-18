@@ -73,31 +73,31 @@
   --accent:          var(--brand-primary);
 }
 
-/* ─── Light theme — mint canvas, brown text, white surfaces ─── */
+/* ─── Light theme — mint page canvas, brown ink, white elevated surfaces ─── */
 [data-theme="light"] {
   color-scheme: light;
 
   --cosmos:     #DDEAE1;
-  --cosmos-2:   #D4E4DA;
-  --cosmos-3:   #CBDED2;
-  --cosmos-4:   #B5CCC0;
-  --haze:       var(--brand-button);
-  --haze-2:     rgba(78, 39, 37, 0.78);
-  --haze-3:     rgba(78, 39, 37, 0.58);
+  --cosmos-2:   #D0E4D8;
+  --cosmos-3:   #C5DAD0;
+  --cosmos-4:   #A8C0B4;
+  --haze:       #4E2725;
+  --haze-2:     #6B4542;
+  --haze-3:     #8A6B67;
 
   --surface-card:    #FFFFFF;
   --surface-raised:  #FFFFFF;
-  --surface-inset:   #FFFFFF;
-  --surface-hover:   rgba(249, 35, 19, 0.06);
-  --border-1:        rgba(78, 39, 37, 0.12);
-  --border-2:        rgba(78, 39, 37, 0.2);
-  --border-accent:   rgba(249, 35, 19, 0.35);
-  --void-tint:       rgba(249, 35, 19, 0.07);
-  --void-tint-hover: rgba(249, 35, 19, 0.12);
-  --glow-1:          rgba(249, 35, 19, 0.05);
+  --surface-inset:   #F7FAF8;
+  --surface-hover:   rgba(78, 39, 37, 0.05);
+  --border-1:        rgba(78, 39, 37, 0.14);
+  --border-2:        rgba(78, 39, 37, 0.22);
+  --border-accent:   rgba(249, 35, 19, 0.4);
+  --void-tint:       rgba(249, 35, 19, 0.08);
+  --void-tint-hover: rgba(249, 35, 19, 0.14);
+  --glow-1:          rgba(249, 35, 19, 0.06);
   --terminal-bg:     #FFFFFF;
-  --terminal-border: rgba(78, 39, 37, 0.14);
-  --focus-ring:      rgba(249, 35, 19, 0.28);
+  --terminal-border: rgba(78, 39, 37, 0.16);
+  --focus-ring:      rgba(249, 35, 19, 0.3);
   --btn-primary-bg:  var(--brand-button);
   --btn-primary-fg:  var(--brand-bridge);
   --btn-primary-hover: var(--brand-button-hover);
@@ -120,34 +120,34 @@
   --crown:      #F0A500;
 }
 
-/* ─── Tailwind v4 Theme ─── */
+/* ─── Tailwind v4 Theme — bind utilities to live CSS variables ─── */
 @theme inline {
-  --color-brand-primary:       #F92313;
-  --color-brand-primary-light: #FF4A3D;
-  --color-brand-primary-deep:  #C91C0F;
-  --color-brand-button:        #4E2725;
-  --color-brand-button-hover:  #3A1D1B;
-  --color-brand-bridge:        #DDEAE1;
-  --color-plum:       #F92313;
-  --color-plum-light: #FF4A3D;
-  --color-plum-deep:  #C91C0F;
-  --color-mint:       #DDEAE1;
-  --color-mint-dim:   #B8CFC4;
-  --color-mint-deep:  #9BB5A8;
-  --color-ignite:     #F92313;
-  --color-crown:      #F92313;
-  --color-void-light: #FF4A3D;
-  --color-void:       #F92313;
-  --color-void-deep:  #C91C0F;
-  --color-cosmos:     #120C0B;
-  --color-cosmos-2:   #1A1211;
-  --color-cosmos-3:   #241917;
-  --color-cosmos-4:   #362220;
-  --color-haze:       #DDEAE1;
-  --color-haze-2:     #B8CFC4;
-  --color-haze-3:     #8FA89C;
-  --color-danger:     #F92313;
-  --color-success:    #DDEAE1;
+  --color-brand-primary: var(--brand-primary);
+  --color-brand-primary-light: var(--brand-primary-light);
+  --color-brand-primary-deep: var(--brand-primary-deep);
+  --color-brand-button: var(--brand-button);
+  --color-brand-button-hover: var(--brand-button-hover);
+  --color-brand-bridge: var(--brand-bridge);
+  --color-plum: var(--plum);
+  --color-plum-light: var(--plum-light);
+  --color-plum-deep: var(--plum-deep);
+  --color-mint: var(--mint);
+  --color-mint-dim: var(--mint-dim);
+  --color-mint-deep: var(--mint-deep);
+  --color-ignite: var(--ignite);
+  --color-crown: var(--crown);
+  --color-void-light: var(--void-light);
+  --color-void: var(--void);
+  --color-void-deep: var(--void-deep);
+  --color-cosmos: var(--cosmos);
+  --color-cosmos-2: var(--cosmos-2);
+  --color-cosmos-3: var(--cosmos-3);
+  --color-cosmos-4: var(--cosmos-4);
+  --color-haze: var(--haze);
+  --color-haze-2: var(--haze-2);
+  --color-haze-3: var(--haze-3);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
@@ -168,13 +168,24 @@ body {
   font-family: var(--font-body), "Plus Jakarta Sans", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
-  transition: var(--theme-transition);
+  transition: background-color 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.3s ease;
 }
 
-/* Smooth theme transitions on surfaces */
-header, nav, main, section, footer, article, aside,
-.bx-input, .bx-card, button, a, input, textarea, select {
-  transition: var(--theme-transition);
+/* Theme transitions on layout shells only (avoids flashing every child) */
+html,
+body,
+header,
+nav,
+main,
+footer,
+.bx-card,
+.auth-form-card,
+.auth-form-panel {
+  transition: background-color 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.3s ease,
+              box-shadow 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ─── Scrollbar ─── */
@@ -263,6 +274,23 @@ header, nav, main, section, footer, article, aside,
   border: 1px solid var(--border-1);
   border-radius: var(--radius-lg);
   backdrop-filter: blur(12px);
+}
+
+/* Auth pages — elevated card on light mode for readable contrast */
+.auth-form-panel {
+  background: transparent;
+}
+
+[data-theme="light"] .auth-form-panel {
+  background: var(--surface-card);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-xl);
+  padding: 2rem 1.75rem;
+  box-shadow: 0 8px 32px rgba(78, 39, 37, 0.1);
+}
+
+[data-theme="light"] .auth-form-shell {
+  background: var(--cosmos);
 }
 
 /* ─── Clip-path (legacy compat, neutralized) ─── */

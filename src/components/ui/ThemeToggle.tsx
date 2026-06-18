@@ -13,7 +13,8 @@ export function ThemeToggle({ className }: { className?: string }) {
       type="button"
       onClick={toggleTheme}
       className={cn(
-        "cursor-target relative flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border-2)] bg-[var(--surface-raised)] text-haze-2 transition-[background-color,border-color,color,box-shadow] duration-300 hover:text-haze hover:border-[var(--border-accent)]",
+        "cursor-target relative flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border-2)] bg-[var(--surface-raised)] transition-[background-color,border-color,box-shadow] duration-300 hover:border-[var(--border-accent)]",
+        isDark ? "text-[var(--brand-bridge)] hover:text-white" : "text-[var(--brand-button)] hover:text-[var(--brand-primary)]",
         className
       )}
       aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}

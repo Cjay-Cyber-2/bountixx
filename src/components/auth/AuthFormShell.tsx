@@ -26,7 +26,7 @@ export function AuthFormShell({
   footer?: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-center px-6 py-16 relative min-h-screen bg-cosmos">
+    <div className="auth-form-shell flex items-center justify-center px-6 py-16 relative min-h-screen bg-cosmos">
       <div className="absolute top-5 left-5 right-5 flex items-center justify-between z-10">
         <Link
           href="/"
@@ -42,7 +42,7 @@ export function AuthFormShell({
         variants={staggerContainer}
         initial="hidden"
         animate="show"
-        className="w-full max-w-[420px] pt-10"
+        className="auth-form-panel w-full max-w-[420px] pt-10"
       >
         <motion.div variants={slideUp} className="lg:hidden flex justify-center mb-8">
           <BountixxLogo size={44} showWordmark />
