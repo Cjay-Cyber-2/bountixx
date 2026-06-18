@@ -8,6 +8,7 @@ import { LayoutDashboard, PlusCircle, User, Wallet, Menu, X, Bell, BellOff, LogO
 import { useClerk } from "@clerk/nextjs";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { BountixxLogo } from "@/components/BountixxLogo";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { firebaseEnabled } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
@@ -45,8 +46,6 @@ export function TopNav() {
   const [notifLoading, setNotifLoading] = useState(false);
 
   useEffect(() => {
-    // Clear any previous user's profile immediately so a different account
-    // never briefly shows the prior user's name/initials.
     setProfile(null);
     setCoinsUnlimited(false);
     if (!user) return;
@@ -67,7 +66,7 @@ export function TopNav() {
 
   async function handleNotificationOptIn() {
     if (notifEnabled || notifLoading) return;
-    if (!firebaseEnabled) return; // Push notifications not configured.
+    if (!firebaseEnabled) return;
     if (!("Notification" in window) || !("serviceWorker" in navigator)) return;
 
     setNotifLoading(true);
@@ -75,7 +74,6 @@ export function TopNav() {
       const permission = await Notification.requestPermission();
       if (permission !== "granted") return;
 
-      // Dynamically import to avoid SSR module evaluation
       const { getMessaging, register, onRegistered } = await import("firebase/messaging");
       const { app } = await import("@/lib/firebase");
       if (!app) return;
@@ -83,7 +81,6 @@ export function TopNav() {
 
       const swReg = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
 
-      // Subscribe via the FID-based new API
       await register(messaging, {
         vapidKey: process.env.NEXT_PUBLIC_FCM_VAPID_KEY,
         serviceWorkerRegistration: swReg,
@@ -124,20 +121,17 @@ export function TopNav() {
   return (
     <>
       <header
-        className="sticky top-0 inset-x-0 z-50 h-16 border-b border-cosmos-4"
+        className="sticky top-0 inset-x-0 z-50 h-16 border-b border-[var(--border-1)]"
         style={{ background: "var(--surface-raised)", backdropFilter: "blur(16px)" }}
       >
         <div className={`${APP_GUTTERS} relative h-full flex items-center justify-between`}>
-
-          {/* Left: Logo */}
           <div className="flex items-center shrink-0">
             <Link href="/dashboard" className="shrink-0 cursor-target">
               <BountixxLogo size={36} showWordmark />
             </Link>
           </div>
 
-          {/* Centre: Desktop nav links — pinned to viewport center */}
-          <nav className="hidden md:flex items-center gap-2 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+          <nav className="hidden md:flex items-center gap-1 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
             {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
               const active = pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
               return (
@@ -145,8 +139,8 @@ export function TopNav() {
                   key={href}
                   href={href}
                   className={cn(
-                    "cursor-target relative flex items-center gap-2 px-4 py-2 font-rajdhani font-semibold text-sm transition-colors",
-                    active ? "text-haze" : "text-haze-2 hover:text-haze"
+                    "cursor-target relative flex items-center gap-2 px-4 py-2 font-medium text-sm rounded-lg transition-colors",
+                    active ? "text-haze" : "text-haze-2 hover:text-haze hover:bg-[var(--surface-hover)]"
                   )}
                 >
                   <Icon size={15} aria-hidden />
@@ -154,37 +148,31 @@ export function TopNav() {
                   {active && (
                     <motion.span
                       layoutId="topnav-pill"
-                      className="absolute inset-0 bg-cosmos-3 border border-cosmos-4 -z-10"
-                      style={{ borderRadius: 4 }}
+                      className="absolute inset-0 bg-[var(--void-tint)] border border-[var(--border-accent)] rounded-lg -z-10"
                       transition={{ type: "spring", stiffness: 380, damping: 38 }}
                     />
-                  )}
-                  {active && (
-                    <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-void" />
                   )}
                 </Link>
               );
             })}
           </nav>
 
-          {/* Right: desktop right cluster + mobile hamburger */}
-          <div className="flex items-center justify-end gap-3 shrink-0 ml-auto">
-            {/* Desktop-only cluster */}
-            <div className="hidden md:flex items-center gap-3 shrink-0">
-              {/* Coin balance */}
-              <div className="flex items-center gap-1.5 bg-cosmos-2 border border-cosmos-4 px-3 py-1.5">
+          <div className="flex items-center justify-end gap-2 sm:gap-3 shrink-0 ml-auto">
+            <div className="hidden md:flex items-center gap-2 sm:gap-3 shrink-0">
+              <div className="flex items-center gap-1.5 bg-[var(--surface-inset)] border border-[var(--border-2)] rounded-full px-3 py-1.5">
                 <span className="text-crown text-xs" aria-hidden>◈</span>
-                <span className="font-orbitron font-bold text-sm text-crown">
+                <span className="font-stats font-semibold text-sm text-crown tabular-nums">
                   {coinsUnlimited ? "∞" : (profile?.coinsBalance ?? 0)}
                 </span>
               </div>
 
-              {/* Notifications opt-in */}
+              <ThemeToggle />
+
               <button
                 onClick={handleNotificationOptIn}
                 disabled={notifLoading}
                 className={cn(
-                  "cursor-target relative transition-colors p-1 disabled:opacity-40",
+                  "cursor-target relative transition-colors p-2 rounded-lg hover:bg-[var(--surface-hover)] disabled:opacity-40",
                   notifEnabled ? "text-success" : "text-haze-2 hover:text-haze"
                 )}
                 aria-label={notifEnabled ? "Notifications enabled" : "Enable notifications"}
@@ -193,42 +181,41 @@ export function TopNav() {
                 {notifEnabled ? <Bell size={18} /> : <BellOff size={18} />}
                 {!notifEnabled && (
                   <span
-                    className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-void border border-cosmos"
+                    className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-plum"
                     aria-hidden
                   />
                 )}
               </button>
 
-              {/* Avatar */}
               <Link href="/profile/me" className="cursor-target">
                 {profile?.avatarUrl ? (
                   <img
                     src={profile.avatarUrl}
                     alt={profile.username}
-                    className="w-8 h-8 rounded-full border-2 border-void/60 hover:border-void transition-colors object-cover"
+                    className="w-8 h-8 rounded-full border-2 border-[var(--border-accent)] hover:border-plum transition-colors object-cover"
                   />
                 ) : (
-                  <div className="w-8 h-8 rounded-full border-2 border-void/60 bg-cosmos-3 flex items-center justify-center hover:border-void transition-colors">
-                    <span className="font-orbitron font-bold text-[10px] text-haze">{initials}</span>
+                  <div className="w-8 h-8 rounded-full border-2 border-[var(--border-accent)] bg-[var(--surface-inset)] flex items-center justify-center hover:border-plum transition-colors">
+                    <span className="font-stats font-semibold text-[10px] text-haze">{initials}</span>
                   </div>
                 )}
               </Link>
 
-              {/* Logout */}
               <button
                 onClick={handleLogout}
                 disabled={signingOut}
-                className="cursor-target flex items-center gap-1.5 font-space-mono text-[10px] tracking-widest text-haze-2 hover:text-danger border border-cosmos-4 hover:border-danger/50 px-2.5 py-1.5 transition-all disabled:opacity-40 whitespace-nowrap"
+                className="cursor-target flex items-center gap-1.5 text-xs font-medium text-haze-2 hover:text-danger border border-[var(--border-2)] hover:border-danger/40 rounded-lg px-3 py-2 transition-all disabled:opacity-40 whitespace-nowrap"
                 aria-label="Sign out"
               >
-                <LogOut size={12} aria-hidden />
-                {signingOut ? "…" : "SIGN OUT"}
+                <LogOut size={14} aria-hidden />
+                {signingOut ? "…" : "Sign out"}
               </button>
             </div>
 
-            {/* Mobile hamburger */}
+            <ThemeToggle className="md:hidden" />
+
             <button
-              className="md:hidden text-haze-2 hover:text-haze transition-colors p-1"
+              className="md:hidden text-haze-2 hover:text-haze transition-colors p-2 rounded-lg hover:bg-[var(--surface-hover)]"
               aria-label={mobileOpen ? "Close menu" : "Open menu"}
               onClick={() => setMobileOpen((o) => !o)}
             >
@@ -238,7 +225,6 @@ export function TopNav() {
         </div>
       </header>
 
-      {/* Mobile drawer */}
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
@@ -246,7 +232,7 @@ export function TopNav() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -12 }}
             transition={{ duration: 0.2 }}
-            className="md:hidden fixed top-16 inset-x-0 z-40 border-b border-cosmos-4 pb-2"
+            className="md:hidden fixed top-16 inset-x-0 z-40 border-b border-[var(--border-1)] pb-2"
             style={{ background: "var(--surface-raised)", backdropFilter: "blur(20px)" }}
           >
             {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
@@ -257,10 +243,10 @@ export function TopNav() {
                   href={href}
                   onClick={() => setMobileOpen(false)}
                   className={cn(
-                    "flex items-center gap-3 px-6 py-4 font-rajdhani font-semibold text-base border-b border-cosmos-4/40 transition-colors",
+                    "flex items-center gap-3 px-6 py-4 font-medium text-base border-b border-[var(--border-1)] transition-colors",
                     active
-                      ? "text-void bg-void/5"
-                      : "text-haze-2 hover:text-haze hover:bg-cosmos-2"
+                      ? "text-plum bg-[var(--void-tint)]"
+                      : "text-haze-2 hover:text-haze hover:bg-[var(--surface-hover)]"
                   )}
                 >
                   <Icon size={18} aria-hidden />
@@ -269,22 +255,22 @@ export function TopNav() {
               );
             })}
             <div className="flex items-center justify-between px-6 py-4">
-              <div className="flex items-center gap-1.5 bg-cosmos-2 border border-cosmos-4 px-3 py-1.5">
+              <div className="flex items-center gap-1.5 bg-[var(--surface-inset)] border border-[var(--border-2)] rounded-full px-3 py-1.5">
                 <span className="text-crown text-xs">◈</span>
-                <span className="font-orbitron font-bold text-sm text-crown">
+                <span className="font-stats font-semibold text-sm text-crown tabular-nums">
                   {coinsUnlimited ? "∞" : (profile?.coinsBalance ?? 0)}
                 </span>
               </div>
-              <span className="font-space-mono text-[10px] text-haze-3 uppercase tracking-widest">
-                {profile?.rank ?? "RECRUIT"}
+              <span className="text-xs text-haze-3 font-medium">
+                {profile?.rank ?? "Recruit"}
               </span>
               <button
                 onClick={handleLogout}
                 disabled={signingOut}
-                className="flex items-center gap-2 font-space-mono text-[11px] text-danger border border-danger/30 px-3 py-1.5 hover:bg-danger/10 transition-colors disabled:opacity-40"
+                className="flex items-center gap-2 text-xs font-medium text-danger border border-danger/30 rounded-lg px-3 py-2 hover:bg-danger/10 transition-colors disabled:opacity-40"
               >
                 <LogOut size={13} />
-                SIGN OUT
+                Sign out
               </button>
             </div>
           </motion.div>
@@ -294,12 +280,11 @@ export function TopNav() {
   );
 }
 
-/** Bottom tab bar — mobile only */
 export function MobileBottomNav() {
   const pathname = usePathname();
   return (
     <nav
-      className="md:hidden fixed bottom-0 inset-x-0 z-50 border-t border-cosmos-4 flex"
+      className="md:hidden fixed bottom-0 inset-x-0 z-50 border-t border-[var(--border-1)] flex"
       style={{ background: "var(--surface-raised)", backdropFilter: "blur(20px)" }}
     >
       {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
@@ -310,11 +295,11 @@ export function MobileBottomNav() {
             href={href}
             className={cn(
               "flex-1 flex flex-col items-center gap-1 py-3 transition-colors",
-              active ? "text-void" : "text-haze-3 hover:text-haze-2"
+              active ? "text-plum" : "text-haze-3 hover:text-haze-2"
             )}
           >
             <Icon size={20} aria-hidden />
-            <span className="font-rajdhani text-[9px] font-semibold tracking-widest uppercase">
+            <span className="text-[9px] font-medium">
               {label.split(" ")[0]}
             </span>
           </Link>

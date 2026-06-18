@@ -9,18 +9,18 @@ interface ChipProps {
 }
 
 const colorMap: Record<NonNullable<ChipProps["color"]>, string> = {
-  ignite:  "bg-ignite/10 border-ignite/30 text-ignite",
+  ignite:  "bg-plum/10 border-plum/25 text-plum",
   crown:   "bg-crown/10 border-crown/30 text-crown",
-  void:    "bg-void/10 border-void/30 text-void",
+  void:    "bg-plum/10 border-plum/25 text-plum",
   success: "bg-success/10 border-success/30 text-success",
   danger:  "bg-danger/10 border-danger/30 text-danger",
-  haze:    "bg-haze-3/20 border-haze-3/30 text-haze-2",
+  haze:    "bg-[var(--surface-hover)] border-[var(--border-2)] text-haze-2",
 };
 
 const dotColorMap: Record<NonNullable<ChipProps["color"]>, string> = {
-  ignite:  "bg-ignite",
+  ignite:  "bg-plum",
   crown:   "bg-crown",
-  void:    "bg-void",
+  void:    "bg-plum",
   success: "bg-success",
   danger:  "bg-danger",
   haze:    "bg-haze-2",
@@ -36,7 +36,7 @@ export function Chip({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 border rounded-none font-space-mono",
+        "inline-flex items-center gap-1.5 border rounded-full font-medium",
         colorMap[color],
         size === "xs" ? "text-[10px] px-2 py-0.5" : "text-xs px-2.5 py-1",
         className

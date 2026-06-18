@@ -12,7 +12,9 @@ export default function LandingPage() {
   return (
     <main className="bg-cosmos text-haze">
       <LandingNav />
-      <Hero />
+      <div data-legacy-aesthetic>
+        <Hero />
+      </div>
       <HowItWorks />
       <Categories />
       <AIEngine />

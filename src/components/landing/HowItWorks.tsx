@@ -56,7 +56,7 @@ export function HowItWorks() {
         {!reduce && (
           <motion.div
             className="absolute left-1/2 -translate-x-1/2 top-2 w-px origin-top"
-            style={{ height: railFill, background: "var(--void)" }}
+            style={{ height: railFill, background: "var(--plum)" }}
             aria-hidden
           />
         )}

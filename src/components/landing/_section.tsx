@@ -2,21 +2,18 @@
 
 /**
  * Shared landing-section layout + typography.
- * One full-width container with symmetric padding — no nested narrow columns.
  */
 
 import type { ReactNode, CSSProperties } from "react";
 
-/** Full-width page shell with equal side padding (no max-width cap). */
 export const LANDING_GUTTERS =
-  "w-full mx-auto px-5 sm:px-8 md:px-10 lg:px-12 xl:px-16";
+  "w-full mx-auto px-5 sm:px-8 md:px-10 lg:px-12 xl:px-16 2xl:px-20";
 
 export const APP_GUTTERS = LANDING_GUTTERS;
 
-/** @deprecated Use LANDING_GUTTERS only — kept so imports don't break. */
+/** @deprecated Use LANDING_GUTTERS only */
 export const LANDING_CONTENT = "w-full";
-
-/** @deprecated Use APP_GUTTERS only — kept so imports don't break. */
+/** @deprecated Use APP_GUTTERS only */
 export const APP_CONTENT = "w-full";
 
 type LandingSectionProps = {
@@ -37,7 +34,7 @@ export function LandingSection({
   return (
     <section
       id={id}
-      className={`cyber-grid relative py-24 md:py-32 lg:py-36 overflow-hidden ${className}`}
+      className={`relative py-20 md:py-28 lg:py-32 overflow-hidden ${className}`}
       style={{
         background: variant === "raised" ? "var(--cosmos-2)" : "var(--cosmos)",
         borderTop: variant === "raised" ? "1px solid var(--border-1)" : undefined,
@@ -63,14 +60,14 @@ export function SpecLine({
 }) {
   return (
     <p
-      className={`font-space-mono text-[11px] tracking-[5px] uppercase flex items-center gap-3 text-void ${
+      className={`font-mono text-xs tracking-wide flex items-center gap-3 text-plum ${
         centered ? "justify-center" : ""
       } ${className}`}
     >
-      {!centered && <span className="h-px w-8 bg-void/60 shrink-0" aria-hidden />}
-      {index && <span className="tabular-nums text-void-light">{index}</span>}
-      <span className="text-haze-3">{children}</span>
-      {centered && <span className="h-px w-8 bg-void/60 shrink-0" aria-hidden />}
+      {!centered && <span className="h-px w-8 bg-plum/40 shrink-0" aria-hidden />}
+      {index && <span className="tabular-nums text-plum-light">{index}</span>}
+      <span className="text-haze-3 font-medium">{children}</span>
+      {centered && <span className="h-px w-8 bg-plum/40 shrink-0" aria-hidden />}
     </p>
   );
 }
@@ -84,16 +81,15 @@ export function SectionHeading({
 }) {
   return (
     <h2
-      className={`font-zen-dots text-[clamp(1.75rem,4vw,3.25rem)] text-haze leading-[1.12] tracking-tight text-balance ${className}`}
+      className={`font-display text-[clamp(2rem,4.5vw,3.5rem)] text-haze leading-[1.1] tracking-tight text-balance ${className}`}
     >
       {children}
     </h2>
   );
 }
 
-/** Purple brand accent inside headings — use at most once per heading. */
 export function Accent({ children }: { children: ReactNode }) {
-  return <span className="text-void">{children}</span>;
+  return <span className="text-plum italic">{children}</span>;
 }
 
 export function SectionIntro({
@@ -115,22 +111,22 @@ export function SectionIntro({
 
   return (
     <div
-      className={`mb-16 md:mb-20 lg:mb-24 w-full ${centered ? "mx-auto text-center" : ""} ${className}`}
+      className={`mb-14 md:mb-18 lg:mb-20 w-full max-w-3xl ${centered ? "mx-auto text-center" : ""} ${className}`}
     >
       <SpecLine className={centered ? "justify-center" : ""} centered={centered}>
         {eyebrow}
       </SpecLine>
-      <SectionHeading className="mt-5 md:mt-6">{title}</SectionHeading>
+      <SectionHeading className="mt-4 md:mt-5">{title}</SectionHeading>
       {description && (
         <p
-          className={`font-rajdhani text-lg md:text-xl text-haze-2 mt-6 md:mt-8 leading-relaxed max-w-[62ch] ${centered ? "mx-auto" : ""}`}
+          className={`font-body text-lg md:text-xl text-haze-2 mt-5 md:mt-6 leading-relaxed max-w-[62ch] ${centered ? "mx-auto" : ""}`}
         >
           {description}
         </p>
       )}
       {extra && (
         <p
-          className={`font-rajdhani text-base text-haze-3 mt-4 leading-relaxed max-w-[62ch] ${centered ? "mx-auto" : ""}`}
+          className={`font-body text-base text-haze-3 mt-3 leading-relaxed max-w-[62ch] ${centered ? "mx-auto" : ""}`}
         >
           {extra}
         </p>
@@ -139,12 +135,12 @@ export function SectionIntro({
   );
 }
 
-/** Shared app-page frame — centered form column, not full-bleed. */
+/** App page frame — comfortable width, clean card surface */
 export function PageShell({
   children,
   className = "",
-  width = "3xl",
-  align = "center",
+  width = "4xl",
+  align = "left",
 }: {
   children: ReactNode;
   className?: string;
@@ -155,22 +151,20 @@ export function PageShell({
     width === "full"
       ? "w-full"
       : width === "5xl"
-        ? "w-full max-w-5xl mx-auto"
+        ? "w-full max-w-5xl"
         : width === "3xl"
-          ? "w-full max-w-3xl mx-auto"
-          : "w-full max-w-4xl mx-auto";
+          ? "w-full max-w-3xl"
+          : "w-full max-w-4xl";
 
   const alignClass = align === "center" ? "text-center" : "";
 
   return (
-    <div className={`${APP_GUTTERS} py-10 md:py-14 flex justify-center`}>
+    <div className={`${APP_GUTTERS} py-8 md:py-12 lg:py-14`}>
       <div
-        className={`${widthClass} border border-cosmos-4/80 px-6 py-10 sm:px-8 md:px-10 md:py-12 ${alignClass} ${className}`}
+        className={`${widthClass} mx-auto rounded-2xl border border-[var(--border-1)] px-6 py-8 sm:px-10 sm:py-10 md:px-12 md:py-12 ${alignClass} ${className}`}
         style={{
-          background:
-            "linear-gradient(180deg, rgba(19,12,36,0.72) 0%, rgba(14,8,24,0.96) 100%)",
-          boxShadow:
-            "0 0 0 1px rgba(168,85,247,0.06), 0 28px 90px rgba(0,0,0,0.38)",
+          background: "var(--surface-card)",
+          boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 12px 40px rgba(0,0,0,0.08)",
         }}
       >
         {children}

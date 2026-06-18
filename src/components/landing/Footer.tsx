@@ -38,11 +38,11 @@ export function Footer() {
           className="flex flex-col items-center justify-center gap-3 pt-8 text-center"
           style={{ borderTop: "1px solid var(--border-1)" }}
         >
-          <p className="font-space-mono text-[10px] text-haze-3 tracking-wider">
+          <p className="font-mono text-[10px] text-haze-3">
             © 2026 Bountixx. All rights reserved.
           </p>
-          <p className="font-space-mono text-[10px] text-haze-3 tracking-[3px] uppercase">
-            Built for champions · CC · MMXXVI
+          <p className="text-xs text-haze-3">
+            Built for champions
           </p>
         </div>
       </div>
@@ -55,7 +55,7 @@ function SocialIcon({ label, href, children }: { label: string; href: string; ch
     <a
       href={href}
       aria-label={label}
-      className="cursor-target w-9 h-9 flex items-center justify-center transition-colors duration-150"
+      className="cursor-target w-9 h-9 flex items-center justify-center rounded-full transition-colors duration-150"
       style={{
         border: "1px solid var(--border-1)",
         color: "var(--haze-3)",

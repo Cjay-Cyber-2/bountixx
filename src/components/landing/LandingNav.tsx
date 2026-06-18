@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { BountixxLogo } from "@/components/BountixxLogo";
 import { Button } from "@/components/ui/Button";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { LANDING_GUTTERS } from "@/components/landing/_section";
 
 const NAV = [
@@ -33,68 +34,49 @@ export function LandingNav() {
         transition={{ duration: 0.5, ease: "easeOut" }}
         className="fixed top-0 inset-x-0 z-50 transition-all duration-300"
         style={{
-          background: scrolled ? "rgba(14,8,24,0.85)" : "transparent",
+          background: scrolled ? "var(--surface-raised)" : "transparent",
           backdropFilter: scrolled ? "blur(20px)" : "none",
-          borderBottom: scrolled
-            ? "1px solid rgba(45,27,105,0.4)"
-            : "1px solid transparent",
+          borderBottom: scrolled ? "1px solid var(--border-1)" : "1px solid transparent",
         }}
       >
-        <div className={`${LANDING_GUTTERS} relative h-20 flex items-center justify-between gap-6`}>
-          {/* Logo */}
+        <div className={`${LANDING_GUTTERS} relative h-18 min-h-[4.5rem] flex items-center justify-between gap-6`}>
           <Link href="/" aria-label="Bountixx home" className="cursor-target shrink-0">
             <BountixxLogo size={36} showWordmark />
           </Link>
 
-          {/* Center nav links — viewport-centered */}
-          <div className="hidden md:flex items-center gap-10 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+          <div className="hidden md:flex items-center gap-8 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
             {NAV.map(({ href, label }) => (
               <a
                 key={href}
                 href={href}
-                className="cursor-target group relative py-2 font-space-mono text-[11px] tracking-[3px] uppercase text-haze-2 hover:text-haze transition-colors"
+                className="cursor-target group relative py-2 text-sm font-medium text-haze-2 hover:text-haze transition-colors"
               >
                 {label}
                 <span
-                  className="absolute left-0 right-0 bottom-0 h-px scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300"
-                  style={{ background: "#9B6BFF" }}
+                  className="absolute left-0 right-0 bottom-0 h-px scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300 bg-plum"
                   aria-hidden
                 />
               </a>
             ))}
           </div>
 
-          {/* Right cluster */}
-          <div className="flex items-center gap-3 sm:gap-4 shrink-0 ml-auto">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0 ml-auto">
+            <ThemeToggle />
+
             <Link href="/login" className="hidden sm:block">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="font-space-mono text-[11px] tracking-[2px] text-haze-2 hover:text-haze"
-              >
-                SIGN IN
+              <Button variant="ghost" size="sm">
+                Sign in
               </Button>
             </Link>
             <Link href="/signup">
-              <Button
-                variant="primary"
-                size="sm"
-                magnetic
-                className="font-space-mono text-[11px] tracking-[2px] h-10 px-4 sm:px-5"
-                style={{
-                  background: "#FF6B1A",
-                  borderColor: "#FF6B1A",
-                  boxShadow: "0 0 24px rgba(255,107,26,0.3)",
-                } as React.CSSProperties}
-              >
-                GET STARTED
+              <Button variant="primary" size="sm" magnetic>
+                Get started
               </Button>
             </Link>
 
-            {/* Mobile menu toggle */}
             <button
               type="button"
-              className="md:hidden text-haze-2 hover:text-haze transition-colors p-1"
+              className="md:hidden text-haze-2 hover:text-haze transition-colors p-2 rounded-lg hover:bg-[var(--surface-hover)]"
               aria-label={open ? "Close menu" : "Open menu"}
               aria-expanded={open}
               onClick={() => setOpen((o) => !o)}
@@ -104,7 +86,6 @@ export function LandingNav() {
           </div>
         </div>
 
-        {/* Mobile dropdown menu */}
         <AnimatePresence>
           {open && (
             <motion.div
@@ -112,15 +93,15 @@ export function LandingNav() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -12 }}
               transition={{ duration: 0.2 }}
-              className="md:hidden border-t border-cosmos-4"
-              style={{ background: "rgba(14,8,24,0.96)", backdropFilter: "blur(20px)" }}
+              className="md:hidden border-t border-[var(--border-1)]"
+              style={{ background: "var(--surface-raised)", backdropFilter: "blur(20px)" }}
             >
               {NAV.map(({ href, label }) => (
                 <a
                   key={href}
                   href={href}
                   onClick={() => setOpen(false)}
-                  className="block px-6 py-4 font-space-mono text-[12px] tracking-[3px] uppercase text-haze-2 hover:text-haze hover:bg-cosmos-2 border-b border-cosmos-4/40 transition-colors"
+                  className="block px-6 py-4 text-sm font-medium text-haze-2 hover:text-haze hover:bg-[var(--surface-hover)] border-b border-[var(--border-1)] transition-colors"
                 >
                   {label}
                 </a>
@@ -128,9 +109,9 @@ export function LandingNav() {
               <Link
                 href="/login"
                 onClick={() => setOpen(false)}
-                className="block px-6 py-4 font-space-mono text-[12px] tracking-[3px] uppercase text-void hover:bg-cosmos-2 transition-colors"
+                className="block px-6 py-4 text-sm font-medium text-plum hover:bg-[var(--surface-hover)] transition-colors"
               >
-                Sign In
+                Sign in
               </Link>
             </motion.div>
           )}

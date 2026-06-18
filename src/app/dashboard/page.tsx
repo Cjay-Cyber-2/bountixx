@@ -61,10 +61,10 @@ export default function DashboardPage() {
   }, [fetchData]);
 
   const statCards = [
-    { label: "Rooms created",  value: data?.roomsCreated  ?? 0, icon: Swords,     accent: "var(--void)",  accentRaw: "#9B6BFF" },
-    { label: "Rooms won",      value: data?.roomsWon      ?? 0, icon: Trophy,     accent: "var(--void)",  accentRaw: "#9B6BFF" },
-    { label: "Total XP",       value: data?.totalXp       ?? 0, icon: TrendingUp,  accent: "var(--void)",  accentRaw: "#9B6BFF" },
-    { label: "Coin balance",   value: data?.coinsBalance  ?? 0, icon: Coins,      accent: "#F0A500",      accentRaw: "#F0A500", gold: true },
+    { label: "Rooms created",  value: data?.roomsCreated  ?? 0, icon: Swords,     accent: "var(--plum)",  accentRaw: "#5C0A46" },
+    { label: "Rooms won",      value: data?.roomsWon      ?? 0, icon: Trophy,     accent: "var(--plum)",  accentRaw: "#5C0A46" },
+    { label: "Total XP",       value: data?.totalXp       ?? 0, icon: TrendingUp,  accent: "var(--plum)",  accentRaw: "#5C0A46" },
+    { label: "Coin balance",   value: data?.coinsBalance  ?? 0, icon: Coins,      accent: "#A67C3D",      accentRaw: "#A67C3D", gold: true },
   ];
 
   return (
@@ -80,10 +80,10 @@ export default function DashboardPage() {
           className="flex flex-col items-center text-center gap-4 mb-10 md:mb-12"
         >
           <div>
-            <p className="font-space-mono text-[11px] text-haze-3 tracking-[3px] uppercase mb-1.5">
+            <p className="text-xs font-medium text-plum mb-1.5">
               Welcome back
             </p>
-            <h1 className="font-zen-dots text-2xl md:text-3xl text-haze leading-tight">Arena Dashboard</h1>
+            <h1 className="font-display text-3xl md:text-4xl text-haze leading-tight">Arena dashboard</h1>
           </div>
           <Link href="/create">
             <Button variant="primary" magnetic>
@@ -98,8 +98,7 @@ export default function DashboardPage() {
           initial="hidden"
           animate="show"
           variants={{ show: { transition: { staggerChildren: 0.07 } } }}
-          className="grid grid-cols-2 lg:grid-cols-4 gap-px mb-12 md:mb-14"
-          style={{ background: "var(--border-1)" }}
+          className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-12 md:mb-14"
         >
           {statCards.map((s) => {
             const Icon = s.icon;
@@ -107,7 +106,7 @@ export default function DashboardPage() {
               <motion.div
                 key={s.label}
                 variants={{ hidden: { opacity: 0, y: 18 }, show: { opacity: 1, y: 0 } }}
-                className="relative bg-cosmos-2 p-5 md:p-6 overflow-hidden group"
+                className="relative rounded-xl bg-[var(--surface-inset)] border border-[var(--border-1)] p-5 md:p-6 overflow-hidden group"
               >
                 <div
                   className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
@@ -115,7 +114,7 @@ export default function DashboardPage() {
                   aria-hidden
                 />
                 <div
-                  className="w-9 h-9 mb-4 flex items-center justify-center clip-arena-sm"
+                  className="w-9 h-9 mb-4 flex items-center justify-center rounded-lg"
                   style={{ background: `${s.accentRaw}14`, border: `1px solid ${s.accentRaw}33` }}
                 >
                   <Icon size={16} style={{ color: s.accent }} aria-hidden />

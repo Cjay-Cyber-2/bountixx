@@ -53,7 +53,7 @@ function StepActions({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col sm:flex-row gap-3 mt-6 w-full max-w-md mx-auto">
+    <div className="flex flex-col sm:flex-row gap-3 mt-8 w-full sm:w-auto">
       {children}
     </div>
   );
@@ -61,11 +61,11 @@ function StepActions({
 
 /* ─── Constants ─── */
 const CAT_COLORS: Record<string, string> = {
-  coding: "#a855f7", trivia: "#9B6BFF", logic: "#8660fa", math: "#c084fc",
-  writing: "#b794f6", design: "#9B6BFF", meme: "#a855f7",
+  coding: "#5C0A46", trivia: "#7A2A62", logic: "#5C0A46", math: "#7A2A62",
+  writing: "#5C0A46", design: "#7A2A62", meme: "#5C0A46",
 };
 const DIFF_COLORS: Record<Difficulty, string> = {
-  rookie: "#9B8FC0", challenger: "#a855f7", elite: "#8660fa", legendary: "#F0A500",
+  rookie: "#8FA89C", challenger: "#5C0A46", elite: "#7A2A62", legendary: "#A67C3D",
 };
 
 /* ─── Step indicator ─── */
@@ -78,30 +78,29 @@ function StepIndicator({ step }: { step: Step }) {
   ];
   const activeIdx = ["setup", "questions", "review", "lobby"].indexOf(step);
   return (
-    <div className="mb-10 md:mb-12">
-      {/* Mobile: compact "Step X of 4 · LABEL" */}
-      <p className="sm:hidden font-space-mono text-[11px] tracking-[3px] text-void mb-3">
-        STEP {activeIdx + 1} OF {steps.length} · {steps[activeIdx]?.label}
+    <div className="mb-8 md:mb-10">
+      <p className="sm:hidden text-xs font-medium text-plum mb-3">
+        Step {activeIdx + 1} of {steps.length} · {steps[activeIdx]?.label}
       </p>
-      <div className="flex items-center justify-center gap-1 sm:gap-2 flex-wrap">
+      <div className="flex items-center justify-start sm:justify-center gap-2 sm:gap-3 flex-wrap">
         {steps.map((s, i) => (
-          <div key={s.id} className="flex items-center gap-1 sm:gap-2 shrink-0">
+          <div key={s.id} className="flex items-center gap-2 sm:gap-3 shrink-0">
             <div className="flex items-center gap-2 shrink-0">
-              <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
-                i < activeIdx ? "bg-success border-success" : i === activeIdx ? "border-void bg-void/20" : "border-cosmos-4 bg-transparent"
+              <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+                i < activeIdx ? "bg-success border-success text-white" : i === activeIdx ? "border-plum bg-[var(--void-tint)]" : "border-[var(--border-2)] bg-transparent"
               }`}>
                 {i < activeIdx ? (
                   <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
                 ) : (
-                  <span className={`font-space-mono text-[9px] font-bold ${i === activeIdx ? "text-void" : "text-haze-3"}`}>{i + 1}</span>
+                  <span className={`text-[10px] font-semibold tabular-nums ${i === activeIdx ? "text-plum" : "text-haze-3"}`}>{i + 1}</span>
                 )}
               </div>
-              <span className={`hidden sm:inline font-space-mono text-[10px] tracking-[3px] ${i === activeIdx ? "text-void" : i < activeIdx ? "text-success" : "text-haze-3"}`}>
-                {s.label}
+              <span className={`hidden sm:inline text-xs font-medium ${i === activeIdx ? "text-haze" : i < activeIdx ? "text-success" : "text-haze-3"}`}>
+                {s.label.charAt(0) + s.label.slice(1).toLowerCase()}
               </span>
             </div>
             {i < steps.length - 1 && (
-              <div className={`w-6 sm:w-10 h-px mx-1 sm:mx-2 transition-all ${i < activeIdx ? "bg-success" : "bg-cosmos-4"}`} />
+              <div className={`w-8 sm:w-12 h-px transition-all ${i < activeIdx ? "bg-success" : "bg-[var(--border-2)]"}`} />
             )}
           </div>
         ))}
@@ -131,53 +130,53 @@ function SetupStep({
   return (
     <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} className="flex flex-col gap-7 md:gap-8">
       {/* Entry fee banner */}
-      <div className="flex flex-col items-center gap-2 text-center bg-void/10 border border-void/30 px-4 py-3">
-        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
-          <span className="font-space-mono text-[10px] text-void tracking-widest">ENTRY FEE</span>
-          <span className="font-orbitron font-bold text-sm text-void">{ENTRY_FEE} coins / player</span>
+      <div className="flex flex-col gap-2 rounded-xl bg-[var(--void-tint)] border border-[var(--border-accent)] px-5 py-4">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <span className="text-xs font-medium text-plum">Entry fee</span>
+          <span className="font-stats font-semibold text-sm text-haze">{ENTRY_FEE} coins / player</span>
         </div>
-        <span className="font-space-mono text-[9px] text-haze-3">hosting is free · players pay when arena starts</span>
+        <span className="text-xs text-haze-3">Hosting is free. Players pay when the arena starts.</span>
       </div>
 
       <div>
-        <label className="block font-space-mono text-[11px] text-void tracking-[3px] mb-2 uppercase text-center">Arena Name</label>
+        <label className="bx-label">Arena name</label>
         <input type="text" maxLength={60} placeholder="e.g. Friday Coding Battle" value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full h-12 px-4 bg-cosmos-2 border border-cosmos-4 text-haze font-rajdhani text-base placeholder:text-haze-3 focus:outline-none focus:border-void focus:shadow-[0_0_0_2px_rgba(168,85,247,0.2)] transition-all" style={{ borderRadius: 0 }} />
+          className="bx-input" />
       </div>
 
-      <div className="grid grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
         <div>
-        <label className="block font-space-mono text-[11px] text-void tracking-[3px] mb-2 uppercase text-center">Players (2–20)</label>
-          <div className="flex items-center border border-cosmos-4 bg-cosmos-2 h-12">
-            <button type="button" onClick={() => setPlayers((n) => Math.max(2, n - 1))} className="cursor-target w-12 h-full text-haze-2 hover:text-void hover:bg-cosmos-3 transition-colors font-bold text-lg">−</button>
-            <span className="flex-1 text-center font-orbitron font-bold text-lg text-haze">{players}</span>
-            <button type="button" onClick={() => setPlayers((n) => Math.min(20, n + 1))} className="cursor-target w-12 h-full text-haze-2 hover:text-void hover:bg-cosmos-3 transition-colors font-bold text-lg">+</button>
+        <label className="bx-label">Players (2–20)</label>
+          <div className="flex items-center border border-[var(--border-2)] bg-[var(--surface-inset)] h-12 rounded-xl overflow-hidden">
+            <button type="button" onClick={() => setPlayers((n) => Math.max(2, n - 1))} className="cursor-target w-12 h-full text-haze-2 hover:text-plum hover:bg-[var(--surface-hover)] transition-colors font-semibold text-lg">−</button>
+            <span className="flex-1 text-center font-stats font-semibold text-lg text-haze tabular-nums">{players}</span>
+            <button type="button" onClick={() => setPlayers((n) => Math.min(20, n + 1))} className="cursor-target w-12 h-full text-haze-2 hover:text-plum hover:bg-[var(--surface-hover)] transition-colors font-semibold text-lg">+</button>
           </div>
-          <p className="font-space-mono text-[9px] text-haze-3 mt-1">Max prize pool: {players * ENTRY_FEE} coins</p>
+          <p className="text-xs text-haze-3 mt-2">Max prize pool: {players * ENTRY_FEE} coins</p>
         </div>
         <div>
-          <label className="block font-space-mono text-[11px] text-void tracking-[3px] mb-2 uppercase text-center">Timer</label>
+          <label className="bx-label">Timer</label>
           <button type="button" onClick={() => setTimer(!timer)} role="switch" aria-checked={timer}
-            className={`cursor-target w-full h-12 flex items-center justify-center gap-2 border font-space-mono text-xs tracking-widest transition-all ${timer ? "border-void text-void bg-void/10" : "border-cosmos-4 text-haze-3"}`}>
-            <span className={`w-3 h-3 rounded-full transition-colors ${timer ? "bg-void" : "bg-cosmos-4"}`} aria-hidden />
-            {timer ? "ON" : "OFF"}
+            className={`cursor-target w-full h-12 flex items-center justify-center gap-2 border rounded-xl text-sm font-medium transition-all ${timer ? "border-plum text-plum bg-[var(--void-tint)]" : "border-[var(--border-2)] text-haze-3"}`}>
+            <span className={`w-2.5 h-2.5 rounded-full transition-colors ${timer ? "bg-plum" : "bg-[var(--border-2)]"}`} aria-hidden />
+            {timer ? "On" : "Off"}
           </button>
         </div>
       </div>
 
       {timer && (
         <div>
-          <label className="block font-space-mono text-[11px] text-void tracking-[3px] mb-2 uppercase text-center">Duration — {timerMin} minutes</label>
-          <input type="range" min={1} max={60} value={timerMin} onChange={(e) => setTimerMin(Number(e.target.value))} className="w-full accent-violet-500" />
-          <div className="flex justify-between font-space-mono text-[9px] text-haze-3 mt-1"><span>1 min</span><span>60 min</span></div>
+          <label className="bx-label">Duration — {timerMin} minutes</label>
+          <input type="range" min={1} max={60} value={timerMin} onChange={(e) => setTimerMin(Number(e.target.value))} className="w-full accent-[#5C0A46]" />
+          <div className="flex justify-between text-xs text-haze-3 mt-2"><span>1 min</span><span>60 min</span></div>
         </div>
       )}
 
-      {error && <p className="flex items-center justify-center gap-2 font-rajdhani text-sm text-danger"><AlertCircle size={14} /> {error}</p>}
+      {error && <p className="flex items-center gap-2 text-sm text-danger"><AlertCircle size={14} /> {error}</p>}
       <StepActions>
-        <Button variant="primary" size="lg" className="w-full sm:flex-1" magnetic onClick={handleNext}>
-          NEXT — ADD QUESTIONS <ChevronRight size={16} />
+        <Button variant="primary" size="lg" className="w-full sm:w-auto sm:min-w-[220px]" magnetic onClick={handleNext}>
+          Next — add questions <ChevronRight size={16} />
         </Button>
       </StepActions>
     </motion.div>
@@ -204,7 +203,7 @@ function QuestionCard({
 
   return (
     <motion.div layout initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }}
-      className="bg-cosmos-2 border border-cosmos-4 p-6 md:p-8">
+      className="rounded-xl border border-[var(--border-1)] bg-[var(--surface-inset)] p-6 md:p-8">
       <div className="flex items-center justify-between mb-3">
         <span className="font-space-mono text-[10px] text-void tracking-widest">QUESTION {index + 1}</span>
         <div className="flex items-center gap-2">
@@ -695,10 +694,10 @@ export default function CreatePage() {
 
   return (
     <AppLayout>
-      <PageShell>
-        <p className="font-space-mono text-[11px] text-void tracking-[3px] uppercase mb-3 text-center">New arena</p>
-        <h1 className="font-zen-dots text-2xl md:text-3xl text-haze mb-4 text-center">Create your arena</h1>
-        <p className="font-rajdhani text-base md:text-lg text-haze-2 mb-10 md:mb-12 max-w-xl mx-auto text-center leading-relaxed">
+      <PageShell width="4xl" align="left">
+        <p className="text-xs font-medium text-plum mb-2">New arena</p>
+        <h1 className="font-display text-3xl md:text-4xl text-haze mb-3 text-balance">Create your arena</h1>
+        <p className="text-base md:text-lg text-haze-2 mb-8 md:mb-10 max-w-2xl leading-relaxed">
           Set up your challenge. The AI validates and builds the rest.
         </p>
 

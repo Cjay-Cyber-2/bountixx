@@ -1,5 +1,11 @@
 import type { Metadata } from "next";
-import { Tourney, Chakra_Petch, Oxanium, Share_Tech_Mono } from "next/font/google";
+import {
+  Instrument_Serif,
+  Plus_Jakarta_Sans,
+  DM_Mono,
+  Tourney,
+  Chakra_Petch,
+} from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 import { AuthProvider } from "@/components/providers/AuthProvider";
@@ -8,35 +14,50 @@ import { LenisProvider } from "@/components/providers/LenisProvider";
 import { ToastProvider } from "@/components/ui/Toast";
 import { TargetCursorWrapper } from "@/components/ui/TargetCursor";
 
-/** Arena display — tournament poster energy for heroes & section titles */
-const fontDisplay = Tourney({
+/** App display headings — editorial serif */
+const fontDisplay = Instrument_Serif({
   variable: "--font-display",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
+  weight: "400",
   display: "swap",
 });
 
-/** Body copy — angular tech-gaming sans, readable but unmistakable */
-const fontBody = Chakra_Petch({
+/** Body copy — clean geometric sans */
+const fontBody = Plus_Jakarta_Sans({
   variable: "--font-body",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
-/** Stats, scores, coin counts — esports HUD numerals */
-const fontStats = Oxanium({
+/** Stats & numerals */
+const fontStats = Plus_Jakarta_Sans({
   variable: "--font-stats",
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  display: "swap",
+});
+
+/** Labels & code */
+const fontMono = DM_Mono({
+  variable: "--font-mono",
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  display: "swap",
+});
+
+/** Legacy hero fonts (scoped via data-legacy-aesthetic) */
+const fontLegacyDisplay = Tourney({
+  variable: "--font-legacy-display",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
   display: "swap",
 });
 
-/** Labels, eyebrows, terminal chrome */
-const fontMono = Share_Tech_Mono({
-  variable: "--font-mono",
+const fontLegacyBody = Chakra_Petch({
+  variable: "--font-legacy-body",
   subsets: ["latin"],
-  weight: "400",
+  weight: ["300", "400", "500", "600", "700"],
   display: "swap",
 });
 
@@ -47,7 +68,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport = {
-  themeColor: "#0E0818",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#DDEAE1" },
+    { media: "(prefers-color-scheme: dark)", color: "#0C080A" },
+  ],
 };
 
 export default function RootLayout({
@@ -69,11 +93,12 @@ export default function RootLayout({
       signUpForceRedirectUrl={
         process.env.NEXT_PUBLIC_CLERK_SIGN_UP_FORCE_REDIRECT_URL ?? "/dashboard"
       }
-      appearance={{ variables: { colorPrimary: "#a855f7" } }}
+      appearance={{ variables: { colorPrimary: "#5C0A46" } }}
     >
       <html
         lang="en"
-        className={`${fontDisplay.variable} ${fontBody.variable} ${fontStats.variable} ${fontMono.variable} h-full`}
+        className={`${fontDisplay.variable} ${fontBody.variable} ${fontStats.variable} ${fontMono.variable} ${fontLegacyDisplay.variable} ${fontLegacyBody.variable} h-full`}
+        suppressHydrationWarning
       >
         <body className="min-h-full bg-cosmos text-haze overflow-x-hidden font-body antialiased">
           <AuthProvider>
