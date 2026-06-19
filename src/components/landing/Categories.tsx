@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
-import { LandingSection, SectionIntro } from "@/components/landing/_section";
+import { LandingSection, CenteredSectionIntro } from "@/components/landing/_section";
 
 const CATEGORIES = [
   {
@@ -42,11 +42,10 @@ export function Categories() {
   return (
     <LandingSection id="categories" variant="raised" className="pt-28 md:pt-36 lg:pt-40">
       <div ref={ref} className="w-full">
-        <SectionIntro
+        <CenteredSectionIntro
           eyebrow="Four formats"
           title="Choose your battleground."
           description="Every format has its own win condition and scoring rules. Pick the arena that plays to your strengths."
-          align="center"
         />
 
         <motion.div

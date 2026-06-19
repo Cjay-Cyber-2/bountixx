@@ -11,7 +11,6 @@ import { clerkError, isSessionExistsError } from "@/lib/clerkError";
 import { useRedirectIfSignedIn } from "@/hooks/useRedirectIfSignedIn";
 import { Button } from "@/components/ui/Button";
 import { AuthBrandPanel } from "@/components/landing/AuthBrandPanel";
-import { useTheme } from "@/components/providers/ThemeProvider";
 import {
   AuthFormShell,
   AuthDivider,
@@ -194,8 +193,6 @@ function LoginForm() {
     { id: "phone-otp", label: "Phone", icon: <Phone size={13} /> },
   ];
 
-  const { theme } = useTheme();
-  void theme;
   if (loading || user) return null;
 
   return (

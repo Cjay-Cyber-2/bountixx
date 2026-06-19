@@ -42,7 +42,7 @@ export function LandingSection({
         ...style,
       }}
     >
-      <div className={`${LANDING_GUTTERS} flex w-full flex-col items-center`}>{children}</div>
+      <div className={LANDING_GUTTERS}>{children}</div>
     </section>
   );
 }
@@ -58,16 +58,24 @@ export function SpecLine({
   className?: string;
   centered?: boolean;
 }) {
+  if (centered) {
+    return (
+      <p className={`font-mono text-xs tracking-wide text-center text-plum w-full ${className}`}>
+        <span className="inline-flex items-center justify-center gap-3">
+          {index && <span className="tabular-nums text-plum-light">{index}</span>}
+          <span className="text-haze-3 font-medium">{children}</span>
+        </span>
+      </p>
+    );
+  }
+
   return (
     <p
-      className={`font-mono text-xs tracking-wide flex items-center gap-3 text-plum ${
-        centered ? "justify-center" : ""
-      } ${className}`}
+      className={`font-mono text-xs tracking-wide flex items-center gap-3 text-plum ${className}`}
     >
-      {!centered && <span className="h-px w-8 bg-plum/40 shrink-0" aria-hidden />}
+      <span className="h-px w-8 bg-plum/40 shrink-0" aria-hidden />
       {index && <span className="tabular-nums text-plum-light">{index}</span>}
       <span className="text-haze-3 font-medium">{children}</span>
-      {centered && <span className="h-px w-8 bg-plum/40 shrink-0" aria-hidden />}
     </p>
   );
 }
@@ -85,6 +93,34 @@ export function SectionHeading({
     >
       {children}
     </h2>
+  );
+}
+
+/** Centered section header block — use at the top of landing sections */
+export function CenteredSectionIntro({
+  eyebrow,
+  title,
+  description,
+  extra,
+  className = "",
+}: {
+  eyebrow: string;
+  title: ReactNode;
+  description?: string;
+  extra?: string;
+  className?: string;
+}) {
+  return (
+    <div className={`mb-14 md:mb-18 lg:mb-20 flex w-full justify-center ${className}`}>
+      <SectionIntro
+        eyebrow={eyebrow}
+        title={title}
+        description={description}
+        extra={extra}
+        align="center"
+        className="mb-0"
+      />
+    </div>
   );
 }
 
@@ -118,17 +154,17 @@ export function SectionIntro({
       <SpecLine className={`w-full ${centered ? "justify-center" : ""}`} centered={centered}>
         {eyebrow}
       </SpecLine>
-      <SectionHeading className={`mt-4 md:mt-5 ${centered ? "w-full" : ""}`}>{title}</SectionHeading>
+      <SectionHeading className={`mt-4 md:mt-5 ${centered ? "w-full text-center" : ""}`}>{title}</SectionHeading>
       {description && (
         <p
-          className={`font-body text-lg md:text-xl text-haze-2 mt-5 md:mt-6 leading-relaxed max-w-[62ch] ${centered ? "mx-auto w-full" : ""}`}
+          className={`font-body text-lg md:text-xl text-haze-2 mt-5 md:mt-6 leading-relaxed max-w-[62ch] ${centered ? "mx-auto text-center" : ""}`}
         >
           {description}
         </p>
       )}
       {extra && (
         <p
-          className={`font-body text-base text-haze-3 mt-3 leading-relaxed max-w-[62ch] ${centered ? "mx-auto w-full" : ""}`}
+          className={`font-body text-base text-haze-3 mt-3 leading-relaxed max-w-[62ch] ${centered ? "mx-auto text-center" : ""}`}
         >
           {extra}
         </p>
