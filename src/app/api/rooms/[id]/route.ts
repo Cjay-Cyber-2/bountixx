@@ -8,6 +8,7 @@ import { getSession, unauthorized } from "@/lib/getSession";
 import { getRoomQuestions } from "@/lib/roomQuestions";
 import { expireLobbyIfStale } from "@/lib/roomExpiry";
 import { ENTRY_FEE, isEntryFeeExempt, hasAffordableEntry } from "@/lib/coins";
+import { finalizeArena, refundEntryFeesForRoom, repairMissingEntryRefunds } from "@/lib/arenaResolver";
 import { randomUUID } from "crypto";
 
 export async function GET(
@@ -76,6 +77,8 @@ export async function GET(
   }[] = [];
 
   if (room.status === "ended" || room.status === "cancelled") {
+    await repairMissingEntryRefunds(id, room.status);
+
     const subRows = await db
       .select({
         userId:      submissions.userId,
@@ -211,8 +214,22 @@ export async function PATCH(
     updates.startedAt = new Date();
   }
 
-  if (status === "ended")    updates.endedAt = new Date();
-  if (status === "cancelled") updates.endedAt = new Date();
+  if (status === "ended") {
+    if (room.status === "live") {
+      await finalizeArena(id);
+      const [updated] = await db.select().from(rooms).where(eq(rooms.id, id)).limit(1);
+      return NextResponse.json({ room: updated });
+    }
+    updates.endedAt = new Date();
+  }
+
+  if (status === "cancelled") {
+    if (room.status === "live") {
+      await refundEntryFeesForRoom(id, "cancelled_refund");
+      await db.update(rooms).set({ prizePool: 0 }).where(eq(rooms.id, id));
+    }
+    updates.endedAt = new Date();
+  }
 
   const [updated] = await db
     .update(rooms)
