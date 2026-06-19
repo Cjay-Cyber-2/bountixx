@@ -23,13 +23,13 @@ async function runSchemaStatements(): Promise<void> {
     UPDATE users u
     SET coins_balance = 1000
     WHERE u.coins_balance < 1000
-      AND COALESCE((
-        SELECT SUM(ct.amount)
+      AND NOT EXISTS (
+        SELECT 1
         FROM coin_transactions ct
         WHERE ct.user_id = u.id
-          AND ct.reference = 'main_event_starter'
+          AND ct.reference = 'main_event_launch'
           AND ct.type = 'gifted'
-      ), 0) < 1000
+      )
   `;
   await sql`UPDATE rooms SET prize_pool = 0 WHERE prize_pool IS NULL`;
   await sql`ALTER TABLE rooms ALTER COLUMN prize_pool SET DEFAULT 0`;

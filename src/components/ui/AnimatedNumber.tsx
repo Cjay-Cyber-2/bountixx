@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useInView, useMotionValue, useSpring, animate } from "framer-motion";
+import { useMotionValue, useSpring, animate } from "framer-motion";
 import { formatCoins } from "@/lib/utils";
 
 interface AnimatedNumberProps {
@@ -24,18 +24,15 @@ export function AnimatedNumber({
   duration = 1.5,
 }: AnimatedNumberProps) {
   const ref = useRef<HTMLSpanElement>(null);
-  const motionVal = useMotionValue(0);
+  const motionVal = useMotionValue(value);
   const spring = useSpring(motionVal, { duration: duration * 1000, bounce: 0 });
-  const inView = useInView(ref, { once: true, margin: "-10% 0px" });
 
   useEffect(() => {
-    if (inView) {
-      animate(motionVal, value, {
-        duration,
-        ease: [0.16, 1, 0.3, 1],
-      });
-    }
-  }, [inView, motionVal, value, duration]);
+    animate(motionVal, value, {
+      duration,
+      ease: [0.16, 1, 0.3, 1],
+    });
+  }, [motionVal, value, duration]);
 
   useEffect(() => {
     return spring.on("change", (latest) => {
@@ -46,9 +43,16 @@ export function AnimatedNumber({
     });
   }, [spring, prefix, suffix, format]);
 
+  useEffect(() => {
+    if (ref.current) {
+      const display = format ? formatCoins(Math.round(value)) : String(Math.round(value));
+      ref.current.textContent = `${prefix}${display}${suffix}`;
+    }
+  }, [value, prefix, suffix, format]);
+
   return (
     <span ref={ref} className={className} style={style}>
-      {prefix}0{suffix}
+      {prefix}{format ? formatCoins(value) : String(value)}{suffix}
     </span>
   );
 }

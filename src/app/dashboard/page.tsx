@@ -34,23 +34,50 @@ type DashboardData = {
   pendingInvites: { id: string; roomId: string; roomName: string; inviterName: string }[];
 };
 
+type MeResponse = {
+  user?: { coinsBalance?: number };
+  coinsUnlimited?: boolean;
+};
+
 export default function DashboardPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [onlineCount, setOnlineCount] = useState(0);
 
   const fetchData = useCallback(async () => {
     if (!user) return;
     try {
-      const res = await fetchWithAuth("/api/dashboard");
-      if (res.ok) {
-        const d = await res.json();
-        setData(d);
+      setLoadError(null);
+
+      const meRes = await fetchWithAuth("/api/user/me");
+      let meCoins: number | undefined;
+      let meUnlimited = false;
+      if (meRes.ok) {
+        const me = (await meRes.json()) as MeResponse;
+        meCoins = me.user?.coinsBalance;
+        meUnlimited = Boolean(me.coinsUnlimited);
       }
+
+      const res = await fetchWithAuth("/api/dashboard");
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        setLoadError(body.error ?? "Could not load dashboard.");
+        return;
+      }
+
+      const d = (await res.json()) as DashboardData;
+      if (typeof meCoins === "number") {
+        d.coinsBalance = meCoins;
+      }
+      if (meUnlimited) {
+        d.coinsUnlimited = true;
+      }
+      setData(d);
     } catch {
-      // fail gracefully
+      setLoadError("Network error loading dashboard.");
     } finally {
       setLoading(false);
     }
@@ -59,7 +86,18 @@ export default function DashboardPage() {
   useEffect(() => {
     fetchData();
     const id = setInterval(() => fetchData(), 5_000);
-    return () => clearInterval(id);
+
+    const refresh = () => {
+      if (document.visibilityState === "visible") void fetchData();
+    };
+    document.addEventListener("visibilitychange", refresh);
+    window.addEventListener("focus", refresh);
+
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", refresh);
+      window.removeEventListener("focus", refresh);
+    };
   }, [fetchData]);
 
   const statCards = [
@@ -86,6 +124,12 @@ export default function DashboardPage() {
             <h1 className="font-display text-4xl md:text-5xl text-haze leading-tight mt-1">Arena Dashboard</h1>
           </div>
         </motion.div>
+
+        {loadError ? (
+          <div className="mb-8 rounded-xl border border-danger/40 bg-danger/10 px-5 py-4">
+            <p className="font-rajdhani text-sm text-danger">{loadError}</p>
+          </div>
+        ) : null}
 
         {/* Main event + economy */}
         <motion.div

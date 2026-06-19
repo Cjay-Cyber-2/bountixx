@@ -23,6 +23,22 @@ const steps = [
   ["language", () => sql`ALTER TABLE rooms ADD COLUMN IF NOT EXISTS language text`],
   ["starter_code", () => sql`ALTER TABLE rooms ADD COLUMN IF NOT EXISTS starter_code text`],
   ["last_seen_at", () => sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_seen_at timestamp`],
+  ["coins default", () => sql`ALTER TABLE users ALTER COLUMN coins_balance SET DEFAULT 1000`],
+  [
+    "launch coin backfill",
+    () => sql`
+      UPDATE users u
+      SET coins_balance = 1000
+      WHERE u.coins_balance < 1000
+        AND NOT EXISTS (
+          SELECT 1
+          FROM coin_transactions ct
+          WHERE ct.user_id = u.id
+            AND ct.reference = 'main_event_launch'
+            AND ct.type = 'gifted'
+        )
+    `,
+  ],
   ["prize_pool backfill", () => sql`UPDATE rooms SET prize_pool = 0 WHERE prize_pool IS NULL`],
   ["prize_pool default", () => sql`ALTER TABLE rooms ALTER COLUMN prize_pool SET DEFAULT 0`],
 ];

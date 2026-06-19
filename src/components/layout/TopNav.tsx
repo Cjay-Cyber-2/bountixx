@@ -47,17 +47,32 @@ export function TopNav() {
     setCoinsUnlimited(false);
     if (!user) return;
     let cancelled = false;
-    fetchWithAuth("/api/user/me")
-      .then((r) => r.json())
-      .then((d: MeResponse) => {
-        if (!cancelled && d.user) {
-          setProfile(d.user);
-          setCoinsUnlimited(Boolean(d.coinsUnlimited));
-        }
-      })
-      .catch(() => {});
+
+    const loadProfile = () => {
+      fetchWithAuth("/api/user/me")
+        .then((r) => r.json())
+        .then((d: MeResponse) => {
+          if (!cancelled && d.user) {
+            setProfile(d.user);
+            setCoinsUnlimited(Boolean(d.coinsUnlimited));
+          }
+        })
+        .catch(() => {});
+    };
+
+    loadProfile();
+    const id = window.setInterval(loadProfile, 5_000);
+    const refresh = () => {
+      if (document.visibilityState === "visible") loadProfile();
+    };
+    document.addEventListener("visibilitychange", refresh);
+    window.addEventListener("focus", refresh);
+
     return () => {
       cancelled = true;
+      window.clearInterval(id);
+      document.removeEventListener("visibilitychange", refresh);
+      window.removeEventListener("focus", refresh);
     };
   }, [user]);
 

@@ -124,7 +124,7 @@ export async function GET(req: Request) {
     roomsPlayed,
     winRate,
     totalXp: session.xp,
-    coinsBalance: session.coinsBalance,
+    coinsBalance: session.coinsBalance ?? 0,
     coinsUnlimited: isUnlimitedCoinsEmail(session.email),
     recentRooms,
     onlineUsers: serializeOnlineUsers(onlineUsers),

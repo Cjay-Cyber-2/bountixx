@@ -7,6 +7,7 @@ import { db } from "./db";
 import { coinTransactions, users } from "./schema";
 import {
   isUnlimitedCoinsEmail,
+  MAIN_EVENT_GRANT_REF,
   STARTER_COINS,
   UNLIMITED_COINS_BALANCE,
 } from "./coins";
@@ -70,7 +71,7 @@ async function mainEventStarterGrantedTotal(userId: string): Promise<number> {
     .where(
       and(
         eq(coinTransactions.userId, userId),
-        eq(coinTransactions.reference, "main_event_starter"),
+        eq(coinTransactions.reference, MAIN_EVENT_GRANT_REF),
         eq(coinTransactions.type, "gifted"),
       ),
     );
@@ -117,9 +118,11 @@ async function ensureOneTimeStarterCoins(
   }
 
   const previous = user.coinsBalance ?? 0;
-  const credit = Math.min(owed, Math.max(0, STARTER_COINS - previous));
+  const targetBalance = Math.max(previous, STARTER_COINS);
+  const credit = Math.max(0, targetBalance - previous);
+
   if (credit > 0) {
-    updates.coinsBalance = previous + credit;
+    updates.coinsBalance = targetBalance;
   }
 
   const [updated] = await db
@@ -138,20 +141,17 @@ async function ensureOneTimeStarterCoins(
       userId: user.id,
       amount: owed,
       type: "gifted",
-      reference: "main_event_starter",
+      reference: MAIN_EVENT_GRANT_REF,
     });
   } catch (err) {
-    console.error("[getSession] main event starter tx failed:", err);
+    console.error("[getSession] main event launch grant tx failed:", err);
     if (credit > 0) {
-      return updated ?? { ...user, coinsBalance: previous + credit };
+      return (await findUserById(user.id)) ?? updated ?? { ...user, coinsBalance: targetBalance };
     }
-    return updated ?? user;
+    return (await findUserById(user.id)) ?? updated ?? user;
   }
 
-  if (credit > 0) {
-    return updated ?? { ...user, coinsBalance: previous + credit };
-  }
-  return updated ?? user;
+  return (await findUserById(user.id)) ?? updated ?? (credit > 0 ? { ...user, coinsBalance: targetBalance } : user);
 }
 
 async function findUserById(userId: string): Promise<SessionUser | null> {
@@ -216,9 +216,11 @@ async function finalizeSession(
   user: SessionUser,
   clerkEmail: string | null,
 ): Promise<SessionUser> {
-  const withCoins = await ensureOneTimeStarterCoins(user, clerkEmail);
-  await touchPresence(withCoins.id, true);
-  return withCoins;
+  await ensureOneTimeStarterCoins(user, clerkEmail);
+  const fresh = await findUserById(user.id);
+  const resolved = fresh ?? user;
+  await touchPresence(resolved.id, true);
+  return resolved;
 }
 
 /**

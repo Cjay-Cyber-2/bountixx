@@ -1,6 +1,9 @@
 /** Starter coin grant for new accounts and the one-time main-event gift. */
 export const STARTER_COINS = 1000;
 
+/** Ledger reference for the one-time launch grant (ignores legacy main_event_starter rows). */
+export const MAIN_EVENT_GRANT_REF = "main_event_launch";
+
 /** Entry fee per competing player when an arena goes live — funds the bounty pool. */
 export const ENTRY_FEE = 100;
 
