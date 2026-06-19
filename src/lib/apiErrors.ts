@@ -8,8 +8,14 @@ type ErrorBody = {
 
 const ROBOTIC = /^(unauthorized|forbidden|not found|bad request|internal server error|error)$/i;
 
+export function isAiRateLimitError(message: string): boolean {
+  return /rate limit|tokens per (minute|day|hour)|too many requests|quota exceeded|llama-3\.3|groq/i.test(
+    message,
+  );
+}
+
 function isAiRateLimitish(message: string): boolean {
-  return /rate limit|tokens per (minute|day|hour)|llama-3\.3|groq/i.test(message);
+  return isAiRateLimitError(message);
 }
 
 /** Turn raw API errors into copy people can actually act on. */
