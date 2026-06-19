@@ -1,8 +1,8 @@
 /** Welcome bonus for new accounts and anyone still at 0 balance. */
-export const STARTER_COINS = 500;
+export const STARTER_COINS = 1000;
 
 /** Entry fee per competing player when an arena goes live. */
-export const ENTRY_FEE = 50;
+export const ENTRY_FEE = 100;
 
 /** Stored balance for the unlimited-coins owner account. */
 export const UNLIMITED_COINS_BALANCE = 9_999_999;

@@ -49,7 +49,7 @@ export function OnlineFriendsList({
 
   useEffect(() => {
     void loadOnline();
-    const id = window.setInterval(() => void loadOnline(), 15_000);
+    const id = window.setInterval(() => void loadOnline(), 5_000);
     return () => window.clearInterval(id);
   }, [loadOnline]);
 
@@ -114,7 +114,7 @@ export function OnlineFriendsList({
   const InviteBtn = variant === "lobby" ? LobbyInviteButton : InvitePlayerButton;
 
   return (
-    <div className="space-y-2.5">
+    <div className="space-y-3 max-h-[320px] overflow-y-auto pr-1">
       {users.map((player) => (
         <OnlinePlayerRow
           key={player.id}

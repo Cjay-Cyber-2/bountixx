@@ -215,14 +215,12 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-cosmos">
-      <div data-legacy-aesthetic={theme === "light" ? undefined : ""} className="contents">
-        <AuthBrandPanel />
-      </div>
+      <AuthBrandPanel />
 
       <AuthFormShell
         eyebrow="Join the arena"
         title="Create account"
-        subtitle="Start with 500 free coins as a welcome bonus."
+        subtitle="Start with 1,000 free coins as a welcome bonus."
         footer={
           <>
             Already have an account?{" "}

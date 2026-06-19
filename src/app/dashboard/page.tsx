@@ -56,7 +56,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     fetchData();
-    const id = setInterval(fetchData, 30_000);
+    const id = setInterval(() => fetchData(), 5_000);
     return () => clearInterval(id);
   }, [fetchData]);
 
@@ -129,7 +129,7 @@ export default function DashboardPage() {
                     style={{ color: s.gold ? "var(--coin-gold-text)" : "var(--haze)" }}
                   />
                 )}
-                <p className="font-space-mono text-[9px] text-haze-3 tracking-[2px] uppercase">{s.label}</p>
+                <p className="font-space-mono text-[10px] text-haze-3 tracking-[2px] uppercase break-words">{s.label}</p>
               </motion.div>
             );
           })}
@@ -231,9 +231,9 @@ export default function DashboardPage() {
               onNotify={(message, type = "info") => toast({ type, title: message })}
             />
             {!data?.activeLobby ? (
-              <p className="font-space-mono text-[9px] text-haze-3 mt-4 text-center">
-                Create an arena to invite online friends from here.
-              </p>
+                <p className="font-space-mono text-sm text-haze-3 mt-4 text-center leading-relaxed">
+                  Create an arena to invite online friends from here.
+                </p>
             ) : null}
           </motion.div>
         </div>

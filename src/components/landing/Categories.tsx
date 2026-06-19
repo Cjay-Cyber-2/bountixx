@@ -40,19 +40,20 @@ export function Categories() {
   const inView = useInView(ref, { once: true, margin: "-10% 0px" });
 
   return (
-    <LandingSection id="categories" variant="raised">
+    <LandingSection id="categories" variant="raised" className="pt-28 md:pt-36 lg:pt-40">
       <div ref={ref}>
         <SectionIntro
           eyebrow="Four formats"
           title="Choose your battleground."
           description="Every format has its own win condition and scoring rules. Pick the arena that plays to your strengths."
+          align="center"
         />
 
         <motion.div
           initial="hidden"
           animate={inView ? "show" : "hidden"}
           variants={{ show: { transition: { staggerChildren: 0.1 } } }}
-          className="grid sm:grid-cols-2 gap-5 md:gap-7 lg:gap-8"
+          className="grid sm:grid-cols-2 gap-6 md:gap-8 lg:gap-10"
         >
           {CATEGORIES.map((cat) => (
             <motion.article
@@ -61,7 +62,7 @@ export function Categories() {
                 hidden: { opacity: 0, y: 24 },
                 show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } },
               }}
-              className="group relative flex flex-col items-center text-center p-8 md:p-10 lg:p-11 transition-transform duration-300 hover:-translate-y-1"
+              className="group relative flex flex-col items-center text-center p-8 md:p-10 lg:p-11 rounded-xl transition-transform duration-300 hover:-translate-y-1"
               style={{
                 background: "var(--cosmos)",
                 border: "1px solid var(--border-1)",
@@ -69,7 +70,7 @@ export function Categories() {
               }}
             >
               <div
-                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-xl"
                 style={{
                   background:
                     "radial-gradient(ellipse 70% 50% at 50% 0%, rgba(168,85,247,0.12), transparent 70%)",
@@ -90,10 +91,7 @@ export function Categories() {
                 {cat.sample}
               </p>
 
-              <div
-                className="mt-auto pt-6 md:pt-7 space-y-3"
-                style={{ borderTop: "1px solid var(--border-1)" }}
-              >
+              <div className="mt-auto pt-6 md:pt-7 space-y-3 w-full" style={{ borderTop: "1px solid var(--border-1)" }}>
                 <p className="font-space-mono text-[11px] uppercase tracking-[2px] text-haze leading-relaxed">
                   {cat.win}
                 </p>

@@ -10,6 +10,7 @@ import { PageShell, APP_GUTTERS } from "@/components/landing/_section";
 import { Button } from "@/components/ui/Button";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { readApiError } from "@/lib/readApiError";
+import { ENTRY_FEE } from "@/lib/coins";
 import { LANGUAGES, LANGUAGE_KEYS, getLanguage, type LanguageKey } from "@/lib/languages";
 
 /* ─── Types ─── */
@@ -44,8 +45,6 @@ interface Question {
 }
 
 interface CreatedRoom { id: string; name: string; status: string; }
-
-const ENTRY_FEE = 50;
 
 function StepActions({
   children,
@@ -209,7 +208,7 @@ function SetupStep({
 /* ─── Question card ─── */
 function QuestionCard({
   q, index, total, arenaName,
-  onChange, onAnswerChange, onDelete, onAnalyze,
+  onChange, onAnswerChange, onDelete, onAnalyze, showAnalyzeButton,
 }: {
   q: Question;
   index: number;
@@ -219,6 +218,7 @@ function QuestionCard({
   onAnswerChange: (answer: string) => void;
   onDelete: () => void;
   onAnalyze: (languageHint?: string) => void;
+  showAnalyzeButton: boolean;
 }) {
   const catColor = q.analysis ? (CAT_COLORS[q.analysis.category] ?? "#9B8FC0") : "#4A3F70";
   void arenaName;
@@ -240,8 +240,8 @@ function QuestionCard({
             <span className="font-space-mono text-[9px] text-danger tracking-wider">✗ INVALID</span>
           )}
           {total > 1 && (
-            <button onClick={onDelete} className="cursor-target text-haze-3 hover:text-danger transition-colors p-1" aria-label="Remove question">
-              <Trash2 size={13} />
+            <button onClick={onDelete} className="cursor-target text-haze-3 hover:text-danger transition-colors p-2 rounded-lg hover:bg-danger/10" aria-label="Remove question">
+              <Trash2 size={20} />
             </button>
           )}
         </div>
@@ -318,22 +318,22 @@ function QuestionCard({
       {/* Analysis preview */}
       {q.status === "done" && q.analysis?.valid && (
         <>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <span className="font-space-mono text-[9px] px-2 py-0.5 border" style={{ color: catColor, borderColor: `${catColor}44`, background: `${catColor}11` }}>
+          <div className="mt-3 flex flex-wrap gap-2 items-center">
+            <span className="font-space-mono text-sm px-3 py-1 border" style={{ color: catColor, borderColor: `${catColor}44`, background: `${catColor}11` }}>
               {q.analysis.category.toUpperCase()}
             </span>
-            <span className="font-space-mono text-[9px] px-2 py-0.5 border" style={{ color: DIFF_COLORS[q.analysis.difficulty], borderColor: `${DIFF_COLORS[q.analysis.difficulty]}44`, background: `${DIFF_COLORS[q.analysis.difficulty]}11` }}>
+            <span className="font-space-mono text-sm px-3 py-1 border" style={{ color: DIFF_COLORS[q.analysis.difficulty], borderColor: `${DIFF_COLORS[q.analysis.difficulty]}44`, background: `${DIFF_COLORS[q.analysis.difficulty]}11` }}>
               {q.analysis.difficulty.toUpperCase()}
             </span>
-            <span className="font-rajdhani text-xs text-haze-2 self-center">"{q.analysis.title}"</span>
+            <span className="font-rajdhani text-base text-haze font-semibold">"{q.analysis.title}"</span>
           </div>
 
           {/* AI answer — visible and editable before the room is created */}
           {q.analysis.category !== "coding" && (
-            <div className="mt-3 border border-crown/30 bg-crown/5 p-3">
+            <div className="mt-4 border border-crown/30 bg-crown/5 p-4 rounded-lg">
               <label
                 htmlFor={`answer-${q.localId}`}
-                className="font-space-mono text-[9px] text-crown tracking-widest uppercase block mb-1.5"
+                className="font-space-mono text-sm text-crown tracking-widest uppercase block mb-2"
               >
                 Correct Answer (AI) — edit if wrong
               </label>
@@ -343,10 +343,9 @@ function QuestionCard({
                 value={q.analysis.canonicalAnswer ?? ""}
                 onChange={(e) => onAnswerChange(e.target.value)}
                 placeholder="The answer players must match"
-                className="w-full h-9 px-3 bg-cosmos border border-cosmos-4 text-haze font-rajdhani text-sm focus:outline-none focus:border-crown transition-colors"
-                style={{ borderRadius: 0 }}
+                className="w-full h-11 px-4 bg-cosmos border border-cosmos-4 text-haze font-rajdhani text-base focus:outline-none focus:border-crown transition-colors rounded-lg"
               />
-              <p className="font-space-mono text-[8px] text-haze-3 mt-1.5">
+              <p className="font-rajdhani text-sm text-haze-2 mt-2 leading-relaxed">
                 Players win by matching this exactly (case-insensitive). Fix it now if the AI got it wrong.
               </p>
             </div>
@@ -382,6 +381,7 @@ function QuestionCard({
         </>
       )}
 
+      {showAnalyzeButton && (
       <button
         onClick={() => onAnalyze()}
         disabled={q.status === "analyzing" || !q.taskRaw.trim()}
@@ -399,6 +399,7 @@ function QuestionCard({
           <>ANALYZE WITH AI</>
         )}
       </button>
+      )}
     </motion.div>
   );
 }
@@ -407,28 +408,34 @@ function QuestionCard({
 function QuestionsStep({
   arenaName,
   questions,
-  onAnalyze,
+  onAnalyzeAll,
+  onAnalyzeOne,
   onAdd,
   onDelete,
   onChange,
   onAnswerChange,
   onNext,
   onBack,
+  batchAnalyzing,
 }: {
   arenaName: string;
   questions: Question[];
-  onAnalyze: (localId: string, languageHint?: string) => void;
+  onAnalyzeAll: () => void;
+  onAnalyzeOne: (localId: string, languageHint?: string) => void;
   onAdd: () => void;
   onDelete: (localId: string) => void;
   onChange: (localId: string, taskRaw: string) => void;
   onAnswerChange: (localId: string, answer: string) => void;
   onNext: () => void;
   onBack: () => void;
+  batchAnalyzing: boolean;
 }) {
   const allValid = questions.every(
     (q) => q.status === "done" && q.analysis?.valid && !q.analysis?.needsClarification
   );
-  const anyAnalyzing = questions.some((q) => q.status === "analyzing");
+  const anyAnalyzing = questions.some((q) => q.status === "analyzing") || batchAnalyzing;
+  const multi = questions.length > 1;
+  const hasContent = questions.some((q) => q.taskRaw.trim());
 
   return (
     <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} className="flex flex-col gap-4">
@@ -443,10 +450,29 @@ function QuestionsStep({
             onChange={(taskRaw) => onChange(q.localId, taskRaw)}
             onAnswerChange={(answer) => onAnswerChange(q.localId, answer)}
             onDelete={() => onDelete(q.localId)}
-            onAnalyze={(hint) => onAnalyze(q.localId, hint)}
+            onAnalyze={(hint) => onAnalyzeOne(q.localId, hint)}
+            showAnalyzeButton={!multi}
           />
         ))}
       </AnimatePresence>
+
+      {multi && (
+        <Button
+          variant="primary"
+          size="lg"
+          fullWidth
+          onClick={onAnalyzeAll}
+          disabled={anyAnalyzing || !hasContent}
+          loading={batchAnalyzing}
+          className="gap-2"
+        >
+          {batchAnalyzing ? "ANALYZING ALL QUESTIONS…" : "ANALYZE ALL WITH AI"}
+        </Button>
+      )}
+
+      {!multi && questions.length === 1 && questions[0].status !== "done" && (
+        <p className="font-rajdhani text-sm text-haze-3 text-center">Analyze your question before continuing.</p>
+      )}
 
       {questions.length < 10 && (
         <button onClick={onAdd}
@@ -598,7 +624,9 @@ export default function CreatePage() {
   const [createdRoom, setCreatedRoom] = useState<CreatedRoom | null>(null);
 
   /* ─── Analyze a single question (optionally forcing a coding language) ─── */
-  const handleAnalyze = useCallback(async (localId: string, languageHint?: string) => {
+  const [batchAnalyzing, setBatchAnalyzing] = useState(false);
+
+  const handleAnalyzeOne = useCallback(async (localId: string, languageHint?: string) => {
     const q = questions.find((x) => x.localId === localId);
     if (!q || !q.taskRaw.trim()) return;
 
@@ -643,6 +671,57 @@ export default function CreatePage() {
           ? "Network error — check your connection and try again"
           : "Could not reach AI service";
       setQuestions((prev) => prev.map((x) => x.localId === localId ? { ...x, status: "error", error: message } : x));
+    }
+  }, [questions, setupData]);
+
+  const handleAnalyzeAll = useCallback(async () => {
+    const pending = questions.filter((q) => q.taskRaw.trim());
+    if (pending.length === 0) return;
+
+    setBatchAnalyzing(true);
+    setQuestions((prev) =>
+      prev.map((q) => (q.taskRaw.trim() ? { ...q, status: "analyzing" as const, error: undefined } : q)),
+    );
+
+    try {
+      const res = await fetchWithAuth("/api/rooms/analyse/batch", {
+        method: "POST",
+        body: JSON.stringify({
+          arenaName: setupData?.name ?? "",
+          tasks: pending.map((q) => ({ id: q.localId, taskRaw: q.taskRaw })),
+        }),
+      });
+
+      if (!res.ok) {
+        const error = await readApiError(res);
+        setQuestions((prev) =>
+          prev.map((q) => (q.taskRaw.trim() ? { ...q, status: "error", error } : q)),
+        );
+        return;
+      }
+
+      const data = (await res.json()) as {
+        results: Record<string, AIAnalysis | { error: string }>;
+      };
+
+      setQuestions((prev) =>
+        prev.map((q) => {
+          const result = data.results[q.localId];
+          if (!result) return q;
+          if ("error" in result) return { ...q, status: "error", error: result.error };
+          if (!result.valid) return { ...q, status: "invalid", analysis: result };
+          if (result.needsClarification) return { ...q, status: "clarify", analysis: result };
+          return { ...q, status: "done", analysis: result };
+        }),
+      );
+    } catch {
+      setQuestions((prev) =>
+        prev.map((q) =>
+          q.taskRaw.trim() ? { ...q, status: "error", error: "Could not reach AI service" } : q,
+        ),
+      );
+    } finally {
+      setBatchAnalyzing(false);
     }
   }, [questions, setupData]);
 
@@ -750,7 +829,9 @@ export default function CreatePage() {
                 key="questions"
                 arenaName={setupData.name}
                 questions={questions}
-                onAnalyze={handleAnalyze}
+                onAnalyzeOne={handleAnalyzeOne}
+                onAnalyzeAll={handleAnalyzeAll}
+                batchAnalyzing={batchAnalyzing}
                 onAdd={() => setQuestions((prev) => [...prev, { localId: crypto.randomUUID(), taskRaw: "", status: "idle" }])}
                 onDelete={(id) => setQuestions((prev) => prev.filter((q) => q.localId !== id))}
                 onChange={(id, taskRaw) => setQuestions((prev) => prev.map((q) => q.localId === id ? { ...q, taskRaw, status: q.status === "done" || q.status === "invalid" || q.status === "clarify" ? "idle" : q.status } : q))}

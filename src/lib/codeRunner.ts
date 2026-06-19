@@ -1,35 +1,85 @@
+import vm from "node:vm";
 import { getLanguage } from "./languages";
 
 /**
  * Code execution layer.
  *
- * The old public Piston endpoint (emkc.org) became whitelist-only in Feb 2026,
- * so execution is now provider-configurable via env:
- *
- *   1. Judge0 (recommended) — set JUDGE0_URL (+ JUDGE0_KEY)
- *      - RapidAPI:  JUDGE0_URL=https://judge0-ce.p.rapidapi.com, JUDGE0_KEY=<rapidapi key>
- *      - Self-host: JUDGE0_URL=https://your-judge0, JUDGE0_KEY=<X-Auth-Token or empty>
- *   2. Piston (self-hosted) — set PISTON_URL to the full /execute endpoint
- *      e.g. PISTON_URL=https://your-piston/api/v2/piston/execute
- *
- * If neither is configured, codeExecutionEnabled() is false and the submit
- * route returns a clear, actionable error instead of silently failing.
+ * Priority:
+ *   1. Judge0 — set JUDGE0_URL (+ JUDGE0_KEY)
+ *   2. Piston — set PISTON_URL (self-hosted recommended; see README setup notes)
+ *   3. Built-in JavaScript VM — always available for javascript on Node runtime
  */
 
 export interface RunResult {
-  ok: boolean; // program ran and exited cleanly (status accepted)
+  ok: boolean;
   stdout: string;
   stderr: string;
   timedOut: boolean;
 }
 
-export function codeExecutionEnabled(): boolean {
-  return Boolean(process.env.JUDGE0_URL || process.env.PISTON_URL);
+export function codeExecutionEnabled(language?: string): boolean {
+  if (process.env.JUDGE0_URL || process.env.PISTON_URL) return true;
+  return language === "javascript" || language === "typescript" || !language;
 }
 
 const b64 = (s: string) => Buffer.from(s, "utf8").toString("base64");
 const unb64 = (s: string | null | undefined) =>
   s ? Buffer.from(s, "base64").toString("utf8") : "";
+
+/** Built-in JS runner — no external service required. */
+async function runJavaScriptLocally(source: string, stdin: string): Promise<RunResult> {
+  const logs: string[] = [];
+  const errors: string[] = [];
+
+  const sandbox: Record<string, unknown> = {
+    console: {
+      log: (...args: unknown[]) => logs.push(args.map(String).join(" ")),
+      error: (...args: unknown[]) => errors.push(args.map(String).join(" ")),
+    },
+    require: (id: string) => {
+      if (id === "fs") {
+        return {
+          readFileSync: (_fd: number, _enc?: string) => stdin,
+          readFile: (_p: string, _enc: string, cb: (e: null, d: string) => void) =>
+            cb(null, stdin),
+        };
+      }
+      throw new Error(`Module not allowed: ${id}`);
+    },
+    process: {
+      stdin: { read: () => stdin },
+      stdout: { write: (s: string) => { logs.push(String(s).replace(/\n$/, "")); } },
+    },
+    setTimeout,
+    clearTimeout,
+    Buffer,
+    String,
+    Number,
+    Array,
+    Object,
+    Math,
+    JSON,
+    parseInt,
+    parseFloat,
+    Error,
+  };
+
+  try {
+    const script = new vm.Script(source);
+    const context = vm.createContext(sandbox);
+    script.runInContext(context, { timeout: 5000 });
+    return {
+      ok: errors.length === 0,
+      stdout: logs.join("\n").trim(),
+      stderr: errors.join("\n").trim(),
+      timedOut: false,
+    };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    const timedOut = msg.toLowerCase().includes("timeout");
+    return { ok: false, stdout: logs.join("\n").trim(), stderr: msg, timedOut };
+  }
+}
 
 async function runWithJudge0(
   langKey: string,
@@ -82,10 +132,10 @@ async function runWithJudge0(
     (statusId && statusId !== 3 ? data.status?.description ?? "" : "");
 
   return {
-    ok: statusId === 3, // 3 = Accepted (ran successfully)
+    ok: statusId === 3,
     stdout: unb64(data.stdout),
     stderr,
-    timedOut: statusId === 5, // 5 = Time Limit Exceeded
+    timedOut: statusId === 5,
   };
 }
 
@@ -135,11 +185,19 @@ export async function runCode(opts: {
   source: string;
   stdin: string;
 }): Promise<RunResult> {
+  const lang = opts.language;
+
   if (process.env.JUDGE0_URL) {
-    return runWithJudge0(opts.language, opts.source, opts.stdin);
+    return runWithJudge0(lang, opts.source, opts.stdin);
   }
   if (process.env.PISTON_URL) {
-    return runWithPiston(opts.language, opts.source, opts.stdin);
+    return runWithPiston(lang, opts.source, opts.stdin);
   }
-  throw new Error("Code execution is not configured");
+  if (lang === "javascript" || lang === "typescript") {
+    return runJavaScriptLocally(opts.source, opts.stdin);
+  }
+
+  throw new Error(
+    `Code execution for ${lang} requires PISTON_URL or JUDGE0_URL. JavaScript works without configuration.`,
+  );
 }

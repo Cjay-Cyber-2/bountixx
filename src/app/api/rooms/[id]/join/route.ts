@@ -27,9 +27,6 @@ export async function POST(
   if (await expireLobbyIfStale(room)) {
     return NextResponse.json({ error: "This invite link has expired" }, { status: 404 });
   }
-  if (room.status !== "lobby") {
-    return NextResponse.json({ error: "Room is no longer accepting players" }, { status: 409 });
-  }
 
   const [existing] = await db
     .select({ id: roomPlayers.id })
@@ -42,7 +39,21 @@ export async function POST(
       .update(invites)
       .set({ status: "accepted" })
       .where(and(eq(invites.roomId, roomId), eq(invites.inviteeId, session.id)));
-    return NextResponse.json({ message: "Already in this room" });
+
+    if (room.status === "live") {
+      return NextResponse.json({ message: "Already in this room", roomStatus: "live", redirectTo: `/arena/${roomId}` });
+    }
+    if (room.status === "ended" || room.status === "cancelled") {
+      return NextResponse.json({ message: "Already in this room", roomStatus: room.status, redirectTo: `/arena/${roomId}/results` });
+    }
+    return NextResponse.json({ message: "Already in this room", roomStatus: "lobby", redirectTo: `/lobby/${roomId}` });
+  }
+
+  if (room.status !== "lobby") {
+    return NextResponse.json(
+      { error: "Room is no longer accepting players", roomStatus: room.status },
+      { status: 409 },
+    );
   }
 
   const [{ count: playerCount }] = await db
@@ -73,5 +84,5 @@ export async function POST(
     .set({ status: "accepted" })
     .where(and(eq(invites.roomId, roomId), eq(invites.inviteeId, session.id)));
 
-  return NextResponse.json({ player }, { status: 201 });
+  return NextResponse.json({ player, roomStatus: "lobby", redirectTo: `/lobby/${roomId}` }, { status: 201 });
 }

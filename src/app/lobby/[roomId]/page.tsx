@@ -183,7 +183,7 @@ export default function LobbyPage() {
 
   /* ─── Poll every 2s ─── */
   useEffect(() => {
-    const id = setInterval(() => fetchRoom(true), 2000);
+    const id = setInterval(() => fetchRoom(true), 1000);
     return () => clearInterval(id);
   }, [fetchRoom]);
 
@@ -341,7 +341,7 @@ export default function LobbyPage() {
           {[
             { label: "Timer", value: formatTimer(room.timerSeconds) },
             { label: "Player Cap", value: `${room.playerCap} players` },
-            { label: "Entry Fee", value: "50 coins" },
+            { label: "Entry Fee", value: "100 coins" },
           ].map(({ label, value }) => (
             <div key={label} className="bg-cosmos-2 border border-cosmos-4 p-3 text-center">
               <p className="font-space-mono text-[9px] text-haze-3 tracking-widest uppercase mb-1">{label}</p>
@@ -440,14 +440,14 @@ export default function LobbyPage() {
         {isAdmin ? (
           <motion.div
             variants={slideUp}
-            className="bg-cosmos-2 border border-cosmos-4 p-5"
+            className="bg-cosmos-2 border border-cosmos-4 p-5 mb-6 overflow-visible"
           >
-            <div className="flex items-center gap-3 mb-4">
-              <span className="relative flex h-2 w-2" aria-hidden>
+            <div className="flex items-center gap-3 mb-5">
+              <span className="relative flex h-2 w-2 shrink-0" aria-hidden>
                 <span className="absolute inset-0 rounded-full bg-success animate-[livepulse_1.5s_ease-in-out_infinite]" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-success" />
               </span>
-              <p className="font-space-mono text-[10px] text-void tracking-widest uppercase">
+              <p className="font-space-mono text-xs text-void tracking-widest uppercase">
                 Friends online
               </p>
             </div>

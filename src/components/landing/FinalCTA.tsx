@@ -51,7 +51,7 @@ export function FinalCTA() {
           transition={{ duration: 0.6, delay: 0.12 }}
           className="font-rajdhani text-lg md:text-xl text-haze-2 mb-10 md:mb-12 mx-auto max-w-lg leading-relaxed"
         >
-          No subscription. No card required. Start with 500 welcome coins. The AI structures the challenge, you bring the skill.
+          No subscription. No card required. Start with 1,000 welcome coins. The AI structures the challenge, you bring the skill.
         </motion.p>
 
         <motion.div
