@@ -223,7 +223,25 @@ interface CodeEditorProps {
   submitting: boolean;
 }
 
-function CodeEditor({ code, setCode, language, onRun, onSubmit, disabled, running, submitting }: CodeEditorProps) {
+function CodeEditor({
+  code,
+  setCode,
+  language,
+  onRun,
+  onSubmit,
+  disabled,
+  running,
+  submitting,
+  onPaste,
+  onCopy,
+  onBeforeInput,
+  onDrop,
+}: CodeEditorProps & {
+  onPaste: (e: React.ClipboardEvent) => void;
+  onCopy: (e: React.ClipboardEvent) => void;
+  onBeforeInput: (e: React.FormEvent<HTMLTextAreaElement>) => void;
+  onDrop: (e: React.DragEvent) => void;
+}) {
   const spec = getLanguage(language);
   const lineCount = Math.max(code.split("\n").length, 1);
 
@@ -278,8 +296,11 @@ function CodeEditor({ code, setCode, language, onRun, onSubmit, disabled, runnin
           spellCheck={false}
           aria-label="Code editor"
           disabled={disabled}
-          onPaste={(e) => e.preventDefault()}
-          onCopy={(e) => e.preventDefault()}
+          onPaste={onPaste}
+          onCopy={onCopy}
+          onBeforeInput={onBeforeInput}
+          onDrop={onDrop}
+          onContextMenu={(e) => e.preventDefault()}
         />
       </div>
 
@@ -458,7 +479,11 @@ function DQBanner({ reason }: { reason: ArenaCheatReason }) {
   const label =
     reason === "tab-switch"
       ? "LEFT ARENA TAB · DISQUALIFIED"
-      : "EXTERNAL PANEL DETECTED · DISQUALIFIED";
+      : reason === "split-view"
+        ? "SPLIT VIEW DETECTED · DISQUALIFIED"
+        : reason === "external-input"
+          ? "EXTERNAL TEXT BLOCKED · DISQUALIFIED"
+          : "EXTERNAL PANEL DETECTED · DISQUALIFIED";
 
   return (
     <motion.div
@@ -470,6 +495,20 @@ function DQBanner({ reason }: { reason: ArenaCheatReason }) {
       <p className="font-space-mono text-[11px] text-white tracking-widest">
         ANTI-CHEAT · {label}
       </p>
+    </motion.div>
+  );
+}
+
+function IntegrityWarningBanner({ message }: { message: string }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="fixed top-14 inset-x-0 z-30 flex items-center justify-center gap-2 px-4 py-2 bg-crown/90"
+    >
+      <AlertTriangle size={14} className="text-cosmos shrink-0" aria-hidden="true" />
+      <p className="font-space-mono text-[10px] text-cosmos tracking-wide text-center">{message}</p>
     </motion.div>
   );
 }
@@ -515,6 +554,7 @@ export default function ArenaPage() {
   const [activityFeed, setActivityFeed] = useState<ActivityItem[]>([]);
   const [tabDisqualified, setTabDisqualified] = useState(false);
   const [cheatReason, setCheatReason] = useState<ArenaCheatReason>("tab-switch");
+  const [integrityWarning, setIntegrityWarning] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [questionIndex, setQuestionIndex] = useState(0);
   const [questionsAnswered, setQuestionsAnswered] = useState(0);
@@ -651,8 +691,13 @@ export default function ArenaPage() {
     [toast, roomId]
   );
 
-  const { blockPaste } = useArenaGuard({
+  const handleIntegrityWarning = useCallback((kind: "split-view" | "side-panel" | null, message: string | null) => {
+    setIntegrityWarning(message);
+  }, []);
+
+  const { blockPaste, blockBeforeInput, blockContextMenu, blockDrop, blockCopy } = useArenaGuard({
     onStrike: handleStrike,
+    onWarning: handleIntegrityWarning,
     maxStrikes: 1,
     enabled: !(data?.isAdmin ?? true),
   });
@@ -820,7 +865,12 @@ export default function ArenaPage() {
   const catColor = CAT_COLORS[questionCategory] ?? "#FF6B1A";
 
   return (
-    <div className="min-h-[100dvh] flex flex-col bg-cosmos" onContextMenu={(e) => e.preventDefault()}>
+    <div className="min-h-[100dvh] flex flex-col bg-cosmos" onContextMenu={blockContextMenu}>
+      <AnimatePresence>
+        {integrityWarning && !tabDisqualified && (
+          <IntegrityWarningBanner key="integrity-warning" message={integrityWarning} />
+        )}
+      </AnimatePresence>
       <AnimatePresence>{tabDisqualified && <DQBanner reason={cheatReason} />}</AnimatePresence>
       <AnimatePresence>{timeUp && <TimeUpBanner />}</AnimatePresence>
 
@@ -918,6 +968,10 @@ export default function ArenaPage() {
                 language={language}
                 onRun={handleRunTests} onSubmit={handleSubmit}
                 disabled={inputDisabled} running={running} submitting={submitting}
+                onPaste={blockPaste}
+                onCopy={blockCopy}
+                onBeforeInput={blockBeforeInput}
+                onDrop={blockDrop}
               />
             ) : (
               /* Beautiful centered non-coding Question & Answer layout */
@@ -975,14 +1029,17 @@ export default function ArenaPage() {
                         }
                       }}
                       onPaste={blockPaste}
-                      onCopy={(e) => e.preventDefault()}
+                      onCopy={blockCopy}
+                      onBeforeInput={blockBeforeInput}
+                      onDrop={blockDrop}
+                      onContextMenu={blockContextMenu}
                       className="w-full p-4 bg-cosmos border border-cosmos-4 text-haze font-rajdhani text-base focus:outline-none focus:border-void resize-none rounded-lg"
                       placeholder="Type your answer here..."
                       disabled={inputDisabled}
                       rows={3}
                     />
                     <p className="font-space-mono text-[9px] text-haze-3 text-right">
-                      AI-graded · close answers count · Enter to submit
+                      Full-width tab only · no split view · Enter to submit
                     </p>
                   </div>
 

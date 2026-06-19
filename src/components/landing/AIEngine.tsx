@@ -18,8 +18,8 @@ const ANTI_CHEAT = [
   },
   {
     icon: Monitor,
-    label: "Side panel detection",
-    note: "Browser AI sidebars and external panels beside the arena are flagged and removed.",
+    label: "Split view & side panels",
+    note: "Chrome split view, AI sidebars, and right-click assistant panels are detected — with a warning before removal.",
   },
   {
     icon: Box,
