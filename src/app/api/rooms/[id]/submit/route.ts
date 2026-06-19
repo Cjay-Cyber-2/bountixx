@@ -156,6 +156,11 @@ export async function POST(
       .update(roomPlayers)
       .set({ status: "forfeited", submittedAt: new Date() })
       .where(and(eq(roomPlayers.roomId, roomId), eq(roomPlayers.userId, session.id)));
+
+    const questions = getRoomQuestions(room);
+    const finished = await allCompetitorsFinished(roomId, room.adminId, questions.length);
+    if (finished) await finalizeArena(roomId);
+
     return NextResponse.json({ forfeited: true });
   }
 
@@ -295,6 +300,10 @@ export async function POST(
       }
     } else {
       await grantParticipationRewards(session.id);
+      if (!isMulti) {
+        const finished = await allCompetitorsFinished(roomId, room.adminId, questions.length);
+        if (finished) await finalizeArena(roomId);
+      }
     }
 
     return NextResponse.json({

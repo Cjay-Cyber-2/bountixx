@@ -216,7 +216,7 @@ export default function ResultsPage() {
             <>
               <p className="font-orbitron font-black text-sm text-haze-3 tracking-[6px]">NO WINNER</p>
               <p className="font-rajdhani text-sm text-haze-2 max-w-xs">
-                This arena ended without a correct submission. Entry fees stay in the vault.
+                This arena ended without a winner. Entry fees have been returned to all competitors.
               </p>
             </>
           )}

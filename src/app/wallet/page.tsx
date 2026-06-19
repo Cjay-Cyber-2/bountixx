@@ -25,6 +25,17 @@ const TX_LABELS: Record<string, string> = {
   gifted: "Coins gifted",
 };
 
+function describeTransaction(reference: string | undefined, type: string): string {
+  const ref = reference?.trim() ?? "";
+  if (ref.includes(":no_winner_refund")) return "Entry fee returned — no winner";
+  if (ref.includes(":cancelled_refund")) return "Entry fee returned — arena cancelled";
+  if (ref.includes(":tie_refund")) return "Entry fee returned — tie";
+  if (ref.includes(":entry")) return "Arena entry fee";
+  if (ref.includes(":winner")) return "Bounty won";
+  if (ref) return ref;
+  return TX_LABELS[type] ?? type;
+}
+
 const BUNDLES = [
   { id: "starter",    label: "Starter",    coins: 100,  priceNGN: "₦750",    priceUSD: "$0.99",  popular: false },
   { id: "challenger", label: "Challenger", coins: 300,  priceNGN: "₦2,000",  priceUSD: "$2.49",  popular: false },
@@ -52,7 +63,7 @@ export default function WalletPage() {
           setTxList(
             d.transactions.map((t: { type: string; reference?: string; amount: number; createdAt: string }) => ({
               type: t.type,
-              desc: t.reference?.trim() || TX_LABELS[t.type] || t.type,
+              desc: describeTransaction(t.reference, t.type),
               amount: t.amount,
               date: new Date(t.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
             }))

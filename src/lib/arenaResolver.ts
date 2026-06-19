@@ -56,6 +56,80 @@ export async function scoreRoom(roomId: string): Promise<ScoreRow[]> {
   });
 }
 
+/** Backfill refunds for ended/cancelled rooms that were closed before refund logic shipped. */
+export async function repairMissingEntryRefunds(
+  roomId: string,
+  roomStatus: string,
+): Promise<void> {
+  if (roomStatus === "cancelled") {
+    await refundEntryFeesForRoom(roomId, "cancelled_refund");
+    return;
+  }
+
+  if (roomStatus !== "ended") return;
+
+  const [winner] = await db
+    .select({ id: submissions.id })
+    .from(submissions)
+    .where(and(eq(submissions.roomId, roomId), eq(submissions.isWinner, true)))
+    .limit(1);
+
+  if (!winner) {
+    await refundEntryFeesForRoom(roomId, "no_winner_refund");
+  }
+}
+
+/** Refund entry fees to everyone who paid when no winner is crowned. Idempotent per refund type. */
+export async function refundEntryFeesForRoom(
+  roomId: string,
+  refundKind: "no_winner_refund" | "cancelled_refund",
+): Promise<void> {
+  const refundReference = `room:${roomId}:${refundKind}`;
+
+  const entryTxs = await db
+    .select({
+      userId: coinTransactions.userId,
+      amount: coinTransactions.amount,
+    })
+    .from(coinTransactions)
+    .where(
+      and(
+        eq(coinTransactions.reference, `room:${roomId}:entry`),
+        eq(coinTransactions.type, "spent"),
+      ),
+    );
+
+  for (const entry of entryTxs) {
+    const [alreadyRefunded] = await db
+      .select({ id: coinTransactions.id })
+      .from(coinTransactions)
+      .where(
+        and(
+          eq(coinTransactions.userId, entry.userId),
+          eq(coinTransactions.reference, refundReference),
+        ),
+      )
+      .limit(1);
+
+    if (alreadyRefunded) continue;
+
+    const refundAmount = Math.abs(entry.amount ?? ENTRY_FEE);
+
+    await db
+      .update(users)
+      .set({ coinsBalance: sql`${users.coinsBalance} + ${refundAmount}` })
+      .where(eq(users.id, entry.userId));
+
+    await db.insert(coinTransactions).values({
+      id: randomUUID(),
+      userId: entry.userId,
+      amount: refundAmount,
+      type: "earned",
+      reference: refundReference,
+    });
+  }
+}
+
 /** End a live room, pick winner(s), distribute coins / refunds. Idempotent if already ended. */
 export async function finalizeArena(roomId: string): Promise<void> {
   const [room] = await db.select().from(rooms).where(eq(rooms.id, roomId)).limit(1);
@@ -174,6 +248,9 @@ export async function finalizeArena(roomId: string): Promise<void> {
       roomsCreatedCount: winnerUser?.roomsCreatedCount,
       consecutiveWins: streak,
     });
+  } else {
+    await refundEntryFeesForRoom(roomId, "no_winner_refund");
+    await db.update(rooms).set({ prizePool: 0 }).where(eq(rooms.id, roomId));
   }
 
   for (const c of competitors) {
