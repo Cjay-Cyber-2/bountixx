@@ -173,6 +173,23 @@ export function SectionIntro({
   );
 }
 
+/** App page frame — full-width, fills viewport below nav */
+export function AppPage({
+  children,
+  className = "",
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={`flex-1 w-full min-h-0 ${APP_GUTTERS} py-6 md:py-8 lg:py-10`}
+    >
+      <div className={`w-full flex flex-col ${className}`}>{children}</div>
+    </div>
+  );
+}
+
 /** App page frame — comfortable width, clean card surface */
 export function PageShell({
   children,

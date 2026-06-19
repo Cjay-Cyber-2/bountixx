@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { AlertCircle, Plus, Trash2, Loader2, ChevronRight } from "lucide-react";
 import { InviteSharePanel } from "@/components/arena/InviteSharePanel";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { PageShell, APP_GUTTERS } from "@/components/landing/_section";
+import { AppPage } from "@/components/landing/_section";
 import { Button } from "@/components/ui/Button";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { readApiError } from "@/lib/readApiError";
@@ -131,10 +131,10 @@ function SetupStep({
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -16 }}
-      className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8"
+      className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[1.15fr_1fr] gap-6 md:gap-8 w-full"
     >
       {/* Left Column */}
-      <div className="lg:col-span-7 flex flex-col gap-6">
+      <div className="flex flex-col gap-6 min-w-0">
         {/* Entry fee banner */}
         <div className="flex flex-col gap-2 rounded-xl bg-[var(--void-tint)] border border-[var(--border-accent)] px-5 py-4">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -158,7 +158,7 @@ function SetupStep({
       </div>
 
       {/* Right Column */}
-      <div className="lg:col-span-5 flex flex-col gap-6">
+      <div className="flex flex-col gap-6 min-w-0">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-5">
           <div>
             <label className="bx-label">Players (2–20)</label>
@@ -189,12 +189,12 @@ function SetupStep({
       </div>
 
       {error && (
-        <div className="lg:col-span-12">
+        <div className="md:col-span-2">
           <p className="flex items-center gap-2 text-sm text-danger"><AlertCircle size={14} /> {error}</p>
         </div>
       )}
 
-      <div className="lg:col-span-12">
+      <div className="md:col-span-2">
         <StepActions>
           <Button variant="primary" size="lg" className="w-full sm:w-auto sm:min-w-[220px]" magnetic onClick={handleNext}>
             Next — add questions <ChevronRight size={16} />
@@ -796,74 +796,65 @@ export default function CreatePage() {
 
   return (
     <AppLayout>
-      <div className={`${APP_GUTTERS} py-6 md:py-10 max-w-7xl mx-auto w-full`}>
-        <div
-          className="w-full rounded-2xl border border-[var(--border-1)] px-6 py-8 sm:px-10 sm:py-10 md:px-12 md:py-12"
-          style={{
-            background: "var(--surface-card)",
-            boxShadow: "0 1px 3px rgba(78, 39, 37, 0.06), 0 8px 32px rgba(78, 39, 37, 0.08)",
-            transition: "var(--theme-transition)",
-          }}
-        >
-          <p className="text-xs font-medium text-plum mb-2">New arena</p>
-          <h1 className="font-display text-3xl md:text-4xl text-haze mb-3 text-balance">Create your arena</h1>
-          <p className="text-base md:text-lg text-haze-2 mb-8 md:mb-10 max-w-2xl leading-relaxed">
-            Set up your challenge. The AI validates and builds the rest.
-          </p>
+      <AppPage>
+        <p className="text-xs font-medium text-plum mb-2">New arena</p>
+        <h1 className="font-display text-3xl md:text-4xl text-haze mb-3 text-balance">Create your arena</h1>
+        <p className="text-base md:text-lg text-haze-2 mb-8 md:mb-10 max-w-3xl leading-relaxed">
+          Set up your challenge. The AI validates and builds the rest.
+        </p>
 
-          <StepIndicator step={step} />
+        <StepIndicator step={step} />
 
-          <AnimatePresence mode="wait">
-            {step === "setup" && (
-              <SetupStep
-                key="setup"
-                onNext={(data) => {
-                  setSetupData(data);
-                  setStep("questions");
-                }}
-              />
-            )}
+        <AnimatePresence mode="wait">
+          {step === "setup" && (
+            <SetupStep
+              key="setup"
+              onNext={(data) => {
+                setSetupData(data);
+                setStep("questions");
+              }}
+            />
+          )}
 
-            {step === "questions" && setupData && (
-              <QuestionsStep
-                key="questions"
-                arenaName={setupData.name}
-                questions={questions}
-                onAnalyzeOne={handleAnalyzeOne}
-                onAnalyzeAll={handleAnalyzeAll}
-                batchAnalyzing={batchAnalyzing}
-                onAdd={() => setQuestions((prev) => [...prev, { localId: crypto.randomUUID(), taskRaw: "", status: "idle" }])}
-                onDelete={(id) => setQuestions((prev) => prev.filter((q) => q.localId !== id))}
-                onChange={(id, taskRaw) => setQuestions((prev) => prev.map((q) => q.localId === id ? { ...q, taskRaw, status: q.status === "done" || q.status === "invalid" || q.status === "clarify" ? "idle" : q.status } : q))}
-                onAnswerChange={(id, answer) => setQuestions((prev) => prev.map((q) =>
-                  q.localId === id && q.analysis
-                    ? { ...q, analysis: { ...q.analysis, canonicalAnswer: answer } }
-                    : q
-                ))}
-                onNext={() => setStep("review")}
-                onBack={() => setStep("setup")}
-              />
-            )}
+          {step === "questions" && setupData && (
+            <QuestionsStep
+              key="questions"
+              arenaName={setupData.name}
+              questions={questions}
+              onAnalyzeOne={handleAnalyzeOne}
+              onAnalyzeAll={handleAnalyzeAll}
+              batchAnalyzing={batchAnalyzing}
+              onAdd={() => setQuestions((prev) => [...prev, { localId: crypto.randomUUID(), taskRaw: "", status: "idle" }])}
+              onDelete={(id) => setQuestions((prev) => prev.filter((q) => q.localId !== id))}
+              onChange={(id, taskRaw) => setQuestions((prev) => prev.map((q) => q.localId === id ? { ...q, taskRaw, status: q.status === "done" || q.status === "invalid" || q.status === "clarify" ? "idle" : q.status } : q))}
+              onAnswerChange={(id, answer) => setQuestions((prev) => prev.map((q) =>
+                q.localId === id && q.analysis
+                  ? { ...q, analysis: { ...q.analysis, canonicalAnswer: answer } }
+                  : q
+              ))}
+              onNext={() => setStep("review")}
+              onBack={() => setStep("setup")}
+            />
+          )}
 
-            {step === "review" && setupData && (
-              <ReviewStep
-                key="review"
-                arenaName={setupData.name}
-                playerCap={setupData.playerCap}
-                questions={questions}
-                onLaunch={handleLaunch}
-                creating={creating}
-                createError={createError}
-                onBack={() => setStep("questions")}
-              />
-            )}
+          {step === "review" && setupData && (
+            <ReviewStep
+              key="review"
+              arenaName={setupData.name}
+              playerCap={setupData.playerCap}
+              questions={questions}
+              onLaunch={handleLaunch}
+              creating={creating}
+              createError={createError}
+              onBack={() => setStep("questions")}
+            />
+          )}
 
-            {step === "lobby" && createdRoom && (
-              <LobbyView key="lobby" room={createdRoom} />
-            )}
-          </AnimatePresence>
-        </div>
-      </div>
+          {step === "lobby" && createdRoom && (
+            <LobbyView key="lobby" room={createdRoom} />
+          )}
+        </AnimatePresence>
+      </AppPage>
     </AppLayout>
   );
 }

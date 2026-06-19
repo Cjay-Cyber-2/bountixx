@@ -18,7 +18,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   return (
     <div className="flex min-h-[100dvh] flex-col bg-cosmos">
       <TopNav />
-      <main className="flex-1 w-full pb-20 md:pb-0">
+      <main className="flex flex-1 flex-col w-full min-h-0 pb-20 md:pb-0">
         {children}
       </main>
       <MobileBottomNav />

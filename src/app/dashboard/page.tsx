@@ -6,7 +6,7 @@ import { Zap, Trophy, TrendingUp, Coins, Swords, ArrowRight } from "lucide-react
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { APP_GUTTERS } from "@/components/landing/_section";
+import { AppPage } from "@/components/landing/_section";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { Button } from "@/components/ui/Button";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
@@ -69,9 +69,7 @@ export default function DashboardPage() {
 
   return (
     <AppLayout>
-      <div className={`${APP_GUTTERS} py-6 md:py-8 lg:py-10`}>
-        <div className="w-full">
-
+      <AppPage>
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
@@ -298,9 +296,7 @@ export default function DashboardPage() {
             </div>
           )}
         </motion.div>
-
-        </div>
-      </div>
+      </AppPage>
     </AppLayout>
   );
 }

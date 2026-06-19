@@ -9,7 +9,7 @@ import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { CrownMark } from "@/components/BountixxLogo";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { useToast } from "@/components/ui/Toast";
-import { APP_GUTTERS } from "@/components/landing/_section";
+import { AppPage } from "@/components/landing/_section";
 
 type FilterTab = "ALL" | "EARNED" | "SPENT" | "PURCHASED";
 type PaymentMethod = "paystack" | "stripe";
@@ -106,11 +106,11 @@ export default function WalletPage() {
 
   return (
     <AppLayout>
-      <div className={`${APP_GUTTERS} py-8 md:py-10`}>
+      <AppPage>
         <p className="font-space-mono text-[11px] text-plum tracking-[3px] uppercase mb-2">Treasury</p>
         <h1 className="font-zen-dots text-2xl md:text-3xl text-haze mb-8">Your wallet</h1>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6 lg:gap-8">
+        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(300px,380px)] gap-6 xl:gap-10 w-full">
           {/* Left */}
           <div className="flex flex-col gap-6">
             {/* Balance */}
@@ -273,7 +273,7 @@ export default function WalletPage() {
             </p>
           </div>
         </div>
-      </div>
+      </AppPage>
     </AppLayout>
   );
 }
