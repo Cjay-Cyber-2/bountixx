@@ -3,22 +3,43 @@
 /**
  * Left-side brand panel shared by /login and /signup.
  *
- * Renders the official animated brand mark (bountixx.svg) full-bleed inside
- * the left column — no aspect-square boxing, just edge-to-edge SVG.
+ * Dark mode  → legacy dark blue (#0E0818)
+ * Light mode → mint canvas (#DDEAE1)
  *
- * The panel is hidden below lg — mobile shows the form full-width.
+ * Backgrounds are set explicitly from theme so they never inherit the wrong
+ * palette (display:contents wrappers do not pass CSS variables reliably).
  */
 
 import { useState } from "react";
 import { useTheme } from "@/components/providers/ThemeProvider";
 
+/** Legacy cyber palette — matches [data-legacy-aesthetic] in globals.css */
+const PANEL = {
+  dark: {
+    bg: "#0E0818",
+    border: "rgba(155, 107, 255, 0.22)",
+  },
+  light: {
+    bg: "#DDEAE1",
+    border: "rgba(78, 39, 37, 0.22)",
+  },
+} as const;
+
 export function AuthBrandPanel() {
   const [svgFailed, setSvgFailed] = useState(false);
   const { theme } = useTheme();
   const isLight = theme === "light";
+  const palette = isLight ? PANEL.light : PANEL.dark;
 
   return (
-    <div className="hidden lg:flex bg-[var(--cosmos-2)] border-r border-[var(--border-2)] relative overflow-hidden transition-colors duration-350">
+    <div
+      data-legacy-aesthetic={isLight ? undefined : ""}
+      className="hidden lg:flex relative min-h-full overflow-hidden border-r transition-[background-color,border-color] duration-350"
+      style={{
+        backgroundColor: palette.bg,
+        borderColor: palette.border,
+      }}
+    >
       {/* Ambient glow layers */}
       <div
         className="absolute inset-0 pointer-events-none z-[2]"
@@ -41,7 +62,7 @@ export function AuthBrandPanel() {
         <div
           key={c}
           className={`absolute ${c} w-8 h-8 ${b} z-10`}
-          style={{ borderColor: isLight ? "var(--border-2)" : "rgba(155,107,255,0.30)" }}
+          style={{ borderColor: isLight ? PANEL.light.border : "rgba(155,107,255,0.30)" }}
           aria-hidden
         />
       ))}

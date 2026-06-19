@@ -11,7 +11,6 @@ import { clerkError, isSessionExistsError } from "@/lib/clerkError";
 import { useRedirectIfSignedIn } from "@/hooks/useRedirectIfSignedIn";
 import { Button } from "@/components/ui/Button";
 import { AuthBrandPanel } from "@/components/landing/AuthBrandPanel";
-import { useTheme } from "@/components/providers/ThemeProvider";
 import {
   AuthFormShell,
   AuthDivider,
@@ -210,14 +209,11 @@ export default function SignupPage() {
     { id: "phone-otp", label: "Phone", icon: <Phone size={13} /> },
   ];
 
-  const { theme } = useTheme();
   if (loading || user) return null;
 
   return (
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-cosmos">
-      <div data-legacy-aesthetic={theme === "light" ? undefined : ""} className="contents">
-        <AuthBrandPanel />
-      </div>
+      <AuthBrandPanel />
 
       <AuthFormShell
         eyebrow="Join the arena"
