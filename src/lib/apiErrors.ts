@@ -8,6 +8,10 @@ type ErrorBody = {
 
 const ROBOTIC = /^(unauthorized|forbidden|not found|bad request|internal server error|error)$/i;
 
+function isAiRateLimitish(message: string): boolean {
+  return /rate limit|tokens per (minute|day|hour)|llama-3\.3|groq/i.test(message);
+}
+
 /** Turn raw API errors into copy people can actually act on. */
 export function friendlyErrorMessage(
   status: number,
@@ -62,9 +66,12 @@ export function friendlyErrorMessage(
     return "That isn't available right now. Refresh and try again.";
   }
 
-  if (status === 503) {
+  if (status === 502 || status === 503) {
+    if (raw && isAiRateLimitish(raw)) {
+      return "Groq AI hit its daily limit. Add GEMINI_API_KEY in Vercel (recommended), or wait about an hour and try again.";
+    }
     if (raw && !ROBOTIC.test(raw)) return raw;
-    return "We're having trouble reaching the server. Please try again in a moment.";
+    return "We're having trouble reaching the AI service. Please try again in a moment.";
   }
 
   if (raw && !ROBOTIC.test(raw)) return raw;

@@ -256,8 +256,47 @@ function resolveProvider(): { provider: Provider; apiKey: string } | null {
   return null;
 }
 
+export function isAiRateLimitError(message: string): boolean {
+  return /rate limit|tokens per (minute|day|hour)|too many requests|quota exceeded/i.test(message);
+}
+
+export function friendlyAiRateLimitMessage(): string {
+  return "Groq AI hit its daily limit. Add GEMINI_API_KEY in Vercel (recommended), or wait about an hour and try again.";
+}
+
+async function runPrimaryAnalysis(
+  userMessage: string,
+): Promise<{ result: AnalysisResult; provider: Provider }> {
+  const geminiKey = process.env.GEMINI_API_KEY?.trim();
+  const groqKey = process.env.GROQ_API_KEY?.trim();
+
+  if (geminiKey) {
+    try {
+      return { result: await analyseWithGemini(geminiKey, userMessage), provider: "gemini" };
+    } catch (err) {
+      if (groqKey && err instanceof AiProviderError && !isAiRateLimitError(err.message)) {
+        return { result: await analyseWithGroq(groqKey, userMessage), provider: "groq" };
+      }
+      throw err;
+    }
+  }
+
+  if (groqKey) {
+    try {
+      return { result: await analyseWithGroq(groqKey, userMessage), provider: "groq" };
+    } catch (err) {
+      if (err instanceof AiProviderError && isAiRateLimitError(err.message)) {
+        throw new AiProviderError(friendlyAiRateLimitMessage());
+      }
+      throw err;
+    }
+  }
+
+  throw new AiConfigError(missingAiKeyMessage());
+}
+
 export function missingAiKeyMessage(): string {
-  return "AI analysis unavailable — set GEMINI_API_KEY or GROQ_API_KEY in Vercel, then redeploy";
+  return "AI analysis unavailable — set GEMINI_API_KEY (recommended) or GROQ_API_KEY in Vercel, then redeploy";
 }
 
 async function readHttpError(res: Response, label: string): Promise<string> {
@@ -492,17 +531,13 @@ export async function analyseChallenge(
   userMessage: string,
   languageHint?: string
 ): Promise<AnalysisResult> {
-  const resolved = resolveProvider();
-  if (!resolved) {
+  if (!resolveProvider()) {
     throw new AiConfigError(missingAiKeyMessage());
   }
 
   const taskText = extractTaskText(userMessage);
 
-  const result =
-    resolved.provider === "gemini"
-      ? await analyseWithGemini(resolved.apiKey, userMessage)
-      : await analyseWithGroq(resolved.apiKey, userMessage);
+  const { result, provider } = await runPrimaryAnalysis(userMessage);
 
   const { analysis, reclassified } = normaliseAnalysis(result, languageHint, taskText);
 
@@ -511,7 +546,16 @@ export async function analyseChallenge(
     analysis.valid &&
     !analysis.needsClarification;
 
-  if (needsAnswer) {
+  const hasConcreteFirstPass =
+    Boolean(analysis.canonicalAnswer?.trim()) &&
+    isConcreteAnswer(analysis.canonicalAnswer ?? "", analysis.category);
+
+  // Groq has tight daily limits — skip the extra fact-check call when the first pass already has an answer.
+  const shouldFactCheck =
+    needsAnswer &&
+    (provider === "gemini" || !hasConcreteFirstPass || reclassified);
+
+  if (shouldFactCheck) {
     const resolved = await resolveCanonicalAnswer(analysis.category, taskText);
     applyResolvedAnswer(analysis, resolved, taskText);
 

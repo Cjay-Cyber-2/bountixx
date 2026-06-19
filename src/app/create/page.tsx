@@ -12,6 +12,8 @@ import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { readApiError } from "@/lib/readApiError";
 import { ENTRY_FEE, ENTRY_FEE_SUMMARY, HOSTING_FREE_SUMMARY, maxBountyPool } from "@/lib/coins";
 import { LANGUAGES, LANGUAGE_KEYS, getLanguage, type LanguageKey } from "@/lib/languages";
+import { isBulkQuestionPaste, parseBulkQuestions } from "@/lib/parseBulkQuestions";
+import { isAiRateLimitError } from "@/lib/aiAnalyse";
 
 /* ─── Types ─── */
 type Category = "coding" | "trivia" | "logic" | "math" | "writing" | "design" | "meme";
@@ -67,15 +69,87 @@ const DIFF_COLORS: Record<Difficulty, string> = {
   rookie: "#DDEAE1", challenger: "#F92313", elite: "#4E2725", legendary: "#F92313",
 };
 
-function parseBulkQuestions(text: string): string[] {
-  return text
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0);
-}
-
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function questionsFromLines(lines: string[]): Question[] {
+  return lines.slice(0, 10).map((line) => ({
+    localId: crypto.randomUUID(),
+    taskRaw: line,
+    status: "idle" as const,
+  }));
+}
+
+/* ─── Render-style bulk question import ─── */
+function BulkQuestionImport({
+  onImport,
+  disabled,
+}: {
+  onImport: (lines: string[]) => void;
+  disabled?: boolean;
+}) {
+  const [draft, setDraft] = useState("");
+  const [importedCount, setImportedCount] = useState<number | null>(null);
+
+  function applyImport(text: string) {
+    const lines = parseBulkQuestions(text);
+    if (lines.length < 2) return false;
+    onImport(lines);
+    setDraft("");
+    setImportedCount(lines.length);
+    return true;
+  }
+
+  return (
+    <div
+      className="rounded-xl border border-dashed border-void/40 bg-void/5 p-4 md:p-5"
+      onPaste={(e) => {
+        const text = e.clipboardData.getData("text/plain");
+        if (isBulkQuestionPaste(text)) {
+          e.preventDefault();
+          applyImport(text);
+        }
+      }}
+    >
+      <p className="font-space-mono text-[10px] text-void tracking-widest uppercase mb-1">
+        Bulk import
+      </p>
+      <p className="font-rajdhani text-sm text-haze-2 mb-3 leading-relaxed">
+        Paste multiple questions here with <kbd className="px-1.5 py-0.5 bg-cosmos-3 border border-cosmos-4 text-[10px] font-space-mono">Ctrl+V</kbd> — one question per line, like Render env vars. Each line becomes its own question card.
+      </p>
+      <textarea
+        rows={4}
+        value={draft}
+        onChange={(e) => {
+          setDraft(e.target.value);
+          setImportedCount(null);
+        }}
+        onPaste={(e) => {
+          const text = e.clipboardData.getData("text/plain");
+          if (isBulkQuestionPaste(text)) {
+            e.preventDefault();
+            applyImport(text);
+          }
+        }}
+        onKeyDown={(e) => {
+          if ((e.ctrlKey || e.metaKey) && e.key === "v") return;
+          if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+            e.preventDefault();
+            applyImport(draft);
+          }
+        }}
+        disabled={disabled}
+        placeholder={"What is the capital of France?\nWho wrote Hamlet?\nWhat is the file extension for Go source code?"}
+        className="w-full px-4 py-3 bg-cosmos border border-cosmos-4 text-haze font-rajdhani text-sm placeholder:text-haze-3 focus:outline-none focus:border-void resize-none disabled:opacity-50"
+      />
+      {importedCount !== null && (
+        <p className="font-rajdhani text-xs text-success mt-2">
+          Imported {importedCount} questions — review each card below, then analyze.
+        </p>
+      )}
+    </div>
+  );
 }
 
 /* ─── Step indicator ─── */
@@ -230,7 +304,7 @@ function QuestionCard({
   onAnswerChange: (answer: string) => void;
   onDelete: () => void;
   onAnalyze: (languageHint?: string) => void;
-  onBulkPaste: (lines: string[], startIndex: number) => void;
+  onBulkPaste: (lines: string[]) => void;
   showAnalyzeButton: boolean;
 }) {
   const catColor = q.analysis ? (CAT_COLORS[q.analysis.category] ?? "#9B8FC0") : "#4A3F70";
@@ -266,11 +340,10 @@ function QuestionCard({
         value={q.taskRaw}
         onChange={(e) => onChange(e.target.value)}
         onPaste={(e) => {
-          const text = e.clipboardData.getData("text");
-          const lines = parseBulkQuestions(text);
-          if (lines.length > 1) {
+          const text = e.clipboardData.getData("text/plain");
+          if (isBulkQuestionPaste(text)) {
             e.preventDefault();
-            onBulkPaste(lines, index);
+            onBulkPaste(parseBulkQuestions(text));
           }
         }}
         disabled={q.status === "analyzing"}
@@ -449,7 +522,7 @@ function QuestionsStep({
   onDelete: (localId: string) => void;
   onChange: (localId: string, taskRaw: string) => void;
   onAnswerChange: (localId: string, answer: string) => void;
-  onBulkPaste: (lines: string[], startIndex: number) => void;
+  onBulkPaste: (lines: string[]) => void;
   onNext: () => void;
   onBack: () => void;
   batchAnalyzing: boolean;
@@ -469,6 +542,8 @@ function QuestionsStep({
 
   return (
     <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} className="flex flex-col gap-4">
+      <BulkQuestionImport onImport={onBulkPaste} disabled={anyAnalyzing} />
+
       <AnimatePresence mode="popLayout">
         {questions.map((q, i) => (
           <QuestionCard
@@ -488,11 +563,7 @@ function QuestionsStep({
       </AnimatePresence>
 
       {multi && (
-        <>
-          <p className="font-rajdhani text-sm text-haze-3 text-center">
-            Tip: paste multiple questions at once (one per line) into any question box — like Render env import.
-          </p>
-          <Button
+        <Button
             variant="primary"
             size="lg"
             fullWidth
@@ -507,7 +578,6 @@ function QuestionsStep({
                 ? "ANALYZING ALL QUESTIONS…"
                 : "ANALYZE ALL WITH AI"}
           </Button>
-        </>
       )}
 
       {!multi && questions.length === 1 && questions[0].status !== "done" && (
@@ -679,11 +749,16 @@ export default function CreatePage() {
     setQuestions((prev) => prev.map((x) => (x.localId === localId ? { ...x, status: "done", analysis } : x)));
   }, []);
 
+  const handleBulkPaste = useCallback((lines: string[]) => {
+    if (lines.length < 2) return;
+    setQuestions(questionsFromLines(lines));
+  }, []);
+
   const runAnalyzeRequest = useCallback(async (
     localId: string,
     taskRaw: string,
     languageHint?: string,
-  ): Promise<boolean> => {
+  ): Promise<{ ok: boolean; rateLimited: boolean }> => {
     setQuestions((prev) => prev.map((x) => (x.localId === localId ? { ...x, status: "analyzing", error: undefined } : x)));
 
     try {
@@ -699,24 +774,24 @@ export default function CreatePage() {
       if (!res.ok) {
         const error = await readApiError(res);
         setQuestions((prev) => prev.map((x) => (x.localId === localId ? { ...x, status: "error", error } : x)));
-        return false;
+        return { ok: false, rateLimited: isAiRateLimitError(error) };
       }
 
       const data = (await res.json()) as { analysis?: AIAnalysis };
       if (!data.analysis) {
         setQuestions((prev) => prev.map((x) => (x.localId === localId ? { ...x, status: "error", error: "Invalid response from server" } : x)));
-        return false;
+        return { ok: false, rateLimited: false };
       }
 
       applyAnalysisResult(localId, data.analysis);
-      return true;
+      return { ok: true, rateLimited: false };
     } catch (err) {
       const message =
         err instanceof TypeError
           ? "Network error — check your connection and try again"
           : "Could not reach AI service";
       setQuestions((prev) => prev.map((x) => (x.localId === localId ? { ...x, status: "error", error: message } : x)));
-      return false;
+      return { ok: false, rateLimited: false };
     }
   }, [applyAnalysisResult, setupData?.name]);
 
@@ -725,27 +800,6 @@ export default function CreatePage() {
     if (!q || !q.taskRaw.trim()) return;
     await runAnalyzeRequest(localId, q.taskRaw, languageHint);
   }, [questions, runAnalyzeRequest]);
-
-  const handleBulkPaste = useCallback((lines: string[], startIndex: number) => {
-    setQuestions((prev) => {
-      const next = [...prev];
-      for (let i = 0; i < lines.length && startIndex + i < 10; i++) {
-        const idx = startIndex + i;
-        if (idx < next.length) {
-          next[idx] = {
-            ...next[idx],
-            taskRaw: lines[i],
-            status: "idle",
-            analysis: undefined,
-            error: undefined,
-          };
-        } else {
-          next.push({ localId: crypto.randomUUID(), taskRaw: lines[i], status: "idle" });
-        }
-      }
-      return next.slice(0, 10);
-    });
-  }, []);
 
   const handleAnalyzeAll = useCallback(async () => {
     const pending = questions.filter((q) => q.taskRaw.trim());
@@ -757,10 +811,21 @@ export default function CreatePage() {
     for (let i = 0; i < pending.length; i++) {
       const q = pending[i];
       setAnalyzeProgress({ current: i + 1, total: pending.length });
-      await runAnalyzeRequest(q.localId, q.taskRaw);
+
+      let attempts = 0;
+      while (attempts < 3) {
+        const result = await runAnalyzeRequest(q.localId, q.taskRaw);
+        if (result.ok) break;
+        if (result.rateLimited) {
+          await sleep(8_000 * (attempts + 1));
+          attempts++;
+          continue;
+        }
+        break;
+      }
 
       if (i < pending.length - 1) {
-        await sleep(3500);
+        await sleep(6_500);
       }
     }
 
