@@ -14,10 +14,11 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 export async function GET(req: Request) {
-  const session = await getSession(req);
-  if (!session) return unauthorized();
+  try {
+    const session = await getSession(req);
+    if (!session) return unauthorized();
 
-  const uid = session.id;
+    const uid = session.id;
 
   // Rooms won (submissions where this user is winner)
   const [wonResult] = await db
@@ -138,4 +139,11 @@ export async function GET(req: Request) {
         inviterName: inv.inviterName ?? "Someone",
       })),
   });
+  } catch (err) {
+    console.error("[dashboard] GET failed:", err);
+    return NextResponse.json(
+      { error: "Dashboard failed to load. Please refresh in a moment." },
+      { status: 503 },
+    );
+  }
 }

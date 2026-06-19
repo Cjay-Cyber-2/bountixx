@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
+import { useAuth } from "@/components/providers/AuthProvider";
 import {
   InvitePlayerButton,
   LobbyInviteButton,
@@ -9,8 +10,9 @@ import {
   OnlinePlayerRow,
 } from "@/components/arena/OnlinePlayerRow";
 
-const POLL_MS = 1_000;
-const STREAM_RECONNECT_MS = 2_000;
+const POLL_MS = 5_000;
+const MAX_AUTH_RETRIES = 4;
+const RETRY_DELAY_MS = 600;
 
 type OnlineFriendsListProps = {
   roomId?: string;
@@ -28,6 +30,10 @@ function samePlayerList(a: OnlinePlayer[], b: OnlinePlayer[]): boolean {
   return a.every((player, index) => player.id === b[index]?.id);
 }
 
+function sleep(ms: number) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
 export function OnlineFriendsList({
   roomId,
   activeLobby,
@@ -38,12 +44,14 @@ export function OnlineFriendsList({
   onCountChange,
   onNotify,
 }: OnlineFriendsListProps) {
+  const { user, loading: authLoading } = useAuth();
   const [users, setUsers] = useState<OnlinePlayer[]>(initialUsers ?? []);
   const [loading, setLoading] = useState(initialUsers === undefined);
   const [error, setError] = useState<string | null>(null);
   const [invitingId, setInvitingId] = useState<string | null>(null);
   const [invitedIds, setInvitedIds] = useState<Set<string>>(new Set());
   const usersRef = useRef(users);
+  const failStreakRef = useRef(0);
 
   const targetRoomId = roomId ?? activeLobby?.id;
   const excludeKey = excludeUserIds.join(",");
@@ -59,6 +67,7 @@ export function OnlineFriendsList({
       if (samePlayerList(usersRef.current, filtered)) return;
       setUsers(filtered);
       setError(null);
+      failStreakRef.current = 0;
       onCountChange?.(filtered.length);
       setLoading(false);
     },
@@ -66,99 +75,61 @@ export function OnlineFriendsList({
   );
 
   const loadOnline = useCallback(async () => {
-    try {
-      const res = await fetchWithAuth("/api/presence");
-      if (res.status === 401) {
-        setError("Finishing account setup — try again in a moment.");
-        setUsers([]);
-        onCountChange?.(0);
+    if (authLoading || !user) return;
+
+    for (let attempt = 0; attempt < MAX_AUTH_RETRIES; attempt += 1) {
+      try {
+        const res = await fetchWithAuth("/api/presence");
+        if (res.status === 401 && attempt < MAX_AUTH_RETRIES - 1) {
+          await sleep(RETRY_DELAY_MS * (attempt + 1));
+          continue;
+        }
+        if (res.status === 401) {
+          if (usersRef.current.length === 0) {
+            setError("Still signing you in — hang tight for a moment.");
+          }
+          return;
+        }
+        if (!res.ok) {
+          failStreakRef.current += 1;
+          if (failStreakRef.current >= 3 && usersRef.current.length === 0) {
+            const body = (await res.json().catch(() => ({}))) as { error?: string };
+            setError(body.error ?? "Could not load online players.");
+          }
+          return;
+        }
+
+        const data = (await res.json()) as { users?: OnlinePlayer[] };
+        applyUsers(data.users ?? []);
+        return;
+      } catch {
+        failStreakRef.current += 1;
+        if (failStreakRef.current >= 3 && usersRef.current.length === 0) {
+          setError("Network error loading online players.");
+        }
         return;
       }
-      if (!res.ok) {
-        const body = (await res.json().catch(() => ({}))) as { error?: string };
-        setError(body.error ?? "Could not load online players.");
-        return;
-      }
-      const data = (await res.json()) as { users?: OnlinePlayer[] };
-      applyUsers(data.users ?? []);
-    } catch {
-      setError("Network error loading online players.");
-    } finally {
-      setLoading(false);
     }
-  }, [applyUsers, onCountChange]);
+  }, [applyUsers, authLoading, user]);
 
   useEffect(() => {
-    let disposed = false;
-    let pollId: number | null = null;
-    let reconnectId: number | null = null;
-    let source: EventSource | null = null;
+    if (authLoading || !user) return;
 
-    const stopPolling = () => {
-      if (pollId !== null) {
-        window.clearInterval(pollId);
-        pollId = null;
-      }
-    };
-
-    const startPolling = () => {
-      if (pollId !== null || disposed) return;
-      void loadOnline();
-      pollId = window.setInterval(() => void loadOnline(), POLL_MS);
-    };
-
-    const connectStream = () => {
-      if (disposed) return;
-
-      source?.close();
-      source = new EventSource("/api/presence/stream");
-
-      source.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data) as { users?: OnlinePlayer[] };
-          applyUsers(data.users ?? []);
-          stopPolling();
-        } catch {
-          // ignore malformed payloads
-        }
-      };
-
-      source.onerror = () => {
-        source?.close();
-        source = null;
-        if (disposed) return;
-        startPolling();
-        if (reconnectId === null) {
-          reconnectId = window.setInterval(() => {
-            if (!disposed && !source) connectStream();
-          }, STREAM_RECONNECT_MS);
-        }
-      };
-    };
-
-    connectStream();
+    void loadOnline();
+    const id = window.setInterval(() => void loadOnline(), POLL_MS);
 
     const refreshNow = () => {
-      if (disposed) return;
-      void loadOnline();
+      if (document.visibilityState === "visible") void loadOnline();
     };
-
-    const onVisible = () => {
-      if (document.visibilityState === "visible") refreshNow();
-    };
-
-    document.addEventListener("visibilitychange", onVisible);
+    document.addEventListener("visibilitychange", refreshNow);
     window.addEventListener("focus", refreshNow);
 
     return () => {
-      disposed = true;
-      source?.close();
-      stopPolling();
-      if (reconnectId !== null) window.clearInterval(reconnectId);
-      document.removeEventListener("visibilitychange", onVisible);
+      window.clearInterval(id);
+      document.removeEventListener("visibilitychange", refreshNow);
       window.removeEventListener("focus", refreshNow);
     };
-  }, [applyUsers, loadOnline]);
+  }, [authLoading, loadOnline, user]);
 
   const invite = async (player: OnlinePlayer) => {
     if (!targetRoomId) {
@@ -212,7 +183,7 @@ export function OnlineFriendsList({
     );
   }
 
-  if (error) {
+  if (error && users.length === 0) {
     return (
       <p className="font-space-mono text-[10px] text-danger text-center py-6 leading-relaxed">{error}</p>
     );

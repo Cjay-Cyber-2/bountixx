@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { Zap, Trophy, TrendingUp, Coins, Swords, ArrowRight } from "lucide-react";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AppPage } from "@/components/landing/_section";
@@ -34,58 +34,66 @@ type DashboardData = {
   pendingInvites: { id: string; roomId: string; roomName: string; inviterName: string }[];
 };
 
-type MeResponse = {
-  user?: { coinsBalance?: number };
-  coinsUnlimited?: boolean;
-};
+const MAX_AUTH_RETRIES = 4;
+const RETRY_DELAY_MS = 600;
+
+function sleep(ms: number) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
 
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [onlineCount, setOnlineCount] = useState(0);
-
-  const fetchData = useCallback(async () => {
-    if (!user) return;
-    try {
-      setLoadError(null);
-
-      const meRes = await fetchWithAuth("/api/user/me");
-      let meCoins: number | undefined;
-      let meUnlimited = false;
-      if (meRes.ok) {
-        const me = (await meRes.json()) as MeResponse;
-        meCoins = me.user?.coinsBalance;
-        meUnlimited = Boolean(me.coinsUnlimited);
-      }
-
-      const res = await fetchWithAuth("/api/dashboard");
-      if (!res.ok) {
-        const body = (await res.json().catch(() => ({}))) as { error?: string };
-        setLoadError(body.error ?? "Could not load dashboard.");
-        return;
-      }
-
-      const d = (await res.json()) as DashboardData;
-      if (typeof meCoins === "number") {
-        d.coinsBalance = meCoins;
-      }
-      if (meUnlimited) {
-        d.coinsUnlimited = true;
-      }
-      setData(d);
-    } catch {
-      setLoadError("Network error loading dashboard.");
-    } finally {
-      setLoading(false);
-    }
-  }, [user]);
+  const hasDataRef = useRef(false);
 
   useEffect(() => {
-    fetchData();
-    const id = setInterval(() => fetchData(), 5_000);
+    hasDataRef.current = data !== null;
+  }, [data]);
+
+  const fetchData = useCallback(async () => {
+    if (authLoading || !user) return;
+
+    for (let attempt = 0; attempt < MAX_AUTH_RETRIES; attempt += 1) {
+      try {
+        const res = await fetchWithAuth("/api/dashboard");
+        if (res.status === 401 && attempt < MAX_AUTH_RETRIES - 1) {
+          await sleep(RETRY_DELAY_MS * (attempt + 1));
+          continue;
+        }
+        if (!res.ok) {
+          const body = (await res.json().catch(() => ({}))) as { error?: string };
+          if (!hasDataRef.current) {
+            setLoadError(body.error ?? "Could not load dashboard.");
+          }
+          setLoading(false);
+          return;
+        }
+
+        const d = (await res.json()) as DashboardData;
+        setData(d);
+        setLoadError(null);
+        setLoading(false);
+        return;
+      } catch {
+        if (!hasDataRef.current) {
+          setLoadError("Network error loading dashboard.");
+        }
+        setLoading(false);
+        return;
+      }
+    }
+    setLoading(false);
+  }, [authLoading, user]);
+
+  useEffect(() => {
+    if (authLoading || !user) return;
+
+    void fetchData();
+    const id = setInterval(() => void fetchData(), 15_000);
 
     const refresh = () => {
       if (document.visibilityState === "visible") void fetchData();
@@ -98,7 +106,7 @@ export default function DashboardPage() {
       document.removeEventListener("visibilitychange", refresh);
       window.removeEventListener("focus", refresh);
     };
-  }, [fetchData]);
+  }, [authLoading, fetchData, user]);
 
   const statCards = [
     { label: "Rooms created",  value: data?.roomsCreated  ?? 0, icon: Swords,     accent: "var(--brand-primary)",  accentRaw: "#F92313" },
@@ -125,7 +133,7 @@ export default function DashboardPage() {
           </div>
         </motion.div>
 
-        {loadError ? (
+        {loadError && !data ? (
           <div className="mb-8 rounded-xl border border-danger/40 bg-danger/10 px-5 py-4">
             <p className="font-rajdhani text-sm text-danger">{loadError}</p>
           </div>

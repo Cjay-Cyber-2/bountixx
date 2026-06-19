@@ -35,7 +35,7 @@ type MeResponse = {
 export function TopNav() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { signOut } = useClerk();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -43,38 +43,48 @@ export function TopNav() {
   const [signingOut, setSigningOut] = useState(false);
 
   useEffect(() => {
-    setProfile(null);
-    setCoinsUnlimited(false);
-    if (!user) return;
+    if (authLoading) return;
+    if (!user) {
+      setProfile(null);
+      setCoinsUnlimited(false);
+      return;
+    }
+
     let cancelled = false;
 
-    const loadProfile = () => {
-      fetchWithAuth("/api/user/me")
-        .then((r) => r.json())
-        .then((d: MeResponse) => {
-          if (!cancelled && d.user) {
-            setProfile(d.user);
-            setCoinsUnlimited(Boolean(d.coinsUnlimited));
-          }
-        })
-        .catch(() => {});
+    const loadProfile = async () => {
+      try {
+        const r = await fetchWithAuth("/api/user/me");
+        if (!r.ok || cancelled) return;
+        const d = (await r.json()) as MeResponse;
+        if (!cancelled && d.user) {
+          setProfile(d.user);
+          setCoinsUnlimited(Boolean(d.coinsUnlimited));
+        }
+      } catch {
+        // keep last known profile on transient failures
+      }
     };
 
-    loadProfile();
-    const id = window.setInterval(loadProfile, 5_000);
+    const start = window.setTimeout(() => {
+      void loadProfile();
+    }, 400);
+
+    const id = window.setInterval(() => void loadProfile(), 15_000);
     const refresh = () => {
-      if (document.visibilityState === "visible") loadProfile();
+      if (document.visibilityState === "visible") void loadProfile();
     };
     document.addEventListener("visibilitychange", refresh);
     window.addEventListener("focus", refresh);
 
     return () => {
       cancelled = true;
+      window.clearTimeout(start);
       window.clearInterval(id);
       document.removeEventListener("visibilitychange", refresh);
       window.removeEventListener("focus", refresh);
     };
-  }, [user]);
+  }, [authLoading, user]);
 
   async function handleLogout() {
     setSigningOut(true);

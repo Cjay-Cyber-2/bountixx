@@ -64,26 +64,39 @@ async function readClerkProfile() {
   return { email, avatarUrl, rawUsername };
 }
 
-async function mainEventStarterGrantedTotal(userId: string): Promise<number> {
-  const txs = await db
-    .select({ amount: coinTransactions.amount })
+async function hasLaunchGrant(userId: string): Promise<boolean> {
+  const [tx] = await db
+    .select({ id: coinTransactions.id })
     .from(coinTransactions)
     .where(
       and(
         eq(coinTransactions.userId, userId),
         eq(coinTransactions.reference, MAIN_EVENT_GRANT_REF),
-        eq(coinTransactions.type, "gifted"),
       ),
-    );
+    )
+    .limit(1);
+  return Boolean(tx);
+}
 
-  return txs.reduce((total, tx) => total + Math.max(0, tx.amount ?? 0), 0);
+async function hasSpentCoins(userId: string): Promise<boolean> {
+  const [tx] = await db
+    .select({ id: coinTransactions.id })
+    .from(coinTransactions)
+    .where(
+      and(
+        eq(coinTransactions.userId, userId),
+        eq(coinTransactions.type, "spent"),
+      ),
+    )
+    .limit(1);
+  return Boolean(tx);
 }
 
 /** One-time main-event grant: 1,000 coins once per account. Spent coins stay spent. */
 async function ensureOneTimeStarterCoins(
   user: SessionUser,
   clerkEmail: string | null,
-): Promise<SessionUser> {
+): Promise<void> {
   const email = clerkEmail ?? user.email;
   const updates: Partial<typeof users.$inferInsert> = {};
 
@@ -95,63 +108,46 @@ async function ensureOneTimeStarterCoins(
     if (user.coinsBalance < UNLIMITED_COINS_BALANCE) {
       updates.coinsBalance = UNLIMITED_COINS_BALANCE;
     }
-    if (Object.keys(updates).length === 0) return user;
-    const [updated] = await db
+    if (Object.keys(updates).length === 0) return;
+    await db.update(users).set(updates).where(eq(users.id, user.id));
+    return;
+  }
+
+  const balance = user.coinsBalance ?? 0;
+  const granted = await hasLaunchGrant(user.id);
+
+  if (!granted) {
+    const targetBalance = Math.max(balance, STARTER_COINS);
+    await db
       .update(users)
-      .set(updates)
-      .where(eq(users.id, user.id))
-      .returning();
-    return updated ?? { ...user, ...updates };
-  }
+      .set({ ...updates, coinsBalance: targetBalance, email: updates.email ?? user.email })
+      .where(eq(users.id, user.id));
 
-  const grantedTotal = await mainEventStarterGrantedTotal(user.id);
-  const owed = Math.max(0, STARTER_COINS - grantedTotal);
-
-  if (owed === 0) {
-    if (Object.keys(updates).length === 0) return user;
-    const [updated] = await db
-      .update(users)
-      .set(updates)
-      .where(eq(users.id, user.id))
-      .returning();
-    return updated ?? { ...user, ...updates };
-  }
-
-  const previous = user.coinsBalance ?? 0;
-  const targetBalance = Math.max(previous, STARTER_COINS);
-  const credit = Math.max(0, targetBalance - previous);
-
-  if (credit > 0) {
-    updates.coinsBalance = targetBalance;
-  }
-
-  const [updated] = await db
-    .update(users)
-    .set(
-      Object.keys(updates).length > 0
-        ? { ...updates, email: updates.email ?? user.email }
-        : { email: updates.email ?? user.email },
-    )
-    .where(eq(users.id, user.id))
-    .returning();
-
-  try {
-    await db.insert(coinTransactions).values({
-      id: randomUUID(),
-      userId: user.id,
-      amount: owed,
-      type: "gifted",
-      reference: MAIN_EVENT_GRANT_REF,
-    });
-  } catch (err) {
-    console.error("[getSession] main event launch grant tx failed:", err);
-    if (credit > 0) {
-      return (await findUserById(user.id)) ?? updated ?? { ...user, coinsBalance: targetBalance };
+    try {
+      await db.insert(coinTransactions).values({
+        id: randomUUID(),
+        userId: user.id,
+        amount: STARTER_COINS,
+        type: "gifted",
+        reference: MAIN_EVENT_GRANT_REF,
+      });
+    } catch (err) {
+      console.error("[getSession] main event launch grant tx failed:", err);
     }
-    return (await findUserById(user.id)) ?? updated ?? user;
+    return;
   }
 
-  return (await findUserById(user.id)) ?? updated ?? (credit > 0 ? { ...user, coinsBalance: targetBalance } : user);
+  if (balance < STARTER_COINS && !(await hasSpentCoins(user.id))) {
+    await db
+      .update(users)
+      .set({ ...updates, coinsBalance: STARTER_COINS, email: updates.email ?? user.email })
+      .where(eq(users.id, user.id));
+    return;
+  }
+
+  if (Object.keys(updates).length > 0) {
+    await db.update(users).set(updates).where(eq(users.id, user.id));
+  }
 }
 
 async function findUserById(userId: string): Promise<SessionUser | null> {
@@ -216,11 +212,21 @@ async function finalizeSession(
   user: SessionUser,
   clerkEmail: string | null,
 ): Promise<SessionUser> {
-  await ensureOneTimeStarterCoins(user, clerkEmail);
+  try {
+    await ensureOneTimeStarterCoins(user, clerkEmail);
+  } catch (err) {
+    console.error("[getSession] starter coins failed:", err);
+  }
+
   const fresh = await findUserById(user.id);
-  const resolved = fresh ?? user;
-  await touchPresence(resolved.id, true);
-  return resolved;
+
+  try {
+    await touchPresence((fresh ?? user).id, true);
+  } catch (err) {
+    console.error("[getSession] presence touch failed:", err);
+  }
+
+  return fresh ?? user;
 }
 
 /**
@@ -275,7 +281,12 @@ export async function getSession(req?: Request): Promise<SessionUser | null> {
   if (!userId) return null;
 
   try {
-    await ensureDatabaseSchema();
+    try {
+      await ensureDatabaseSchema();
+    } catch (err) {
+      console.error("[getSession] ensureDatabaseSchema failed:", err);
+    }
+
     const profile = await readClerkProfile();
 
     let user = await findUserById(userId);
