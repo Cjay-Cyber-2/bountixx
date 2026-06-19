@@ -6,9 +6,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Play, Upload, Users, AlertTriangle, Crown } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
-import { useArenaGuard } from "@/hooks/useArenaGuard";
+import { arenaCheatMessage, useArenaGuard, type ArenaCheatReason } from "@/hooks/useArenaGuard";
 import { useToast } from "@/components/ui/Toast";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
+import { readApiError } from "@/lib/readApiError";
 import { getLanguage } from "@/lib/languages";
 
 /* ─── Types ─── */
@@ -278,6 +279,7 @@ function CodeEditor({ code, setCode, language, onRun, onSubmit, disabled, runnin
           aria-label="Code editor"
           disabled={disabled}
           onPaste={(e) => e.preventDefault()}
+          onCopy={(e) => e.preventDefault()}
         />
       </div>
 
@@ -305,12 +307,12 @@ interface AnswerInputProps {
   submitting: boolean;
 }
 
-function AnswerInput({ answer, setAnswer, onSubmit, disabled, submitting }: AnswerInputProps) {
+function AnswerInput({ answer, setAnswer, onSubmit, disabled, submitting, onPaste }: AnswerInputProps & { onPaste: (e: React.ClipboardEvent) => void }) {
   return (
     <div className="flex flex-col h-full">
       <div className="px-5 pt-4 pb-3 border-b border-cosmos-4 bg-cosmos-3 shrink-0">
         <p className="font-space-mono text-[11px] text-void tracking-[3px] uppercase">Your Answer</p>
-        <p className="font-rajdhani text-xs text-haze-3 mt-0.5">Case-insensitive · Ctrl+Enter to submit</p>
+        <p className="font-rajdhani text-xs text-haze-3 mt-0.5">Stay on this page · paste is disabled · Ctrl+Enter to submit</p>
       </div>
       <textarea
         value={answer}
@@ -321,6 +323,8 @@ function AnswerInput({ answer, setAnswer, onSubmit, disabled, submitting }: Answ
             onSubmit();
           }
         }}
+        onPaste={onPaste}
+        onCopy={(e) => e.preventDefault()}
         className="flex-1 p-5 bg-[#080612] text-haze font-rajdhani text-lg
                    placeholder:text-haze-3/40 focus:outline-none resize-none"
         style={{ caretColor: "var(--void)" }}
@@ -450,7 +454,12 @@ function HostPanel({ players, adminId, roomId, onEnded }: HostPanelProps) {
 }
 
 /* ─── Disqualified Banner ─── */
-function DQBanner() {
+function DQBanner({ reason }: { reason: ArenaCheatReason }) {
+  const label =
+    reason === "tab-switch"
+      ? "LEFT ARENA TAB · DISQUALIFIED"
+      : "EXTERNAL PANEL DETECTED · DISQUALIFIED";
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -40 }}
@@ -459,7 +468,7 @@ function DQBanner() {
     >
       <AlertTriangle size={14} className="text-white" aria-hidden="true" />
       <p className="font-space-mono text-[11px] text-white tracking-widest">
-        ANTI-CHEAT · TAB SWITCH DETECTED · DISQUALIFIED
+        ANTI-CHEAT · {label}
       </p>
     </motion.div>
   );
@@ -505,6 +514,7 @@ export default function ArenaPage() {
 
   const [activityFeed, setActivityFeed] = useState<ActivityItem[]>([]);
   const [tabDisqualified, setTabDisqualified] = useState(false);
+  const [cheatReason, setCheatReason] = useState<ArenaCheatReason>("tab-switch");
   const [submitted, setSubmitted] = useState(false);
   const [questionIndex, setQuestionIndex] = useState(0);
   const [questionsAnswered, setQuestionsAnswered] = useState(0);
@@ -622,11 +632,16 @@ export default function ArenaPage() {
     return () => document.removeEventListener("keydown", onKeyDown);
   });
 
-  /* ─── Anti-cheat: first tab switch = immediate disqualification ─── */
+  /* ─── Anti-cheat: tab switch or external side panel = disqualification ─── */
   const handleStrike = useCallback(
-    (_count: number, _reason: string) => {
+    (_count: number, reason: ArenaCheatReason) => {
+      setCheatReason(reason);
       setTabDisqualified(true);
-      toast({ type: "error", title: "DISQUALIFIED", message: "Tab switch detected. You have been removed from this arena." });
+      toast({
+        type: "error",
+        title: "Disqualified",
+        message: `${arenaCheatMessage(reason)} You have been removed from this arena.`,
+      });
       fetchWithAuth(`/api/rooms/${roomId}/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -636,8 +651,11 @@ export default function ArenaPage() {
     [toast, roomId]
   );
 
-  // Anti-cheat disabled for the host — they're the referee, not a competitor
-  useArenaGuard({ onStrike: handleStrike, maxStrikes: 1, enabled: !(data?.isAdmin ?? true) });
+  const { blockPaste } = useArenaGuard({
+    onStrike: handleStrike,
+    maxStrikes: 1,
+    enabled: !(data?.isAdmin ?? true),
+  });
 
   /* ─── Derived ─── */
   const inputDisabled = timeUp || tabDisqualified || submitted || loading;
@@ -680,14 +698,17 @@ export default function ArenaPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code, language, runTestsOnly: true, questionIndex }),
       });
-      if (!res.ok) { const err = (await res.json()) as { error?: string }; toast({ type: "error", title: "Run failed", message: err.error }); return; }
+      if (!res.ok) {
+        toast({ type: "error", title: "Run failed", message: await readApiError(res) });
+        return;
+      }
       const json = (await res.json()) as { testResults: { passed: number; total: number; results: TestResult[] }; runOnly: boolean };
       setTestResults(json.testResults.results);
       setTestRan(true);
       const { passed, total } = json.testResults;
       toast({ type: passed === total && total > 0 ? "success" : "warning", title: `${passed}/${total} public tests passed` });
     } catch {
-      toast({ type: "error", title: "Network error" });
+      toast({ type: "error", title: "Connection problem", message: "We couldn't reach the server. Try again." });
     } finally {
       setRunning(false);
     }
@@ -706,8 +727,7 @@ export default function ArenaPage() {
       });
 
       if (!res.ok) {
-        const err = (await res.json()) as { error?: string };
-        toast({ type: "error", title: "Submission failed", message: err.error });
+        toast({ type: "error", title: "Submission failed", message: await readApiError(res) });
         return;
       }
 
@@ -770,7 +790,7 @@ export default function ArenaPage() {
         }
       }
     } catch {
-      toast({ type: "error", title: "Network error" });
+      toast({ type: "error", title: "Connection problem", message: "We couldn't reach the server. Try again." });
     } finally {
       setSubmitting(false);
     }
@@ -801,7 +821,7 @@ export default function ArenaPage() {
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-cosmos" onContextMenu={(e) => e.preventDefault()}>
-      <AnimatePresence>{tabDisqualified && <DQBanner />}</AnimatePresence>
+      <AnimatePresence>{tabDisqualified && <DQBanner reason={cheatReason} />}</AnimatePresence>
       <AnimatePresence>{timeUp && <TimeUpBanner />}</AnimatePresence>
 
       {/* ── Top bar ── */}
@@ -949,6 +969,8 @@ export default function ArenaPage() {
                           handleSubmit();
                         }
                       }}
+                      onPaste={blockPaste}
+                      onCopy={(e) => e.preventDefault()}
                       className="w-full p-4 bg-cosmos border border-cosmos-4 text-haze font-rajdhani text-base focus:outline-none focus:border-void resize-none rounded-lg"
                       placeholder="Type your answer here..."
                       disabled={inputDisabled}
@@ -1019,7 +1041,9 @@ export default function ArenaPage() {
           >
             <div className="bg-danger/10 border border-danger/50 px-6 py-4 text-center clip-arena-sm">
               <p className="font-zen-dots text-danger text-sm">DISQUALIFIED</p>
-              <p className="font-space-mono text-[10px] text-haze-3 mt-1">You have been removed from this arena.</p>
+              <p className="font-space-mono text-[10px] text-haze-3 mt-1 max-w-md">
+                {arenaCheatMessage(cheatReason)}
+              </p>
             </div>
           </motion.div>
         )}

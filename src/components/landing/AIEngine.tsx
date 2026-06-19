@@ -9,7 +9,7 @@ const ANTI_CHEAT = [
   {
     icon: Shield,
     label: "Paste blocked",
-    note: "Clipboard paste is intercepted for the duration of every session.",
+    note: "Clipboard paste is disabled for the full live arena — coding and trivia.",
   },
   {
     icon: Eye,
@@ -18,8 +18,8 @@ const ANTI_CHEAT = [
   },
   {
     icon: Monitor,
-    label: "Focus tracking",
-    note: "Window switches are logged in real time for post-room integrity reports.",
+    label: "Side panel detection",
+    note: "Browser AI sidebars and external panels beside the arena are flagged and removed.",
   },
   {
     icon: Box,

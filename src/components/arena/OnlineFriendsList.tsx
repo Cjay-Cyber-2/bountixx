@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
+import { readApiError } from "@/lib/readApiError";
 import { useAuth } from "@/components/providers/AuthProvider";
 import {
   InvitePlayerButton,
@@ -93,8 +94,7 @@ export function OnlineFriendsList({
         if (!res.ok) {
           failStreakRef.current += 1;
           if (failStreakRef.current >= 3 && usersRef.current.length === 0) {
-            const body = (await res.json().catch(() => ({}))) as { error?: string };
-            setError(body.error ?? "Could not load online players.");
+            setError(await readApiError(res));
           }
           return;
         }

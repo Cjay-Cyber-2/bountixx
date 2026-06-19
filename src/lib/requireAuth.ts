@@ -55,10 +55,13 @@ export async function requireClerkAuth(req: Request): Promise<AuthResult> {
 
   return {
     ok: false,
-    response: new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    }),
+    response: new Response(
+      JSON.stringify({ error: "Please sign in to continue.", code: "AUTH_REQUIRED" }),
+      {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      },
+    ),
   };
 }
 

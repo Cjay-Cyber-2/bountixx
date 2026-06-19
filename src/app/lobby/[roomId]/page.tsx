@@ -14,6 +14,7 @@ import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { staggerContainer, slideUp } from "@/lib/animations";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
+import { readApiError } from "@/lib/readApiError";
 import { bountyPoolFromPlayers, ENTRY_FEE, ENTRY_FEE_SUMMARY, maxBountyPool } from "@/lib/coins";
 
 /* ─── Types ─── */
@@ -203,8 +204,7 @@ export default function LobbyPage() {
         method: "PATCH",
       });
       if (!res.ok) {
-        const err = (await res.json()) as { error?: string };
-        toast({ type: "error", title: err.error ?? "Failed to update status" });
+        toast({ type: "error", title: "Couldn't update ready status", message: await readApiError(res) });
         return;
       }
       const json = (await res.json()) as {
@@ -218,7 +218,7 @@ export default function LobbyPage() {
         title: json.status === "ready" ? "You are READY!" : "Marked as waiting",
       });
     } catch {
-      toast({ type: "error", title: "Network error" });
+      toast({ type: "error", title: "Connection problem", message: "We couldn't reach the server. Try again." });
     } finally {
       setReadying(false);
     }
@@ -235,7 +235,7 @@ export default function LobbyPage() {
       });
       const json = (await res.json()) as { room?: unknown; error?: string; removedPlayers?: string[] };
       if (!res.ok) {
-        toast({ type: "error", title: json.error ?? "Failed to start arena" });
+        toast({ type: "error", title: "Couldn't start arena", message: await readApiError(res) });
         return;
       }
       if (json.removedPlayers && json.removedPlayers.length > 0) {
@@ -246,7 +246,7 @@ export default function LobbyPage() {
       }
       router.replace(`/arena/${roomId}`);
     } catch {
-      toast({ type: "error", title: "Network error" });
+      toast({ type: "error", title: "Connection problem", message: "We couldn't reach the server. Try again." });
     } finally {
       setStarting(false);
     }

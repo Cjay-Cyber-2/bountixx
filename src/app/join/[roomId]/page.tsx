@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { scalePop } from "@/lib/animations";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
+import { readApiError } from "@/lib/readApiError";
+import { friendlyErrorMessage } from "@/lib/apiErrors";
 
 type JoinState =
   | { phase: "loading" }
@@ -19,6 +21,7 @@ type JoinState =
 type JoinResponse = {
   message?: string;
   error?: string;
+  code?: string;
   roomStatus?: string;
   redirectTo?: string;
 };
@@ -51,6 +54,22 @@ export default function JoinPage() {
           setState({ phase: "success" });
           const dest = json.redirectTo ?? `/lobby/${roomId}`;
           setTimeout(() => router.replace(dest), 600);
+          return;
+        }
+
+        if (res.status === 401) {
+          setState({
+            phase: "error",
+            message: friendlyErrorMessage(401, json),
+          });
+          return;
+        }
+
+        if (res.status === 402 || json.code === "INSUFFICIENT_COINS") {
+          setState({
+            phase: "error",
+            message: friendlyErrorMessage(402, json),
+          });
           return;
         }
 
@@ -88,10 +107,10 @@ export default function JoinPage() {
 
         setState({
           phase: "error",
-          message: json.error ?? json.message ?? "Could not join this room.",
+          message: friendlyErrorMessage(res.status, json),
         });
       } catch {
-        setState({ phase: "error", message: "Network error. Please try again." });
+        setState({ phase: "error", message: "We couldn't reach the server. Check your connection and try again." });
       }
     }
 
@@ -149,6 +168,11 @@ export default function JoinPage() {
             </div>
 
             <div className="flex flex-col gap-2 w-full">
+              {state.message.toLowerCase().includes("coins") && (
+                <Link href="/wallet">
+                  <Button variant="primary" size="md" fullWidth>OPEN WALLET</Button>
+                </Link>
+              )}
               {state.showResults && (
                 <Link href={`/arena/${roomId}/results`}>
                   <Button variant="primary" size="md" fullWidth>VIEW RESULTS</Button>

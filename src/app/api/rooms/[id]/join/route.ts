@@ -6,6 +6,7 @@ import { rooms, roomPlayers, invites } from "@/lib/schema";
 import { eq, ne, count, and } from "drizzle-orm";
 import { getSession, unauthorized } from "@/lib/getSession";
 import { expireLobbyIfStale } from "@/lib/roomExpiry";
+import { ENTRY_FEE, hasAffordableEntry, isEntryFeeExempt } from "@/lib/coins";
 import { randomUUID } from "crypto";
 
 export async function POST(
@@ -26,6 +27,21 @@ export async function POST(
   if (!room) return NextResponse.json({ error: "Room not found" }, { status: 404 });
   if (await expireLobbyIfStale(room)) {
     return NextResponse.json({ error: "This invite link has expired" }, { status: 404 });
+  }
+
+  const entryExempt = isEntryFeeExempt(session.id, room.adminId, session.email);
+  if (
+    session.id !== room.adminId &&
+    !entryExempt &&
+    !hasAffordableEntry(session.coinsBalance ?? 0, session.email)
+  ) {
+    return NextResponse.json(
+      {
+        error: `You need at least ${ENTRY_FEE} coins to compete in this arena. Open your Wallet to get more coins.`,
+        code: "INSUFFICIENT_COINS",
+      },
+      { status: 402 },
+    );
   }
 
   const [existing] = await db

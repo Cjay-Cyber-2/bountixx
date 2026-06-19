@@ -8,11 +8,11 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AppPage } from "@/components/landing/_section";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
+import { friendlyErrorMessage } from "@/lib/apiErrors";
 import { Button } from "@/components/ui/Button";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { useToast } from "@/components/ui/Toast";
 import { OnlineFriendsList } from "@/components/arena/OnlineFriendsList";
-import { ENTRY_FEE, ENTRY_FEE_SUMMARY, MAIN_EVENT_STARTER_SUMMARY } from "@/lib/coins";
 
 const CATEGORY_COLORS: Record<string, string> = {
   coding: "#a855f7", trivia: "#9B6BFF", logic: "#8660fa", math: "#c084fc",
@@ -65,9 +65,9 @@ export default function DashboardPage() {
           continue;
         }
         if (!res.ok) {
-          const body = (await res.json().catch(() => ({}))) as { error?: string };
+          const body = (await res.json().catch(() => ({}))) as { error?: string; code?: string };
           if (!hasDataRef.current) {
-            setLoadError(body.error ?? "Could not load dashboard.");
+            setLoadError(friendlyErrorMessage(res.status, body));
           }
           setLoading(false);
           return;
@@ -80,7 +80,7 @@ export default function DashboardPage() {
         return;
       } catch {
         if (!hasDataRef.current) {
-          setLoadError("Network error loading dashboard.");
+          setLoadError("We couldn't reach the server. Check your connection and try again.");
         }
         setLoading(false);
         return;
@@ -138,22 +138,6 @@ export default function DashboardPage() {
             <p className="font-rajdhani text-sm text-danger">{loadError}</p>
           </div>
         ) : null}
-
-        {/* Main event + economy */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15, duration: 0.45 }}
-          className="mb-8 rounded-xl border border-[var(--border-accent)] bg-[var(--void-tint)] px-5 py-4 md:px-6 md:py-5"
-        >
-          <p className="font-space-mono text-[10px] text-plum tracking-widest uppercase mb-2">Main event</p>
-          <p className="font-rajdhani text-sm md:text-base text-haze leading-relaxed mb-2">
-            {MAIN_EVENT_STARTER_SUMMARY}
-          </p>
-          <p className="font-rajdhani text-sm text-haze-2 leading-relaxed">
-            Arena entry costs <span className="text-coin-gold font-semibold">{ENTRY_FEE} coins</span> per competing player — that fee builds the bounty the winner claims.
-          </p>
-        </motion.div>
 
         {/* Stats */}
         <motion.div

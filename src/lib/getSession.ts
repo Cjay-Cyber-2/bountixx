@@ -304,10 +304,16 @@ export async function getSession(req?: Request): Promise<SessionUser | null> {
 }
 
 export function unauthorized() {
-  return new Response(JSON.stringify({ error: "Unauthorized" }), {
-    status: 401,
-    headers: { "Content-Type": "application/json" },
-  });
+  return new Response(
+    JSON.stringify({
+      error: "Please sign in to continue.",
+      code: "AUTH_REQUIRED",
+    }),
+    {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    },
+  );
 }
 
 export function sessionUnavailable(message?: string) {
