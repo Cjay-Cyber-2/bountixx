@@ -69,28 +69,22 @@ export default function DashboardPage() {
 
   return (
     <AppLayout>
-      <div className={`${APP_GUTTERS} py-8 md:py-12 lg:py-16 flex justify-center`}>
-        <div className="w-full max-w-5xl">
+      <div className={`${APP_GUTTERS} py-8 md:py-10 lg:py-12`}>
+        <div className="w-full">
 
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="flex flex-col items-center text-center gap-4 mb-10 md:mb-12"
+          className="flex flex-col gap-1.5 mb-8"
         >
           <div>
-            <p className="text-xs font-medium text-plum mb-1.5">
+            <p className="font-space-mono text-[10px] text-plum uppercase tracking-widest">
               Welcome back
             </p>
-            <h1 className="font-display text-3xl md:text-4xl text-haze leading-tight">Arena dashboard</h1>
+            <h1 className="font-display text-4xl md:text-5xl text-haze leading-tight mt-1">Arena Dashboard</h1>
           </div>
-          <Link href="/create">
-            <Button variant="primary" magnetic>
-              <Zap size={14} className="mr-1.5" aria-hidden />
-              New Arena
-            </Button>
-          </Link>
         </motion.div>
 
         {/* Stats */}
@@ -98,7 +92,7 @@ export default function DashboardPage() {
           initial="hidden"
           animate="show"
           variants={{ show: { transition: { staggerChildren: 0.07 } } }}
-          className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-12 md:mb-14"
+          className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-12 md:mb-14"
         >
           {statCards.map((s) => {
             const Icon = s.icon;
@@ -106,7 +100,7 @@ export default function DashboardPage() {
               <motion.div
                 key={s.label}
                 variants={{ hidden: { opacity: 0, y: 18 }, show: { opacity: 1, y: 0 } }}
-                className="relative rounded-xl bg-[var(--surface-inset)] border border-[var(--border-1)] p-5 md:p-6 overflow-hidden group"
+                className="relative rounded-xl bg-[var(--surface-inset)] border border-[var(--border-1)] p-6 md:p-8 overflow-hidden group shadow-sm"
               >
                 <div
                   className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
@@ -114,17 +108,17 @@ export default function DashboardPage() {
                   aria-hidden
                 />
                 <div
-                  className="w-9 h-9 mb-4 flex items-center justify-center rounded-lg"
+                  className="w-10 h-10 mb-5 flex items-center justify-center rounded-lg"
                   style={{ background: `${s.accentRaw}14`, border: `1px solid ${s.accentRaw}33` }}
                 >
-                  <Icon size={16} style={{ color: s.accent }} aria-hidden />
+                  <Icon size={18} style={{ color: s.accent }} aria-hidden />
                 </div>
                 {loading ? (
                   <div className="h-8 w-16 bg-cosmos-3 animate-pulse mb-1.5" />
                 ) : s.gold && data?.coinsUnlimited ? (
                   <span
                     className="font-orbitron font-black text-2xl md:text-3xl block leading-none mb-1.5"
-                    style={{ color: s.gold ? "#F0A500" : "var(--haze)" }}
+                    style={{ color: s.gold ? "var(--coin-gold-text)" : "var(--haze)" }}
                   >
                     ∞
                   </span>
@@ -132,7 +126,7 @@ export default function DashboardPage() {
                   <AnimatedNumber
                     value={s.value}
                     className="font-orbitron font-black text-2xl md:text-3xl block leading-none mb-1.5"
-                    style={{ color: s.gold ? "#F0A500" : "var(--haze)" }}
+                    style={{ color: s.gold ? "var(--coin-gold-text)" : "var(--haze)" }}
                   />
                 )}
                 <p className="font-space-mono text-[9px] text-haze-3 tracking-[2px] uppercase">{s.label}</p>

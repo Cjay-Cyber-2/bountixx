@@ -160,8 +160,8 @@ export function TopNav() {
           <div className="flex items-center justify-end gap-2 sm:gap-3 shrink-0 ml-auto">
             <div className="hidden md:flex items-center gap-2 sm:gap-3 shrink-0">
               <div className="flex items-center gap-1.5 bg-[var(--surface-inset)] border border-[var(--border-2)] rounded-full px-3 py-1.5">
-                <span className="text-crown text-xs" aria-hidden>◈</span>
-                <span className="font-stats font-semibold text-sm text-crown tabular-nums">
+                <span className="text-coin-gold text-xs" aria-hidden>◈</span>
+                <span className="font-stats font-semibold text-sm text-coin-gold tabular-nums">
                   {coinsUnlimited ? "∞" : (profile?.coinsBalance ?? 0)}
                 </span>
               </div>
@@ -256,8 +256,8 @@ export function TopNav() {
             })}
             <div className="flex items-center justify-between px-6 py-4">
               <div className="flex items-center gap-1.5 bg-[var(--surface-inset)] border border-[var(--border-2)] rounded-full px-3 py-1.5">
-                <span className="text-crown text-xs">◈</span>
-                <span className="font-stats font-semibold text-sm text-crown tabular-nums">
+                <span className="text-coin-gold text-xs">◈</span>
+                <span className="font-stats font-semibold text-sm text-coin-gold tabular-nums">
                   {coinsUnlimited ? "∞" : (profile?.coinsBalance ?? 0)}
                 </span>
               </div>

@@ -351,10 +351,10 @@ export default function LobbyPage() {
         </motion.div>
 
         {/* Prize pool banner */}
-        <motion.div variants={slideUp} className="flex items-center justify-between bg-void/10 border border-void/30 px-4 py-3 mb-6">
+        <motion.div variants={slideUp} className="flex items-center justify-between bg-coin-gold/5 border border-coin-gold/25 px-4 py-3 mb-6">
           <div>
             <p className="font-space-mono text-[9px] text-haze-3 tracking-widest uppercase">Current Prize Pool</p>
-            <p className="font-orbitron font-black text-xl text-void mt-0.5">{competitors.length * 50} coins</p>
+            <p className="font-orbitron font-black text-xl text-coin-gold mt-0.5">{competitors.length * 50} coins</p>
           </div>
           <div className="text-right">
             <p className="font-space-mono text-[9px] text-haze-3">Max: {room.playerCap * 50} coins</p>

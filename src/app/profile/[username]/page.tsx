@@ -282,7 +282,7 @@ export default function ProfilePage() {
               {/* Coin balance */}
               <div className="flex items-center gap-2 sm:flex-col sm:items-end pb-1">
                 <span className="font-space-mono text-[9px] text-haze-3 tracking-[2px] uppercase">Balance</span>
-                <span className="font-orbitron font-bold text-2xl text-crown">
+                <span className="font-orbitron font-bold text-2xl text-coin-gold">
                   {profile?.coinsBalance ?? 0} <span className="text-xs">◈</span>
                 </span>
               </div>
@@ -394,7 +394,7 @@ export default function ProfilePage() {
                           <span style={{ color: catColor }}>{h.category}</span> · {h.place} · {h.date}
                         </p>
                       </div>
-                      <span className="font-orbitron font-bold text-sm text-crown shrink-0">+{h.coins} ◈</span>
+                      <span className="font-orbitron font-bold text-sm text-coin-gold shrink-0">+{h.coins} ◈</span>
                     </div>
                   );
                 })}

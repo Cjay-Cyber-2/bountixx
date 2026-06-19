@@ -23,6 +23,7 @@ const isProtectedRoute = createRouteMatcher([
   "/wallet(.*)",
   "/profile(.*)",
   "/payment(.*)",
+  "/join(.*)",
 ]);
 
 // Clerk is validated on the Edge middleware runtime. Next.js 16 proxy.ts (Node)

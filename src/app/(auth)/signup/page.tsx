@@ -11,6 +11,7 @@ import { clerkError, isSessionExistsError } from "@/lib/clerkError";
 import { useRedirectIfSignedIn } from "@/hooks/useRedirectIfSignedIn";
 import { Button } from "@/components/ui/Button";
 import { AuthBrandPanel } from "@/components/landing/AuthBrandPanel";
+import { useTheme } from "@/components/providers/ThemeProvider";
 import {
   AuthFormShell,
   AuthDivider,
@@ -80,12 +81,12 @@ export default function SignupPage() {
     }
     setError("");
     setPending(true);
-    const urls = clerkOAuthUrls();
+    const urls = clerkOAuthUrls(nextPath);
     try {
       await signIn.authenticateWithRedirect({
         strategy: provider === "google" ? "oauth_google" : "oauth_github",
         redirectUrl: urls.ssoCallback,
-        redirectUrlComplete: urls.destination(readNextParam()),
+        redirectUrlComplete: urls.destination(nextPath),
       });
     } catch (err) {
       if (isSessionExistsError(err)) {
@@ -151,7 +152,7 @@ export default function SignupPage() {
       setPending(false);
       const { startEmailLinkFlow } = signUp.createEmailLinkFlow();
       const res = await startEmailLinkFlow({
-        redirectUrl: `${window.location.origin}/sso-callback`,
+        redirectUrl: `${window.location.origin}/sso-callback?next=${encodeURIComponent(nextPath)}`,
       });
       if (res.status === "complete") {
         await setActive({ session: res.createdSessionId });
@@ -209,11 +210,12 @@ export default function SignupPage() {
     { id: "phone-otp", label: "Phone", icon: <Phone size={13} /> },
   ];
 
+  const { theme } = useTheme();
   if (loading || user) return null;
 
   return (
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-cosmos">
-      <div data-legacy-aesthetic className="contents">
+      <div data-legacy-aesthetic={theme === "light" ? undefined : ""} className="contents">
         <AuthBrandPanel />
       </div>
 

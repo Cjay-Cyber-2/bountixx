@@ -10,19 +10,23 @@
  */
 
 import { useState } from "react";
+import { useTheme } from "@/components/providers/ThemeProvider";
 
 export function AuthBrandPanel() {
   const [svgFailed, setSvgFailed] = useState(false);
+  const { theme } = useTheme();
+  const isLight = theme === "light";
 
   return (
-    <div className="hidden lg:flex bg-cosmos-2 border-r border-cosmos-4 relative overflow-hidden">
+    <div className="hidden lg:flex bg-[var(--cosmos-2)] border-r border-[var(--border-2)] relative overflow-hidden transition-colors duration-350">
       {/* Ambient glow layers */}
       <div
         className="absolute inset-0 pointer-events-none z-[2]"
         style={{
-          background:
-            "radial-gradient(ellipse 70% 55% at 50% 40%, rgba(155,107,255,0.10) 0%, transparent 70%)," +
-            "radial-gradient(ellipse 55% 45% at 50% 85%, rgba(255,107,26,0.06) 0%, transparent 72%)",
+          background: isLight
+            ? "radial-gradient(ellipse 70% 55% at 50% 40%, rgba(249,35,19,0.05) 0%, transparent 70%)"
+            : "radial-gradient(ellipse 70% 55% at 50% 40%, rgba(155,107,255,0.10) 0%, transparent 70%)," +
+              "radial-gradient(ellipse 55% 45% at 50% 85%, rgba(255,107,26,0.06) 0%, transparent 72%)",
         }}
         aria-hidden
       />
@@ -37,7 +41,7 @@ export function AuthBrandPanel() {
         <div
           key={c}
           className={`absolute ${c} w-8 h-8 ${b} z-10`}
-          style={{ borderColor: "rgba(155,107,255,0.30)" }}
+          style={{ borderColor: isLight ? "var(--border-2)" : "rgba(155,107,255,0.30)" }}
           aria-hidden
         />
       ))}
@@ -61,7 +65,9 @@ export function AuthBrandPanel() {
             className="w-full h-full pointer-events-none"
             style={{
               display: "block",
-              filter: "drop-shadow(0 0 40px rgba(155,107,255,0.20))",
+              filter: isLight
+                ? "drop-shadow(0 4px 24px rgba(78,39,37,0.10))"
+                : "drop-shadow(0 0 40px rgba(155,107,255,0.20))",
             }}
             aria-label="Bountixx arena animation"
           />

@@ -475,8 +475,8 @@ function ReviewStep({
         <div className="flex flex-col gap-2 font-space-mono text-xs">
           <div className="flex justify-between"><span className="text-haze-3">Name</span><span className="text-haze">{arenaName}</span></div>
           <div className="flex justify-between"><span className="text-haze-3">Questions</span><span className="text-haze">{questions.length}</span></div>
-          <div className="flex justify-between"><span className="text-haze-3">Entry fee</span><span className="text-void">{ENTRY_FEE} coins per player</span></div>
-          <div className="flex justify-between"><span className="text-haze-3">Max prize pool</span><span className="text-crown font-bold">{maxPrizePool} coins</span></div>
+          <div className="flex justify-between"><span className="text-haze-3">Entry fee</span><span className="text-coin-gold">{ENTRY_FEE} coins per player</span></div>
+          <div className="flex justify-between"><span className="text-haze-3">Max prize pool</span><span className="text-coin-gold font-bold">{maxPrizePool} coins</span></div>
           <p className="text-haze-3 text-[9px] pt-2 border-t border-cosmos-4 mt-2">
             Hosting is free. Each competing player pays {ENTRY_FEE} coins when the arena starts — winner takes the pool.
           </p>

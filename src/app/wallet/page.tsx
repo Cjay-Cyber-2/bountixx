@@ -107,7 +107,7 @@ export default function WalletPage() {
   return (
     <AppLayout>
       <div className={`${APP_GUTTERS} py-8 md:py-10`}>
-        <p className="font-space-mono text-[11px] text-crown tracking-[3px] uppercase mb-2">Treasury</p>
+        <p className="font-space-mono text-[11px] text-plum tracking-[3px] uppercase mb-2">Treasury</p>
         <h1 className="font-zen-dots text-2xl md:text-3xl text-haze mb-8">Your wallet</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6 lg:gap-8">
@@ -130,7 +130,7 @@ export default function WalletPage() {
               </div>
               <div>
                 <p className="font-space-mono text-[10px] text-haze-3 tracking-[2px] mb-1 uppercase">Bountixx coins</p>
-                <AnimatedNumber value={balance} className="font-orbitron font-black text-5xl md:text-6xl text-crown block leading-none" />
+                <AnimatedNumber value={balance} className="font-orbitron font-black text-5xl md:text-6xl text-coin-gold block leading-none" />
               </div>
             </motion.div>
 
@@ -222,7 +222,7 @@ export default function WalletPage() {
                 )}
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-orbitron font-bold text-2xl text-crown leading-none">{b.coins.toLocaleString()}</p>
+                    <p className="font-orbitron font-bold text-2xl text-coin-gold leading-none">{b.coins.toLocaleString()}</p>
                     <p className="font-space-mono text-[9px] text-haze-3 mt-1.5 uppercase tracking-wider">{b.label}</p>
                   </div>
                   <p className="font-rajdhani font-bold text-xl text-haze">

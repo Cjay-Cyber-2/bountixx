@@ -9,6 +9,7 @@ import { useSignUp } from "@clerk/nextjs/legacy";
 import { BountixxLogo } from "@/components/BountixxLogo";
 import { Button } from "@/components/ui/Button";
 import { AuthBrandPanel } from "@/components/landing/AuthBrandPanel";
+import { useTheme } from "@/components/providers/ThemeProvider";
 import { readNextParam } from "@/lib/clerkOAuth";
 import { staggerContainer, slideUp } from "@/lib/animations";
 
@@ -39,6 +40,7 @@ export default function SignupContinuePage() {
   const [legalAccepted, setLegalAccepted] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
+  const { theme } = useTheme();
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -92,7 +94,9 @@ export default function SignupContinuePage() {
 
   return (
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-cosmos">
-      <AuthBrandPanel />
+      <div data-legacy-aesthetic={theme === "light" ? undefined : ""} className="contents">
+        <AuthBrandPanel />
+      </div>
 
       <div className="flex items-center justify-center px-6 py-16 relative">
         <Link

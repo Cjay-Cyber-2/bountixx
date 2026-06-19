@@ -762,53 +762,55 @@ export default function ArenaPage() {
       <div className="flex flex-col lg:flex-row flex-1 pt-14 lg:h-[calc(100dvh-56px)]">
 
         {/* Challenge panel */}
-        <div className="w-full lg:w-[28%] lg:max-w-[300px] border-b lg:border-b-0 lg:border-r border-cosmos-4 flex flex-col bg-cosmos-2 overflow-y-auto shrink-0">
-          {/* Header */}
-          <div className="px-5 pt-4 pb-3 border-b border-cosmos-4 bg-cosmos-3 shrink-0">
-            <p className="font-space-mono text-[9px] text-void tracking-[3px] uppercase mb-1">Challenge Brief</p>
-            <p className="font-zen-dots text-sm text-haze leading-snug truncate">{room.name}</p>
-          </div>
-
-          {/* Task */}
-          <div className="px-5 py-4 flex-1 overflow-y-auto">
-            <div className="p-4 mb-4 border-l-2 bg-cosmos" style={{ borderLeftColor: catColor }}>
-              <p className="font-rajdhani text-sm text-haze leading-relaxed whitespace-pre-wrap">
-                {room.taskNormalised ?? room.taskRaw}
-              </p>
+        {(isCoding || data.isAdmin) && (
+          <div className="w-full lg:w-[28%] lg:max-w-[300px] border-b lg:border-b-0 lg:border-r border-cosmos-4 flex flex-col bg-cosmos-2 overflow-y-auto shrink-0">
+            {/* Header */}
+            <div className="px-5 pt-4 pb-3 border-b border-cosmos-4 bg-cosmos-3 shrink-0">
+              <p className="font-space-mono text-[9px] text-void tracking-[3px] uppercase mb-1">Challenge Brief</p>
+              <p className="font-zen-dots text-sm text-haze leading-snug truncate">{room.name}</p>
             </div>
 
-            {/* Tags */}
-            <div className="flex flex-wrap gap-2 mb-5">
-              {room.category && (
-                <span className="font-space-mono text-[9px] px-2 py-0.5 border" style={{ color: catColor, borderColor: `${catColor}40`, backgroundColor: `${catColor}15` }}>
-                  {room.category.toUpperCase()}
-                </span>
-              )}
-              {room.difficulty && (
-                <Chip color={DIFF_CHIP_COLOR[room.difficulty]} size="xs">{room.difficulty.toUpperCase()}</Chip>
-              )}
-              <Chip color="crown" size="xs">{room.bountyTier.toUpperCase()}</Chip>
-            </div>
+            {/* Task */}
+            <div className="px-5 py-4 flex-1 overflow-y-auto">
+              <div className="p-4 mb-4 border-l-2 bg-cosmos" style={{ borderLeftColor: catColor }}>
+                <p className="font-rajdhani text-sm text-haze leading-relaxed whitespace-pre-wrap">
+                  {room.taskNormalised ?? room.taskRaw}
+                </p>
+              </div>
 
-            {/* Players */}
-            <div className="border border-cosmos-4 bg-cosmos-3 p-3">
-              <p className="font-space-mono text-[9px] text-haze-3 tracking-widest mb-2 uppercase">Players</p>
-              {players.map((p) => (
-                <div key={p.id} className="flex items-center gap-2 py-1 border-b border-cosmos-4/40 last:border-0">
-                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${p.status === "completed" ? "bg-success" : p.status === "forfeited" ? "bg-danger" : "bg-haze-3"}`} />
-                  <span className="font-space-mono text-[9px] text-haze-2 truncate flex-1">@{p.username ?? "player"}</span>
-                  <span className={`font-space-mono text-[9px] shrink-0 ${p.status === "completed" ? "text-success" : p.status === "forfeited" ? "text-danger" : "text-haze-3"}`}>
-                    {p.status}
+              {/* Tags */}
+              <div className="flex flex-wrap gap-2 mb-5">
+                {room.category && (
+                  <span className="font-space-mono text-[9px] px-2 py-0.5 border" style={{ color: catColor, borderColor: `${catColor}40`, backgroundColor: `${catColor}15` }}>
+                    {room.category.toUpperCase()}
                   </span>
-                </div>
-              ))}
+                )}
+                {room.difficulty && (
+                  <Chip color={DIFF_CHIP_COLOR[room.difficulty]} size="xs">{room.difficulty.toUpperCase()}</Chip>
+                )}
+                <Chip color="crown" size="xs">{room.bountyTier.toUpperCase()}</Chip>
+              </div>
+
+              {/* Players */}
+              <div className="border border-cosmos-4 bg-cosmos-3 p-3">
+                <p className="font-space-mono text-[9px] text-haze-3 tracking-widest mb-2 uppercase">Players</p>
+                {players.map((p) => (
+                  <div key={p.id} className="flex items-center gap-2 py-1 border-b border-cosmos-4/40 last:border-0">
+                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${p.status === "completed" ? "bg-success" : p.status === "forfeited" ? "bg-danger" : "bg-haze-3"}`} />
+                    <span className="font-space-mono text-[9px] text-haze-2 truncate flex-1">@{p.username ?? "player"}</span>
+                    <span className={`font-space-mono text-[9px] shrink-0 ${p.status === "completed" ? "text-success" : p.status === "forfeited" ? "text-danger" : "text-haze-3"}`}>
+                      {p.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Editor + results (or host panel) */}
         <div className="flex-1 flex flex-col lg:flex-row min-w-0 overflow-hidden">
-          <div className="flex-1 flex flex-col border-b lg:border-b-0 lg:border-r border-cosmos-4 min-h-[400px] lg:min-h-0">
+          <div className="flex-1 flex flex-col border-b lg:border-b-0 lg:border-r border-cosmos-4 min-h-[400px] lg:min-h-0 bg-[#06040c]">
             {data.isAdmin ? (
               <HostPanel
                 players={players}
@@ -824,16 +826,98 @@ export default function ArenaPage() {
                 disabled={inputDisabled} running={running} submitting={submitting}
               />
             ) : (
-              <AnswerInput
-                answer={answer} setAnswer={setAnswer}
-                onSubmit={handleSubmit}
-                disabled={inputDisabled} submitting={submitting}
-              />
+              /* Beautiful centered non-coding Question & Answer layout */
+              <div className="flex-1 flex flex-col justify-center items-center p-6 md:p-8 overflow-y-auto w-full">
+                <div className="w-full max-w-xl bg-cosmos-2 border border-cosmos-4 p-6 md:p-8 rounded-xl shadow-xl flex flex-col gap-6">
+                  {/* Question header */}
+                  <div className="flex items-center justify-between border-b border-cosmos-4 pb-4">
+                    <span className="font-space-mono text-[10px] text-void uppercase tracking-widest">
+                      Question
+                    </span>
+                    {room.category && (
+                      <span
+                        className="font-space-mono text-[9px] px-2 py-0.5 border"
+                        style={{
+                          color: catColor,
+                          borderColor: `${catColor}40`,
+                          backgroundColor: `${catColor}15`,
+                        }}
+                      >
+                        {room.category.toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* The Question Text */}
+                  <div className="py-2">
+                    <p className="font-rajdhani font-semibold text-lg md:text-xl text-haze leading-relaxed whitespace-pre-wrap">
+                      {room.taskNormalised ?? room.taskRaw}
+                    </p>
+                  </div>
+
+                  {/* Answer input */}
+                  <div className="flex flex-col gap-2">
+                    <label htmlFor="user-answer" className="font-space-mono text-[9px] text-haze-3 uppercase tracking-widest">
+                      Your Answer
+                    </label>
+                    <textarea
+                      id="user-answer"
+                      value={answer}
+                      onChange={(e) => setAnswer(e.target.value)}
+                      onKeyDown={(e) => {
+                        if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+                          e.preventDefault();
+                          handleSubmit();
+                        }
+                      }}
+                      className="w-full p-4 bg-cosmos border border-cosmos-4 text-haze font-rajdhani text-base focus:outline-none focus:border-void resize-none rounded-lg"
+                      placeholder="Type your answer here..."
+                      disabled={inputDisabled}
+                      rows={3}
+                    />
+                    <p className="font-space-mono text-[9px] text-haze-3 text-right">
+                      Case-insensitive · Ctrl+Enter to submit
+                    </p>
+                  </div>
+
+                  {/* Submit button */}
+                  <div className="flex justify-end pt-4 border-t border-cosmos-4">
+                    <Button
+                      variant="primary"
+                      size="md"
+                      onClick={handleSubmit}
+                      disabled={inputDisabled || submitting}
+                      loading={submitting}
+                      className="gap-2"
+                    >
+                      <Upload size={14} aria-hidden="true" /> SUBMIT ANSWER
+                    </Button>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
 
           {/* Right panel */}
-          <div className="w-full lg:w-64 xl:w-80 flex flex-col shrink-0">
+          <div className="w-full lg:w-64 xl:w-80 flex flex-col shrink-0 bg-cosmos-2">
+            {!isCoding && (
+              <div className="p-4 border-b border-cosmos-4">
+                <div className="bg-cosmos-3 border border-cosmos-4 p-4">
+                  <p className="font-space-mono text-[9px] text-void tracking-widest mb-3 uppercase">Players</p>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {players.map((p) => (
+                      <div key={p.id} className="flex items-center gap-2 py-1.5 border-b border-cosmos-4/30 last:border-0">
+                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${p.status === "completed" ? "bg-success" : p.status === "forfeited" ? "bg-danger" : "bg-haze-3"}`} />
+                        <span className="font-space-mono text-[10px] text-haze-2 truncate flex-1">@{p.username ?? "player"}</span>
+                        <span className={`font-space-mono text-[9px] uppercase tracking-wider shrink-0 ${p.status === "completed" ? "text-success" : p.status === "forfeited" ? "text-danger" : "text-haze-3"}`}>
+                          {p.status}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
             {isCoding && (
               <div className="flex-1 p-4 overflow-y-auto border-b border-cosmos-4">
                 <TestResults testCases={testCases} results={testResults} ran={testRan} />

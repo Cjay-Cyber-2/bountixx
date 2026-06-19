@@ -45,14 +45,55 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const toggleTheme = useCallback(() => {
-    setThemeState((prev) => {
-      const next: Theme = prev === "dark" ? "light" : "dark";
-      document.documentElement.setAttribute("data-theme", next);
-      document.documentElement.style.colorScheme = next;
-      localStorage.setItem(STORAGE_KEY, next);
-      return next;
+    if (
+      typeof document === "undefined" ||
+      !(document as any).startViewTransition ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      setThemeState((prev) => {
+        const next: Theme = prev === "dark" ? "light" : "dark";
+        document.documentElement.setAttribute("data-theme", next);
+        document.documentElement.style.colorScheme = next;
+        localStorage.setItem(STORAGE_KEY, next);
+        return next;
+      });
+      return;
+    }
+
+    const x = window.innerWidth / 2;
+    const y = window.innerHeight / 2;
+    const endRadius = Math.hypot(
+      Math.max(x, window.innerWidth - x),
+      Math.max(y, window.innerHeight - y)
+    );
+
+    const transition = (document as any).startViewTransition(() => {
+      setThemeState((prev) => {
+        const next: Theme = prev === "dark" ? "light" : "dark";
+        document.documentElement.setAttribute("data-theme", next);
+        document.documentElement.style.colorScheme = next;
+        localStorage.setItem(STORAGE_KEY, next);
+        return next;
+      });
     });
-  }, []);
+
+    transition.ready.then(() => {
+      const clipPath = [
+        `circle(0px at ${x}px ${y}px)`,
+        `circle(${endRadius}px at ${x}px ${y}px)`,
+      ];
+      document.documentElement.animate(
+        {
+          clipPath: theme === "dark" ? clipPath : [...clipPath].reverse(),
+        },
+        {
+          duration: 500,
+          easing: "cubic-bezier(0.4, 0, 0.2, 1)",
+          pseudoElement: theme === "dark" ? "::view-transition-new(root)" : "::view-transition-old(root)",
+        }
+      );
+    });
+  }, [theme]);
 
   // Prevent flash: render children immediately but theme applies on mount
   return (
