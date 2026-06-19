@@ -41,9 +41,12 @@ export function OnlineFriendsList({
 
   const loadOnline = useCallback(async () => {
     try {
+      // Provision the account row (coins + presence) before listing others online.
+      await fetchWithAuth("/api/user/me");
+
       const res = await fetchWithAuth("/api/presence");
       if (res.status === 401) {
-        setError("Sign in to see who is online.");
+        setError("Finishing account setup — try again in a moment.");
         setUsers([]);
         onCountChange?.(0);
         return;
@@ -67,7 +70,7 @@ export function OnlineFriendsList({
 
   useEffect(() => {
     void loadOnline();
-    const id = window.setInterval(() => void loadOnline(), 5_000);
+    const id = window.setInterval(() => void loadOnline(), 3_000);
     return () => window.clearInterval(id);
   }, [loadOnline]);
 

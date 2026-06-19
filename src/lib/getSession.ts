@@ -2,9 +2,9 @@ import { auth, currentUser, getAuth } from "@clerk/nextjs/server";
 import { createClerkClient } from "@clerk/backend";
 import type { NextRequest } from "next/server";
 import { randomUUID } from "crypto";
+import { and, eq } from "drizzle-orm";
 import { db } from "./db";
 import { coinTransactions, users } from "./schema";
-import { eq } from "drizzle-orm";
 import {
   isUnlimitedCoinsEmail,
   STARTER_COINS,
@@ -17,6 +17,11 @@ export type SessionUser = typeof users.$inferSelect;
 
 function sanitizeUsername(raw: string): string {
   return raw.replace(/[^a-z0-9_]/gi, "").toLowerCase() || "player";
+}
+
+function buildUsername(rawUsername: string, userId: string): string {
+  const base = sanitizeUsername(rawUsername || userId.slice(0, 16));
+  return `${base}_${userId.slice(-5).toLowerCase()}`;
 }
 
 function isUniqueViolation(err: unknown, column?: string): boolean {
@@ -58,7 +63,22 @@ async function readClerkProfile() {
   return { email, avatarUrl, rawUsername };
 }
 
-async function normalizeUserCoins(
+async function hasWelcomeBonus(userId: string): Promise<boolean> {
+  const [tx] = await db
+    .select({ id: coinTransactions.id })
+    .from(coinTransactions)
+    .where(
+      and(
+        eq(coinTransactions.userId, userId),
+        eq(coinTransactions.reference, "welcome_bonus"),
+      ),
+    )
+    .limit(1);
+  return Boolean(tx);
+}
+
+/** Idempotent welcome bonus — only grants once per account. */
+async function ensureWelcomeBonus(
   user: SessionUser,
   clerkEmail: string | null,
 ): Promise<SessionUser> {
@@ -73,24 +93,28 @@ async function normalizeUserCoins(
     if (user.coinsBalance < UNLIMITED_COINS_BALANCE) {
       updates.coinsBalance = UNLIMITED_COINS_BALANCE;
     }
-  } else if (user.coinsBalance === 0) {
-    updates.coinsBalance = STARTER_COINS;
-    try {
-      await db.insert(coinTransactions).values({
-        id: randomUUID(),
-        userId: user.id,
-        amount: STARTER_COINS,
-        type: "gifted",
-        reference: "welcome_bonus",
-      });
-    } catch (err) {
-      console.error("[getSession] welcome bonus tx failed:", err);
-    }
+    if (Object.keys(updates).length === 0) return user;
+    const [updated] = await db
+      .update(users)
+      .set(updates)
+      .where(eq(users.id, user.id))
+      .returning();
+    return updated ?? { ...user, ...updates };
   }
 
-  if (Object.keys(updates).length === 0) {
-    return user;
+  const alreadyGranted = await hasWelcomeBonus(user.id);
+  if (alreadyGranted) {
+    if (Object.keys(updates).length === 0) return user;
+    const [updated] = await db
+      .update(users)
+      .set(updates)
+      .where(eq(users.id, user.id))
+      .returning();
+    return updated ?? { ...user, ...updates };
   }
+
+  const targetBalance = Math.max(user.coinsBalance ?? 0, STARTER_COINS);
+  updates.coinsBalance = targetBalance;
 
   const [updated] = await db
     .update(users)
@@ -98,7 +122,86 @@ async function normalizeUserCoins(
     .where(eq(users.id, user.id))
     .returning();
 
+  try {
+    await db.insert(coinTransactions).values({
+      id: randomUUID(),
+      userId: user.id,
+      amount: STARTER_COINS,
+      type: "gifted",
+      reference: "welcome_bonus",
+    });
+  } catch (err) {
+    console.error("[getSession] welcome bonus tx failed:", err);
+  }
+
   return updated ?? { ...user, ...updates };
+}
+
+async function findUserById(userId: string): Promise<SessionUser | null> {
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  return user ?? null;
+}
+
+async function createUserRecord(
+  userId: string,
+  profile: { email: string | null; avatarUrl: string | null; rawUsername: string },
+): Promise<SessionUser | null> {
+  const startingCoins = isUnlimitedCoinsEmail(profile.email)
+    ? UNLIMITED_COINS_BALANCE
+    : STARTER_COINS;
+
+  const attempts = [
+    { username: buildUsername(profile.rawUsername, userId), email: profile.email },
+    { username: buildUsername(profile.rawUsername, userId), email: null as string | null },
+    {
+      username: `${buildUsername(profile.rawUsername, userId)}_${randomUUID().slice(0, 4)}`,
+      email: profile.email,
+    },
+    {
+      username: `${buildUsername(profile.rawUsername, userId)}_${randomUUID().slice(0, 4)}`,
+      email: null as string | null,
+    },
+  ];
+
+  for (const attempt of attempts) {
+    try {
+      await db.insert(users).values({
+        id: userId,
+        username: attempt.username,
+        email: attempt.email,
+        avatarUrl: profile.avatarUrl,
+        coinsBalance: startingCoins,
+        xp: 0,
+        rank: "recruit",
+        roomsCreatedCount: 0,
+        lastSeenAt: new Date(),
+      });
+      const created = await findUserById(userId);
+      if (created) return created;
+    } catch (err) {
+      if (isUniqueViolation(err, "id")) {
+        return findUserById(userId);
+      }
+      if (!isUniqueViolation(err)) {
+        console.error("[getSession] user insert failed:", err);
+      }
+    }
+  }
+
+  return findUserById(userId);
+}
+
+async function finalizeSession(
+  user: SessionUser,
+  clerkEmail: string | null,
+): Promise<SessionUser> {
+  const withCoins = await ensureWelcomeBonus(user, clerkEmail);
+  await touchPresence(withCoins.id, true);
+  return withCoins;
 }
 
 /**
@@ -144,7 +247,7 @@ export async function getClerkUserId(req?: Request): Promise<string | null> {
 /**
  * Resolves the authenticated user via Clerk and maps them to the Neon `users`
  * row. On the very first authenticated request after sign-up, the row is
- * created from the Clerk profile with the 500-coin welcome bonus.
+ * created with the starter coin welcome bonus.
  *
  * Never throws — returns null when auth or the database is unavailable.
  */
@@ -154,77 +257,16 @@ export async function getSession(req?: Request): Promise<SessionUser | null> {
 
   try {
     await ensureDatabaseSchema();
-    const { email, avatarUrl, rawUsername } = await readClerkProfile();
+    const profile = await readClerkProfile();
 
-    const [existing] = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1);
-
-    if (existing) {
-      await touchPresence(userId).catch((err) => {
-        console.error("[getSession] touchPresence failed:", err);
-      });
-      return normalizeUserCoins(existing, email);
+    let user = await findUserById(userId);
+    if (!user) {
+      user = await createUserRecord(userId, profile);
     }
 
-    const username = `${sanitizeUsername(rawUsername || userId.slice(0, 16))}_${userId.slice(-5).toLowerCase()}`;
-    const startingCoins = isUnlimitedCoinsEmail(email)
-      ? UNLIMITED_COINS_BALANCE
-      : STARTER_COINS;
+    if (!user) return null;
 
-    const baseRow = {
-      id: userId,
-      username,
-      avatarUrl,
-      coinsBalance: startingCoins,
-      xp: 0,
-      rank: "recruit" as const,
-      roomsCreatedCount: 0,
-      lastSeenAt: new Date(),
-    };
-
-    try {
-      await db.insert(users).values({
-        ...baseRow,
-        email,
-      });
-    } catch (err) {
-      // Firebase → Clerk migration: email may already belong to an old row.
-      if (email && isUniqueViolation(err, "email")) {
-        try {
-          await db.insert(users).values({
-            ...baseRow,
-            email: null,
-          });
-        } catch (retryErr) {
-          console.error("[getSession] user insert retry failed:", retryErr);
-        }
-      } else {
-        console.error("[getSession] user insert failed (may already exist):", err);
-      }
-    }
-
-    const [created] = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1);
-
-    if (!created) return null;
-
-    if (!isUnlimitedCoinsEmail(email) && startingCoins > 0) {
-      await db.insert(coinTransactions).values({
-        id: randomUUID(),
-        userId: created.id,
-        amount: startingCoins,
-        type: "gifted",
-        reference: "welcome_bonus",
-      });
-    }
-
-    return created;
+    return finalizeSession(user, profile.email);
   } catch (err) {
     console.error("[getSession] database error:", err);
     return null;
