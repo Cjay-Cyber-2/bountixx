@@ -2,7 +2,7 @@ import { auth, currentUser, getAuth } from "@clerk/nextjs/server";
 import { createClerkClient } from "@clerk/backend";
 import type { NextRequest } from "next/server";
 import { randomUUID } from "crypto";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { db } from "./db";
 import { coinTransactions, users } from "./schema";
 import {
@@ -63,8 +63,22 @@ async function readClerkProfile() {
   return { email, avatarUrl, rawUsername };
 }
 
-/** Main event: every login gives a fresh starter stack (even if coins were spent before). */
-async function ensureMainEventStarter(
+async function hasMainEventGrant(userId: string): Promise<boolean> {
+  const [tx] = await db
+    .select({ id: coinTransactions.id })
+    .from(coinTransactions)
+    .where(
+      and(
+        eq(coinTransactions.userId, userId),
+        eq(coinTransactions.reference, "main_event_starter"),
+      ),
+    )
+    .limit(1);
+  return Boolean(tx);
+}
+
+/** One-time main-event grant: 1,000 coins once per account. Spent coins stay spent. */
+async function ensureOneTimeStarterCoins(
   user: SessionUser,
   clerkEmail: string | null,
 ): Promise<SessionUser> {
@@ -88,40 +102,48 @@ async function ensureMainEventStarter(
     return updated ?? { ...user, ...updates };
   }
 
-  if (user.coinsBalance !== STARTER_COINS) {
-    const previous = user.coinsBalance ?? 0;
-    updates.coinsBalance = STARTER_COINS;
-
+  if (await hasMainEventGrant(user.id)) {
+    if (Object.keys(updates).length === 0) return user;
     const [updated] = await db
       .update(users)
-      .set({ ...updates, email: updates.email ?? user.email })
+      .set(updates)
       .where(eq(users.id, user.id))
       .returning();
-
-    const delta = STARTER_COINS - previous;
-    try {
-      await db.insert(coinTransactions).values({
-        id: randomUUID(),
-        userId: user.id,
-        amount: delta,
-        type: delta >= 0 ? "gifted" : "spent",
-        reference: "main_event_starter",
-      });
-    } catch (err) {
-      console.error("[getSession] main event starter tx failed:", err);
-    }
-
-    return updated ?? { ...user, coinsBalance: STARTER_COINS };
+    return updated ?? { ...user, ...updates };
   }
 
-  if (Object.keys(updates).length === 0) return user;
+  const previous = user.coinsBalance ?? 0;
+  const grantAmount = Math.max(0, STARTER_COINS - previous);
+  if (grantAmount > 0) {
+    updates.coinsBalance = previous + grantAmount;
+  }
 
   const [updated] = await db
     .update(users)
-    .set(updates)
+    .set(
+      Object.keys(updates).length > 0
+        ? { ...updates, email: updates.email ?? user.email }
+        : { email: updates.email ?? user.email },
+    )
     .where(eq(users.id, user.id))
     .returning();
-  return updated ?? { ...user, ...updates };
+
+  try {
+    await db.insert(coinTransactions).values({
+      id: randomUUID(),
+      userId: user.id,
+      amount: grantAmount,
+      type: "gifted",
+      reference: "main_event_starter",
+    });
+  } catch (err) {
+    console.error("[getSession] main event starter tx failed:", err);
+  }
+
+  if (grantAmount > 0) {
+    return updated ?? { ...user, coinsBalance: previous + grantAmount };
+  }
+  return updated ?? user;
 }
 
 async function findUserById(userId: string): Promise<SessionUser | null> {
@@ -186,7 +208,7 @@ async function finalizeSession(
   user: SessionUser,
   clerkEmail: string | null,
 ): Promise<SessionUser> {
-  const withCoins = await ensureMainEventStarter(user, clerkEmail);
+  const withCoins = await ensureOneTimeStarterCoins(user, clerkEmail);
   await touchPresence(withCoins.id, true);
   return withCoins;
 }
@@ -234,7 +256,7 @@ export async function getClerkUserId(req?: Request): Promise<string | null> {
 /**
  * Resolves the authenticated user via Clerk and maps them to the Neon `users`
  * row. On the very first authenticated request after sign-up, the row is
- * created with the main-event starter coin balance.
+ * created with 1,000 starter coins (one-time main-event grant).
  *
  * Never throws — returns null when auth or the database is unavailable.
  */

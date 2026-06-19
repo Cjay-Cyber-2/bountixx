@@ -1,4 +1,4 @@
-/** Welcome / main-event starter balance on every login. */
+/** Starter coin grant for new accounts and the one-time main-event gift. */
 export const STARTER_COINS = 1000;
 
 /** Entry fee per competing player when an arena goes live — funds the bounty pool. */
@@ -13,7 +13,7 @@ export const HOSTING_FREE_SUMMARY =
   "Hosting is free. You never pay to create an arena — only competitors pay the entry fee at start.";
 
 export const MAIN_EVENT_STARTER_SUMMARY =
-  `Main event: every login starts you with ${STARTER_COINS.toLocaleString()} coins to enter arenas.`;
+  `Launch bonus: every account gets ${STARTER_COINS.toLocaleString()} coins once to kick off the main event. Spend them wisely — once they're gone, they're gone.`;
 
 /** Prize pool from competitor count (host does not pay entry). */
 export function bountyPoolFromPlayers(competitorCount: number): number {

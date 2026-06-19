@@ -19,7 +19,6 @@ async function runSchemaStatements(): Promise<void> {
   await sql`UPDATE submissions SET question_index = 0 WHERE question_index IS NULL`;
   await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_seen_at timestamp`;
   await sql`ALTER TABLE users ALTER COLUMN coins_balance SET DEFAULT 1000`;
-  await sql`UPDATE users SET coins_balance = 1000 WHERE coins_balance < 500000`;
   await sql`UPDATE rooms SET prize_pool = 0 WHERE prize_pool IS NULL`;
   await sql`ALTER TABLE rooms ALTER COLUMN prize_pool SET DEFAULT 0`;
 }

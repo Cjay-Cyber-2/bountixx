@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/Button";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { useToast } from "@/components/ui/Toast";
 import { OnlineFriendsList } from "@/components/arena/OnlineFriendsList";
-import { ENTRY_FEE, ENTRY_FEE_SUMMARY, MAIN_EVENT_STARTER_SUMMARY, STARTER_COINS } from "@/lib/coins";
+import { ENTRY_FEE, ENTRY_FEE_SUMMARY, MAIN_EVENT_STARTER_SUMMARY } from "@/lib/coins";
 
 const CATEGORY_COLORS: Record<string, string> = {
   coding: "#a855f7", trivia: "#9B6BFF", logic: "#8660fa", math: "#c084fc",
@@ -94,7 +94,7 @@ export default function DashboardPage() {
           transition={{ delay: 0.15, duration: 0.45 }}
           className="mb-8 rounded-xl border border-[var(--border-accent)] bg-[var(--void-tint)] px-5 py-4 md:px-6 md:py-5"
         >
-          <p className="font-space-mono text-[10px] text-plum tracking-widest uppercase mb-2">Main event live</p>
+          <p className="font-space-mono text-[10px] text-plum tracking-widest uppercase mb-2">Main event</p>
           <p className="font-rajdhani text-sm md:text-base text-haze leading-relaxed mb-2">
             {MAIN_EVENT_STARTER_SUMMARY}
           </p>
