@@ -18,10 +18,7 @@ export function AuthBrandPanel() {
   const isLight = theme === "light";
 
   return (
-    <div
-      data-legacy-aesthetic={isLight ? undefined : ""}
-      className="hidden lg:flex bg-cosmos border-r border-[var(--border-1)] relative overflow-hidden transition-colors duration-350"
-    >
+    <div className="hidden lg:flex bg-[var(--cosmos-2)] border-r border-[var(--border-2)] relative overflow-hidden transition-colors duration-350">
       {/* Ambient glow layers */}
       <div
         className="absolute inset-0 pointer-events-none z-[2]"

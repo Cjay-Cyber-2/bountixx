@@ -11,6 +11,7 @@ import { clerkError, isSessionExistsError } from "@/lib/clerkError";
 import { useRedirectIfSignedIn } from "@/hooks/useRedirectIfSignedIn";
 import { Button } from "@/components/ui/Button";
 import { AuthBrandPanel } from "@/components/landing/AuthBrandPanel";
+import { useTheme } from "@/components/providers/ThemeProvider";
 import {
   AuthFormShell,
   AuthDivider,
@@ -195,9 +196,13 @@ function LoginForm() {
 
   if (loading || user) return null;
 
+  const { theme } = useTheme();
+
   return (
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-cosmos">
-      <AuthBrandPanel />
+      <div data-legacy-aesthetic={theme === "light" ? undefined : ""} className="contents">
+        <AuthBrandPanel />
+      </div>
 
       <AuthFormShell
         eyebrow="Welcome back"
