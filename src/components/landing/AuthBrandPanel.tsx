@@ -34,7 +34,7 @@ export function AuthBrandPanel() {
   return (
     <div
       data-legacy-aesthetic={isLight ? undefined : ""}
-      className="hidden lg:flex relative min-h-full overflow-hidden border-r transition-[background-color,border-color] duration-350"
+      className="hidden lg:flex relative min-h-screen overflow-hidden border-r transition-[background-color,border-color] duration-350"
       style={{
         backgroundColor: palette.bg,
         borderColor: palette.border,

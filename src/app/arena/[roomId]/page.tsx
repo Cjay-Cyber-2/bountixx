@@ -546,10 +546,14 @@ export default function ArenaPage() {
       prevPlayersRef.current = json.players;
 
       if (!silent) {
-        setLanguage(json.room.language ?? "javascript");
+        const firstQ = json.questions?.[0];
+        const initCategory = (firstQ?.category ?? json.room.category) as RoomCategory;
+        setLanguage(firstQ?.language ?? json.room.language ?? "javascript");
         setCode((prev) =>
           prev === ""
-            ? (json.room.starterCode || getDefaultCode(json.room.category, json.room.language))
+            ? (firstQ?.starterCode ??
+                json.room.starterCode ??
+                getDefaultCode(initCategory, firstQ?.language ?? json.room.language))
             : prev
         );
 
@@ -639,6 +643,31 @@ export default function ArenaPage() {
   const inputDisabled = timeUp || tabDisqualified || submitted || loading;
   const totalQuestions = data?.totalQuestions ?? data?.questions?.length ?? 1;
   const currentQuestion = data?.questions?.[questionIndex];
+  const questionCategory = (currentQuestion?.category ?? data?.room.category ?? "trivia") as RoomCategory;
+  const isCoding = questionCategory === "coding";
+
+  const prevQuestionIndexRef = useRef(-1);
+
+  /* Reset answer/editor state when advancing to a new question */
+  useEffect(() => {
+    if (!data) return;
+    if (prevQuestionIndexRef.current === questionIndex) return;
+    prevQuestionIndexRef.current = questionIndex;
+
+    const q = data.questions?.[questionIndex];
+    const cat = (q?.category ?? data.room.category) as RoomCategory;
+    setAnswer("");
+    setTestResults([]);
+    setTestRan(false);
+    if (cat === "coding") {
+      setLanguage(q?.language ?? data.room.language ?? "javascript");
+      setCode(
+        q?.starterCode ??
+          data.room.starterCode ??
+          getDefaultCode(cat, q?.language ?? data.room.language)
+      );
+    }
+  }, [questionIndex, data]);
 
   /* ─── Run tests ─── */
   async function handleRunTests() {
@@ -669,11 +698,11 @@ export default function ArenaPage() {
     if (!data || inputDisabled) return;
     setSubmitting(true);
     try {
-      const isCoding = (currentQuestion?.category ?? data.room.category) === "coding";
+      const isCodingSubmit = (currentQuestion?.category ?? data.room.category) === "coding";
       const res = await fetchWithAuth(`/api/rooms/${roomId}/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(isCoding ? { code, language, questionIndex } : { answer, questionIndex }),
+        body: JSON.stringify(isCodingSubmit ? { code, language, questionIndex } : { answer, questionIndex }),
       });
 
       if (!res.ok) {
@@ -704,7 +733,7 @@ export default function ArenaPage() {
           title: json.correct ? `Question ${json.questionsAnswered} correct!` : "Wrong answer",
           message: json.correct ? "Moving to the next question..." : "Moving on — answer the next question.",
         });
-      } else if (isCoding && json.testResults) {
+      } else if (isCodingSubmit && json.testResults) {
         setSubmitted(true);
         const { passed, total } = json.testResults;
         setTestResults(json.testResults.results);
@@ -756,8 +785,7 @@ export default function ArenaPage() {
   }
 
   const { room, players, testCases } = data;
-  const catColor = CAT_COLORS[room.category ?? "coding"] ?? "#FF6B1A";
-  const isCoding = room.category === "coding";
+  const catColor = CAT_COLORS[questionCategory] ?? "#FF6B1A";
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-cosmos" onContextMenu={(e) => e.preventDefault()}>
@@ -768,9 +796,9 @@ export default function ArenaPage() {
       <div className="fixed top-0 inset-x-0 z-30 flex items-center justify-between gap-2 px-4 md:px-6 h-14 bg-cosmos-2 border-b border-cosmos-4">
         <div className="flex items-center gap-2 md:gap-3 min-w-0">
           <span className="font-rajdhani font-bold text-sm text-haze truncate max-w-[120px] sm:max-w-[180px]">{room.name}</span>
-          {room.category && (
+          {questionCategory && (
             <span className="hidden sm:inline-block font-space-mono text-[10px] px-2 py-0.5 border shrink-0" style={{ color: catColor, borderColor: `${catColor}40`, backgroundColor: `${catColor}15` }}>
-              {room.category.toUpperCase()}
+              {questionCategory.toUpperCase()}
             </span>
           )}
           {room.difficulty && (
@@ -808,15 +836,15 @@ export default function ArenaPage() {
             <div className="px-5 py-4 flex-1 overflow-y-auto">
               <div className="p-4 mb-4 border-l-2 bg-cosmos" style={{ borderLeftColor: catColor }}>
                 <p className="font-rajdhani text-sm text-haze leading-relaxed whitespace-pre-wrap">
-                  {room.taskNormalised ?? room.taskRaw}
+                  {currentQuestion?.taskNormalised ?? room.taskNormalised ?? room.taskRaw}
                 </p>
               </div>
 
               {/* Tags */}
               <div className="flex flex-wrap gap-2 mb-5">
-                {room.category && (
+                {questionCategory && (
                   <span className="font-space-mono text-[9px] px-2 py-0.5 border" style={{ color: catColor, borderColor: `${catColor}40`, backgroundColor: `${catColor}15` }}>
-                    {room.category.toUpperCase()}
+                    {questionCategory.toUpperCase()}
                   </span>
                 )}
                 {room.difficulty && (
@@ -868,7 +896,7 @@ export default function ArenaPage() {
                     <span className="font-space-mono text-[10px] text-void uppercase tracking-widest">
                       Question
                     </span>
-                    {room.category && (
+                    {questionCategory && (
                       <span
                         className="font-space-mono text-[9px] px-2 py-0.5 border"
                         style={{
@@ -877,7 +905,7 @@ export default function ArenaPage() {
                           backgroundColor: `${catColor}15`,
                         }}
                       >
-                        {room.category.toUpperCase()}
+                        {questionCategory.toUpperCase()}
                       </span>
                     )}
                   </div>

@@ -25,16 +25,21 @@ function getInitialTheme(): Theme {
   return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
 }
 
+function readThemeFromDom(): Theme {
+  if (typeof window === "undefined") return "dark";
+  const fromDom = document.documentElement.getAttribute("data-theme");
+  if (fromDom === "light" || fromDom === "dark") return fromDom;
+  return getInitialTheme();
+}
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>("dark");
-  const [mounted, setMounted] = useState(false);
+  const [theme, setThemeState] = useState<Theme>(() => readThemeFromDom());
 
   useEffect(() => {
-    const initial = getInitialTheme();
+    const initial = readThemeFromDom();
     setThemeState(initial);
     document.documentElement.setAttribute("data-theme", initial);
     document.documentElement.style.colorScheme = initial;
-    setMounted(true);
   }, []);
 
   const setTheme = useCallback((next: Theme) => {
@@ -95,9 +100,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     });
   }, [theme]);
 
-  // Prevent flash: render children immediately but theme applies on mount
   return (
-    <ThemeCtx.Provider value={{ theme: mounted ? theme : "dark", setTheme, toggleTheme }}>
+    <ThemeCtx.Provider value={{ theme, setTheme, toggleTheme }}>
       {children}
     </ThemeCtx.Provider>
   );

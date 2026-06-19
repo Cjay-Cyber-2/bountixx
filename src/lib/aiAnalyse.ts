@@ -23,12 +23,17 @@ export type AnalysisResult = {
 
 const SYSTEM_PROMPT = `You are the Bountixx AI Arena Engine. You read a challenge a user wants to host and return ONLY a JSON object (no markdown, no code fences) describing the environment players will solve it in.
 
-CLASSIFY the task into one category:
-- "coding": writing a program/function (algorithms, data structures, output problems).
-- "trivia": general-knowledge question with one factual answer.
+CLASSIFY the task into exactly one category:
+- "coding": ONLY when the player must write/complete a program or function (algorithms, data structures, stdin/stdout problems). Requires explicit programming work.
+- "trivia": general-knowledge questions with one factual answer (What/Who/Where/When/Which/How many…).
 - "logic": puzzle/riddle/lateral-thinking with one objective answer.
-- "math": calculation/equation/proof with one numeric or exact answer.
+- "math": calculation/equation with one numeric or exact answer.
 - "writing" / "design" / "meme": open-ended creative tasks judged by humans.
+
+CRITICAL — NEVER misclassify:
+- Questions like "What is the capital of France?" or "Who wrote Hamlet?" are TRIVIA, never coding.
+- Do NOT return language, starterCode, ioFormat, publicTests, or hiddenTests for trivia/logic/math/writing/design/meme.
+- Trivia/logic/math rooms are answered by typing text — there is NO code editor and NO Python execution.
 
 VALIDITY:
 - valid=false ONLY if the task is nonsense, spam, offensive, or impossible to solve. Give a short invalidReason.
@@ -36,41 +41,81 @@ VALIDITY:
 
 CLARIFICATION (very important):
 - If the task is REAL but too VAGUE to build a fair room, set needsClarification=true and explain what is missing in clarificationReason, plus 1-3 concrete "suggestions" the host can choose from.
-- A CODING task with NO programming language stated is the most common case: set needsClarification=true, clarificationReason="No programming language was specified for this coding challenge.", and suggestions like ["Python","JavaScript"].
-- Other vague cases: ambiguous expected answer, missing constraints, multiple valid interpretations.
+- A CODING task with NO programming language stated: set needsClarification=true, clarificationReason="No programming language was specified for this coding challenge.", suggestions like ["Python","JavaScript"].
 - When needsClarification=true you may leave tests/answer empty.
 
-CODING TASKS (when language is known):
+CODING TASKS (category="coding" ONLY, when language is known):
 - "language" MUST be one of: ${LANGUAGE_KEYS.join(", ")}.
-- The execution model is STDIN -> STDOUT. The player's program reads the ENTIRE input from standard input and prints ONLY the answer to standard output.
-- "starterCode": a minimal, COMPLETE, runnable program in the chosen language that reads stdin and has a clear TODO where the player writes their logic. It must compile/run as-is.
-- "ioFormat": one sentence describing what is read from stdin and what must be printed to stdout.
-- Generate exactly 5 "publicTests" and 20 "hiddenTests". Each test is {"input": "<stdin>", "expectedOutput": "<exact stdout>"}. Cover edge cases (empty, boundaries, negatives, large). expectedOutput must be EXACTLY what a correct program prints (whitespace-trimmed comparison is used).
+- STDIN -> STDOUT execution model.
+- "starterCode": minimal runnable program with a TODO for player logic.
+- "ioFormat": one sentence on stdin/stdout.
+- Exactly 5 "publicTests" and 20 "hiddenTests": {"input":"<stdin>","expectedOutput":"<exact stdout>"}.
+- Leave "canonicalAnswer" empty for coding.
 
-NON-CODING TASKS:
-- Provide "canonicalAnswer": the single correct answer players must match (case-insensitive, whitespace-normalised). For writing/design/meme leave it empty (host/manual judged).
+NON-CODING TASKS (trivia, logic, math):
+- "canonicalAnswer" is REQUIRED: the single definitive correct answer (verified, concise, unambiguous). Players match this exactly (case-insensitive).
+- For math: numeric result only (e.g. "42" not "The answer is 42").
+- For trivia: the exact fact (e.g. "Paris" not "The capital is Paris").
+- Do NOT include language, starterCode, ioFormat, publicTests, or hiddenTests.
+- For writing/design/meme leave canonicalAnswer empty (host judged).
 
-Always provide: a punchy 3-5 word "title", a "difficulty" of rookie|challenger|elite|legendary, and "taskNormalised" (a clean, well-structured restatement shown to players).
+Always provide: punchy 3-5 word "title", "difficulty" (rookie|challenger|elite|legendary), and "taskNormalised" (clean restatement for players).
 
-JSON shape:
-{
-  "valid": true,
-  "needsClarification": false,
-  "clarificationReason": "",
-  "suggestions": [],
-  "category": "coding",
-  "title": "...",
-  "difficulty": "challenger",
-  "taskNormalised": "...",
-  "language": "python",
-  "ioFormat": "Read a single line from stdin; print its reverse.",
-  "starterCode": "import sys\\n\\ndata = sys.stdin.read().strip()\\n# TODO\\n",
-  "publicTests": [{"input": "abc", "expectedOutput": "cba"}],
-  "hiddenTests": [{"input": "", "expectedOutput": ""}],
-  "canonicalAnswer": ""
-}
+Trivia example:
+{"valid":true,"needsClarification":false,"category":"trivia","title":"Capital of France","difficulty":"rookie","taskNormalised":"What is the capital of France?","canonicalAnswer":"Paris"}
+
+Coding example:
+{"valid":true,"needsClarification":false,"category":"coding","title":"Reverse a String","difficulty":"challenger","taskNormalised":"Write a program that reads a line from stdin and prints its reverse.","language":"python","ioFormat":"Read one line; print its reverse.","starterCode":"import sys\\n\\ndata = sys.stdin.read().strip()\\n# TODO\\n","publicTests":[{"input":"abc","expectedOutput":"cba"}],"hiddenTests":[{"input":"","expectedOutput":""}],"canonicalAnswer":""}
 
 If invalid: {"valid": false, "invalidReason": "short reason"}`;
+
+const ANSWER_PROMPT = `You are a precise fact-checker for a multiplayer trivia arena. Given a challenge, return ONLY JSON: {"canonicalAnswer":"<single definitive answer>"}.
+Rules:
+- One short, exact answer — no explanation, no punctuation fluff.
+- Trivia: the factual answer (e.g. "Paris", "William Shakespeare").
+- Math: numeric result only (e.g. "847").
+- Logic: the single objective solution.
+- Verify correctness before responding.`;
+
+const CODING_SIGNALS =
+  /\b(implement|write\s+(a\s+)?(program|function|code|script|algorithm)|leetcode|hackerrank|stdin|stdout|compile|binary\s+search|sort\s+an?\s+array|reverse\s+a\s+string|data\s+structure|time\s+complexity|o\s*\(\s*n|class\s+\w+|def\s+\w+\s*\(|function\s+\w+\s*\()/i;
+
+const TRIVIA_SIGNALS =
+  /^(what|who|where|when|which|how\s+many|how\s+much|name\s+the|in\s+what\s+year|true\s+or\s+false|is\s+it\s+true)/i;
+
+const MATH_SIGNALS =
+  /^(calculate|compute|solve|evaluate|what\s+is\s+[\d\(]|\d+\s*[\+\-\*\/×÷\^]\s*\d+|find\s+the\s+(value|sum|product|result))/i;
+
+const LOGIC_SIGNALS =
+  /^(if\s+you|suppose|puzzle|riddle|logic|brain\s*teaser|there\s+are\s+\d+\s+(people|boxes|balls))/i;
+
+type TaskCategory = AnalysisResult["category"];
+
+function extractTaskText(userMessage: string): string {
+  const match = userMessage.match(/Challenge:\n([\s\S]*)$/);
+  return (match?.[1] ?? userMessage).trim();
+}
+
+/** Heuristic pre-classification from raw task text — catches obvious trivia/math mislabeled as coding. */
+function inferCategoryFromTask(task: string): TaskCategory | null {
+  const t = task.trim();
+  if (!t) return null;
+
+  if (MATH_SIGNALS.test(t)) return "math";
+  if (LOGIC_SIGNALS.test(t)) return "logic";
+  if (TRIVIA_SIGNALS.test(t)) return "trivia";
+  if (/\?\s*$/.test(t) && !CODING_SIGNALS.test(t)) return "trivia";
+
+  return null;
+}
+
+function stripCodingArtifacts(analysis: AnalysisResult): void {
+  analysis.language = null;
+  delete analysis.starterCode;
+  delete analysis.ioFormat;
+  delete analysis.publicTests;
+  delete analysis.hiddenTests;
+}
 
 const GEMINI_API_URL =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
@@ -210,9 +255,28 @@ async function analyseWithGroq(apiKey: string, userMessage: string): Promise<Ana
   return parseAnalysis(rawText);
 }
 
-/** Force/repair the coding language and clarification flags after the model returns. */
-function normaliseAnalysis(analysis: AnalysisResult, languageHint?: string): AnalysisResult {
+/** Force/repair category, language, and clarification flags after the model returns. */
+function normaliseAnalysis(
+  analysis: AnalysisResult,
+  languageHint?: string,
+  taskText?: string
+): { analysis: AnalysisResult; reclassified: boolean } {
   const hint = isLanguageKey(languageHint) ? languageHint : null;
+  let reclassified = false;
+
+  const inferred = taskText ? inferCategoryFromTask(taskText) : null;
+  if (
+    analysis.category === "coding" &&
+    inferred &&
+    inferred !== "coding" &&
+    !hint &&
+    !CODING_SIGNALS.test(taskText ?? "")
+  ) {
+    analysis.category = inferred;
+    reclassified = true;
+    analysis.needsClarification = false;
+    stripCodingArtifacts(analysis);
+  }
 
   if (analysis.category === "coding") {
     if (hint) {
@@ -230,10 +294,72 @@ function normaliseAnalysis(analysis: AnalysisResult, languageHint?: string): Ana
       }
     }
   } else {
-    analysis.language = null;
+    stripCodingArtifacts(analysis);
+    analysis.needsClarification = false;
   }
 
-  return analysis;
+  return { analysis, reclassified };
+}
+
+async function resolveCanonicalAnswer(
+  provider: Provider,
+  apiKey: string,
+  category: TaskCategory,
+  taskText: string
+): Promise<string> {
+  const userMessage = `Category: ${category}\nChallenge:\n${taskText}`;
+
+  try {
+    if (provider === "gemini") {
+      const geminiRes = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          system_instruction: { parts: [{ text: ANSWER_PROMPT }] },
+          contents: [{ role: "user", parts: [{ text: userMessage }] }],
+          generationConfig: {
+            temperature: 0,
+            maxOutputTokens: 256,
+            responseMimeType: "application/json",
+          },
+        }),
+      });
+      if (!geminiRes.ok) return "";
+      const data = (await geminiRes.json()) as {
+        candidates?: { content?: { parts?: { text?: string }[] } }[];
+      };
+      const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}";
+      const parsed = JSON.parse(raw) as { canonicalAnswer?: string };
+      return parsed.canonicalAnswer?.trim() ?? "";
+    }
+
+    const groqRes = await fetch(GROQ_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: GROQ_MODEL,
+        messages: [
+          { role: "system", content: ANSWER_PROMPT },
+          { role: "user", content: userMessage },
+        ],
+        temperature: 0,
+        max_tokens: 256,
+        response_format: { type: "json_object" },
+      }),
+    });
+    if (!groqRes.ok) return "";
+    const data = (await groqRes.json()) as {
+      choices?: { message?: { content?: string } }[];
+    };
+    const raw = data?.choices?.[0]?.message?.content ?? "{}";
+    const parsed = JSON.parse(raw) as { canonicalAnswer?: string };
+    return parsed.canonicalAnswer?.trim() ?? "";
+  } catch {
+    return "";
+  }
 }
 
 export async function analyseChallenge(
@@ -245,12 +371,31 @@ export async function analyseChallenge(
     throw new AiConfigError(missingAiKeyMessage());
   }
 
+  const taskText = extractTaskText(userMessage);
+
   const result =
     resolved.provider === "gemini"
       ? await analyseWithGemini(resolved.apiKey, userMessage)
       : await analyseWithGroq(resolved.apiKey, userMessage);
 
-  return normaliseAnalysis(result, languageHint);
+  const { analysis, reclassified } = normaliseAnalysis(result, languageHint, taskText);
+
+  const needsAnswer =
+    ["trivia", "logic", "math"].includes(analysis.category) &&
+    analysis.valid &&
+    !analysis.needsClarification;
+
+  if (needsAnswer && (!analysis.canonicalAnswer?.trim() || reclassified)) {
+    const answer = await resolveCanonicalAnswer(
+      resolved.provider,
+      resolved.apiKey,
+      analysis.category,
+      taskText
+    );
+    if (answer) analysis.canonicalAnswer = answer;
+  }
+
+  return analysis;
 }
 
 export function activeAiProvider(): Provider | null {
