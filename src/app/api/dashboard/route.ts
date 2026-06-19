@@ -6,7 +6,7 @@ import { rooms, submissions, roomPlayers, users, invites } from "@/lib/schema";
 import { eq, and, desc, count, inArray } from "drizzle-orm";
 import { getSession, unauthorized } from "@/lib/getSession";
 import { isUnlimitedCoinsEmail } from "@/lib/coins";
-import { listOnlineUsers } from "@/lib/presence";
+import { listOnlineUsers, serializeOnlineUsers } from "@/lib/presence";
 import { timeAgo } from "@/lib/utils";
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -127,13 +127,7 @@ export async function GET(req: Request) {
     coinsBalance: session.coinsBalance,
     coinsUnlimited: isUnlimitedCoinsEmail(session.email),
     recentRooms,
-    onlineUsers: onlineUsers.map((u) => ({
-      id: u.id,
-      username: u.username,
-      rank: u.rank.toUpperCase(),
-      avatarUrl: u.avatarUrl,
-      initials: u.username.slice(0, 2).toUpperCase(),
-    })),
+    onlineUsers: serializeOnlineUsers(onlineUsers),
     activeLobby: activeLobby ?? null,
     pendingInvites: pendingInvites
       .filter((inv) => inv.roomId && inv.roomName)

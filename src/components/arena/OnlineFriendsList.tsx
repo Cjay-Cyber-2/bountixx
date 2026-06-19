@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import {
   InvitePlayerButton,
@@ -8,6 +8,9 @@ import {
   OnlinePlayer,
   OnlinePlayerRow,
 } from "@/components/arena/OnlinePlayerRow";
+
+const POLL_MS = 1_000;
+const STREAM_RECONNECT_MS = 2_000;
 
 type OnlineFriendsListProps = {
   roomId?: string;
@@ -20,6 +23,11 @@ type OnlineFriendsListProps = {
   onNotify?: (message: string, type?: "info" | "success" | "error") => void;
 };
 
+function samePlayerList(a: OnlinePlayer[], b: OnlinePlayer[]): boolean {
+  if (a.length !== b.length) return false;
+  return a.every((player, index) => player.id === b[index]?.id);
+}
+
 export function OnlineFriendsList({
   roomId,
   activeLobby,
@@ -31,19 +39,34 @@ export function OnlineFriendsList({
   onNotify,
 }: OnlineFriendsListProps) {
   const [users, setUsers] = useState<OnlinePlayer[]>(initialUsers ?? []);
-  const [loading, setLoading] = useState(!initialUsers?.length);
+  const [loading, setLoading] = useState(initialUsers === undefined);
   const [error, setError] = useState<string | null>(null);
   const [invitingId, setInvitingId] = useState<string | null>(null);
   const [invitedIds, setInvitedIds] = useState<Set<string>>(new Set());
+  const usersRef = useRef(users);
 
   const targetRoomId = roomId ?? activeLobby?.id;
-  const excluded = new Set(excludeUserIds);
+  const excludeKey = excludeUserIds.join(",");
+
+  useEffect(() => {
+    usersRef.current = users;
+  }, [users]);
+
+  const applyUsers = useCallback(
+    (list: OnlinePlayer[]) => {
+      const excluded = new Set(excludeKey ? excludeKey.split(",") : []);
+      const filtered = list.filter((u) => !excluded.has(u.id));
+      if (samePlayerList(usersRef.current, filtered)) return;
+      setUsers(filtered);
+      setError(null);
+      onCountChange?.(filtered.length);
+      setLoading(false);
+    },
+    [excludeKey, onCountChange],
+  );
 
   const loadOnline = useCallback(async () => {
     try {
-      // Provision the account row (coins + presence) before listing others online.
-      await fetchWithAuth("/api/user/me");
-
       const res = await fetchWithAuth("/api/presence");
       if (res.status === 401) {
         setError("Finishing account setup — try again in a moment.");
@@ -56,23 +79,86 @@ export function OnlineFriendsList({
         setError(body.error ?? "Could not load online players.");
         return;
       }
-      const data = (await res.json()) as { users?: OnlinePlayer[]; count?: number };
-      const filtered = (data.users ?? []).filter((u) => !excluded.has(u.id));
-      setUsers(filtered);
-      setError(null);
-      onCountChange?.(filtered.length);
+      const data = (await res.json()) as { users?: OnlinePlayer[] };
+      applyUsers(data.users ?? []);
     } catch {
       setError("Network error loading online players.");
     } finally {
       setLoading(false);
     }
-  }, [excludeUserIds.join(","), onCountChange]);
+  }, [applyUsers, onCountChange]);
 
   useEffect(() => {
-    void loadOnline();
-    const id = window.setInterval(() => void loadOnline(), 3_000);
-    return () => window.clearInterval(id);
-  }, [loadOnline]);
+    let disposed = false;
+    let pollId: number | null = null;
+    let reconnectId: number | null = null;
+    let source: EventSource | null = null;
+
+    const stopPolling = () => {
+      if (pollId !== null) {
+        window.clearInterval(pollId);
+        pollId = null;
+      }
+    };
+
+    const startPolling = () => {
+      if (pollId !== null || disposed) return;
+      void loadOnline();
+      pollId = window.setInterval(() => void loadOnline(), POLL_MS);
+    };
+
+    const connectStream = () => {
+      if (disposed) return;
+
+      source?.close();
+      source = new EventSource("/api/presence/stream");
+
+      source.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data) as { users?: OnlinePlayer[] };
+          applyUsers(data.users ?? []);
+          stopPolling();
+        } catch {
+          // ignore malformed payloads
+        }
+      };
+
+      source.onerror = () => {
+        source?.close();
+        source = null;
+        if (disposed) return;
+        startPolling();
+        if (reconnectId === null) {
+          reconnectId = window.setInterval(() => {
+            if (!disposed && !source) connectStream();
+          }, STREAM_RECONNECT_MS);
+        }
+      };
+    };
+
+    connectStream();
+
+    const refreshNow = () => {
+      if (disposed) return;
+      void loadOnline();
+    };
+
+    const onVisible = () => {
+      if (document.visibilityState === "visible") refreshNow();
+    };
+
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", refreshNow);
+
+    return () => {
+      disposed = true;
+      source?.close();
+      stopPolling();
+      if (reconnectId !== null) window.clearInterval(reconnectId);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", refreshNow);
+    };
+  }, [applyUsers, loadOnline]);
 
   const invite = async (player: OnlinePlayer) => {
     if (!targetRoomId) {

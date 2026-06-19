@@ -3,9 +3,9 @@ import { users } from "@/lib/schema";
 import { and, desc, eq, gte, isNull, lt, ne, or } from "drizzle-orm";
 
 /** Users seen within this window count as online. */
-export const ONLINE_WINDOW_MS = 5 * 60 * 1000;
+export const ONLINE_WINDOW_MS = 60 * 1000;
 
-const PRESENCE_WRITE_INTERVAL_MS = 30_000;
+const PRESENCE_WRITE_INTERVAL_MS = 15_000;
 
 /** Mark a user as online. Throttled unless force=true (heartbeat / presence poll). */
 export async function touchPresence(userId: string, force = false): Promise<void> {
@@ -58,4 +58,26 @@ export async function countOnlineUsers(): Promise<number> {
     .from(users)
     .where(gte(users.lastSeenAt, cutoff));
   return rows.length;
+}
+
+export type OnlineUserPayload = {
+  id: string;
+  username: string;
+  rank: string;
+  avatarUrl: string | null;
+  lastSeenAt: string | null;
+  initials: string;
+};
+
+export function serializeOnlineUsers(
+  rows: Awaited<ReturnType<typeof listOnlineUsers>>,
+): OnlineUserPayload[] {
+  return rows.map((u) => ({
+    id: u.id,
+    username: u.username,
+    rank: u.rank.toUpperCase(),
+    avatarUrl: u.avatarUrl,
+    lastSeenAt: u.lastSeenAt?.toISOString() ?? null,
+    initials: u.username.slice(0, 2).toUpperCase(),
+  }));
 }
