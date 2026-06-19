@@ -11,6 +11,7 @@ import {
   UNLIMITED_COINS_BALANCE,
 } from "./coins";
 import { ensureDatabaseSchema } from "./ensureSchema";
+import { touchPresence } from "./presence";
 
 export type SessionUser = typeof users.$inferSelect;
 
@@ -162,6 +163,9 @@ export async function getSession(req?: Request): Promise<SessionUser | null> {
       .limit(1);
 
     if (existing) {
+      await touchPresence(userId).catch((err) => {
+        console.error("[getSession] touchPresence failed:", err);
+      });
       return normalizeUserCoins(existing, email);
     }
 

@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 
-const HEARTBEAT_MS = 45_000;
+const HEARTBEAT_MS = 30_000;
 
 /** Keeps the signed-in user visible in "Who's online" while the app is open. */
 export function usePresenceHeartbeat() {

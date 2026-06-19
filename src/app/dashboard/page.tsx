@@ -38,6 +38,7 @@ export default function DashboardPage() {
   const { toast } = useToast();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [onlineCount, setOnlineCount] = useState(0);
 
   const fetchData = useCallback(async () => {
     if (!user) return;
@@ -225,11 +226,13 @@ export default function DashboardPage() {
               </span>
               <span className="font-zen-dots text-base text-haze tracking-wide">Who&apos;s online</span>
               <span className="ml-auto font-space-mono text-[10px] text-haze-3">
-                live
+                {onlineCount > 0 ? `${onlineCount} online` : "live"}
               </span>
             </div>
             <OnlineFriendsList
+              initialUsers={data?.onlineUsers}
               activeLobby={data?.activeLobby ?? null}
+              onCountChange={setOnlineCount}
               onNotify={(message, type = "info") => toast({ type, title: message })}
             />
             {!data?.activeLobby ? (

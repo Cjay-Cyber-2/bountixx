@@ -8,9 +8,12 @@ export async function GET(req: Request) {
   const session = await getSession(req);
   if (!session) return unauthorized();
 
+  await touchPresence(session.id, true);
+
   const onlineUsers = await listOnlineUsers(session.id);
 
   return NextResponse.json({
+    count: onlineUsers.length,
     users: onlineUsers.map((u) => ({
       id: u.id,
       username: u.username,
@@ -26,7 +29,7 @@ export async function POST(req: Request) {
   const session = await getSession(req);
   if (!session) return unauthorized();
 
-  await touchPresence(session.id);
+  await touchPresence(session.id, true);
 
   return NextResponse.json({ ok: true });
 }

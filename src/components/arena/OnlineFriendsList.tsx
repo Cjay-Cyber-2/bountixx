@@ -13,8 +13,10 @@ type OnlineFriendsListProps = {
   roomId?: string;
   activeLobby?: { id: string; name: string } | null;
   excludeUserIds?: string[];
+  initialUsers?: OnlinePlayer[];
   variant?: "dashboard" | "lobby";
   emptyMessage?: string;
+  onCountChange?: (count: number) => void;
   onNotify?: (message: string, type?: "info" | "success" | "error") => void;
 };
 
@@ -22,12 +24,15 @@ export function OnlineFriendsList({
   roomId,
   activeLobby,
   excludeUserIds = [],
+  initialUsers,
   variant = "dashboard",
-  emptyMessage = "No one else online right now. Share your invite link — friends show up here once they're in the app.",
+  emptyMessage = "No one else online right now. When players open the app they appear here automatically.",
+  onCountChange,
   onNotify,
 }: OnlineFriendsListProps) {
-  const [users, setUsers] = useState<OnlinePlayer[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [users, setUsers] = useState<OnlinePlayer[]>(initialUsers ?? []);
+  const [loading, setLoading] = useState(!initialUsers?.length);
+  const [error, setError] = useState<string | null>(null);
   const [invitingId, setInvitingId] = useState<string | null>(null);
   const [invitedIds, setInvitedIds] = useState<Set<string>>(new Set());
 
@@ -37,15 +42,28 @@ export function OnlineFriendsList({
   const loadOnline = useCallback(async () => {
     try {
       const res = await fetchWithAuth("/api/presence");
-      if (!res.ok) return;
-      const data = (await res.json()) as { users?: OnlinePlayer[] };
-      setUsers((data.users ?? []).filter((u) => !excluded.has(u.id)));
+      if (res.status === 401) {
+        setError("Sign in to see who is online.");
+        setUsers([]);
+        onCountChange?.(0);
+        return;
+      }
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        setError(body.error ?? "Could not load online players.");
+        return;
+      }
+      const data = (await res.json()) as { users?: OnlinePlayer[]; count?: number };
+      const filtered = (data.users ?? []).filter((u) => !excluded.has(u.id));
+      setUsers(filtered);
+      setError(null);
+      onCountChange?.(filtered.length);
     } catch {
-      // keep last list on transient failure
+      setError("Network error loading online players.");
     } finally {
       setLoading(false);
     }
-  }, [excludeUserIds.join(",")]);
+  }, [excludeUserIds.join(","), onCountChange]);
 
   useEffect(() => {
     void loadOnline();
@@ -55,7 +73,7 @@ export function OnlineFriendsList({
 
   const invite = async (player: OnlinePlayer) => {
     if (!targetRoomId) {
-      onNotify?.("Create an arena first — then invite friends from here or the lobby.", "info");
+      onNotify?.("Create an arena first — then invite players from here or the lobby.", "info");
       return;
     }
 
@@ -105,9 +123,15 @@ export function OnlineFriendsList({
     );
   }
 
+  if (error) {
+    return (
+      <p className="font-space-mono text-[10px] text-danger text-center py-6 leading-relaxed">{error}</p>
+    );
+  }
+
   if (users.length === 0) {
     return (
-      <p className="font-space-mono text-[10px] text-haze-3 text-center py-6">{emptyMessage}</p>
+      <p className="font-space-mono text-[10px] text-haze-3 text-center py-6 leading-relaxed">{emptyMessage}</p>
     );
   }
 

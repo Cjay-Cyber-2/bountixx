@@ -437,29 +437,27 @@ export default function LobbyPage() {
           <InviteSharePanel roomId={roomId} qrSize={108} />
         </motion.div>
 
-        {isAdmin ? (
-          <motion.div
-            variants={slideUp}
-            className="bg-cosmos-2 border border-cosmos-4 p-5 mb-6 overflow-visible"
-          >
-            <div className="flex items-center gap-3 mb-5">
-              <span className="relative flex h-2 w-2 shrink-0" aria-hidden>
-                <span className="absolute inset-0 rounded-full bg-success animate-[livepulse_1.5s_ease-in-out_infinite]" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-success" />
-              </span>
-              <p className="font-space-mono text-xs text-void tracking-widest uppercase">
-                Friends online
-              </p>
-            </div>
-            <OnlineFriendsList
-              roomId={roomId}
-              variant="lobby"
-              excludeUserIds={players.map((p) => p.userId)}
-              emptyMessage="No friends online right now. Share the invite link above — they'll appear here once they're in the app."
-              onNotify={(message, type = "info") => toast({ type, title: message })}
-            />
-          </motion.div>
-        ) : null}
+        <motion.div
+          variants={slideUp}
+          className="bg-cosmos-2 border border-cosmos-4 p-5 mb-6 overflow-visible"
+        >
+          <div className="flex items-center gap-3 mb-5">
+            <span className="relative flex h-2 w-2 shrink-0" aria-hidden>
+              <span className="absolute inset-0 rounded-full bg-success animate-[livepulse_1.5s_ease-in-out_infinite]" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-success" />
+            </span>
+            <p className="font-space-mono text-xs text-void tracking-widest uppercase">
+              Players online
+            </p>
+          </div>
+          <OnlineFriendsList
+            roomId={roomId}
+            variant="lobby"
+            excludeUserIds={players.map((p) => p.userId)}
+            emptyMessage="No other players online right now. Share the invite link above — they appear here once they open the app."
+            onNotify={(message, type = "info") => toast({ type, title: message })}
+          />
+        </motion.div>
       </motion.div>
     </AppLayout>
   );

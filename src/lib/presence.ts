@@ -1,19 +1,41 @@
 import { db } from "@/lib/db";
 import { users } from "@/lib/schema";
-import { and, desc, eq, gte, ne } from "drizzle-orm";
+import { and, desc, eq, gte, isNull, lt, ne, or } from "drizzle-orm";
 
 /** Users seen within this window count as online. */
-export const ONLINE_WINDOW_MS = 2 * 60 * 1000;
+export const ONLINE_WINDOW_MS = 5 * 60 * 1000;
 
-export async function touchPresence(userId: string): Promise<void> {
+const PRESENCE_WRITE_INTERVAL_MS = 30_000;
+
+/** Mark a user as online. Throttled unless force=true (heartbeat / presence poll). */
+export async function touchPresence(userId: string, force = false): Promise<void> {
+  if (force) {
+    await db
+      .update(users)
+      .set({ lastSeenAt: new Date() })
+      .where(eq(users.id, userId));
+    return;
+  }
+
+  const staleBefore = new Date(Date.now() - PRESENCE_WRITE_INTERVAL_MS);
   await db
     .update(users)
     .set({ lastSeenAt: new Date() })
-    .where(eq(users.id, userId));
+    .where(
+      and(
+        eq(users.id, userId),
+        or(isNull(users.lastSeenAt), lt(users.lastSeenAt, staleBefore)),
+      ),
+    );
 }
 
-export async function listOnlineUsers(excludeUserId: string) {
+export async function listOnlineUsers(excludeUserId?: string) {
   const cutoff = new Date(Date.now() - ONLINE_WINDOW_MS);
+
+  const conditions = [gte(users.lastSeenAt, cutoff)];
+  if (excludeUserId) {
+    conditions.push(ne(users.id, excludeUserId));
+  }
 
   return db
     .select({
@@ -24,9 +46,16 @@ export async function listOnlineUsers(excludeUserId: string) {
       lastSeenAt: users.lastSeenAt,
     })
     .from(users)
-    .where(
-      and(gte(users.lastSeenAt, cutoff), ne(users.id, excludeUserId)),
-    )
+    .where(and(...conditions))
     .orderBy(desc(users.lastSeenAt))
-    .limit(50);
+    .limit(100);
+}
+
+export async function countOnlineUsers(): Promise<number> {
+  const cutoff = new Date(Date.now() - ONLINE_WINDOW_MS);
+  const rows = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(gte(users.lastSeenAt, cutoff));
+  return rows.length;
 }

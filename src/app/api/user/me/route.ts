@@ -12,7 +12,7 @@ export async function GET(req: Request) {
   const session = await getSession(req);
   if (!session) return unauthorized();
 
-  await touchPresence(session.id);
+  await touchPresence(session.id, true);
 
   return NextResponse.json(
     {
