@@ -66,7 +66,7 @@ export function HowItWorks() {
           )}
         </div>
 
-        <div className="flex flex-col gap-28 md:gap-36 lg:gap-44 pb-12 md:pb-20 lg:pb-28">
+        <div className="flex flex-col gap-32 md:gap-40 lg:gap-48 pb-16 md:pb-24 lg:pb-32">
           {STEPS.map((step, i) => (
             <Stage key={step.num} step={step} isLast={i === STEPS.length - 1} />
           ))}
@@ -117,11 +117,11 @@ function Stage({ step, isLast = false }: { step: (typeof STEPS)[number]; isLast?
           {step.num}
         </span>
 
-        <div className="mt-5 md:mt-6 max-w-[52ch]">
-          <h3 className="font-zen-dots text-xl md:text-2xl text-haze mb-4 md:mb-5">
+        <div className="mt-7 md:mt-9 max-w-[50ch]">
+          <h3 className="font-zen-dots text-xl md:text-2xl text-haze mb-5 md:mb-7">
             {step.title}
           </h3>
-          <p className="font-rajdhani text-base md:text-lg text-haze-2 leading-relaxed">
+          <p className="font-rajdhani text-base md:text-lg text-haze-2 leading-[1.8]">
             {step.body}
           </p>
         </div>

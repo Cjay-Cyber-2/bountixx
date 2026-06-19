@@ -48,8 +48,8 @@ export function CoinEconomy() {
           align="center"
         />
 
-        <div className="mb-20 md:mb-28">
-          <div className="flex flex-col items-center justify-center gap-3 mb-10 text-center">
+        <div className="mb-28 md:mb-36 lg:mb-40">
+          <div className="flex flex-col items-center justify-center gap-4 mb-12 md:mb-16 text-center">
             <h3 className="font-zen-dots text-2xl md:text-3xl text-haze">Earning</h3>
             <span className="font-space-mono text-[10px] tracking-[3px] uppercase text-crown">◈ Coins</span>
           </div>
@@ -58,7 +58,7 @@ export function CoinEconomy() {
             initial="hidden"
             animate={inView ? "show" : "hidden"}
             variants={{ show: { transition: { staggerChildren: 0.08 } } }}
-            className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6 max-w-5xl mx-auto"
+            className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 lg:gap-10 max-w-5xl mx-auto"
           >
             {EARN.map((row) => {
               const Icon = row.icon;
@@ -69,7 +69,7 @@ export function CoinEconomy() {
                     hidden: { opacity: 0, y: 16 },
                     show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } },
                   }}
-                  className="flex flex-col items-center text-center gap-3 p-7 md:p-8 rounded-xl"
+                  className="landing-surface flex flex-col items-center text-center gap-4 md:gap-5 rounded-xl"
                   style={{ background: "var(--cosmos-2)", border: "1px solid var(--border-1)" }}
                 >
                   <div
@@ -80,7 +80,7 @@ export function CoinEconomy() {
                   </div>
                   <p className="font-space-mono text-base font-bold text-crown">{row.value}</p>
                   <h4 className="font-rajdhani font-semibold text-lg text-haze">{row.label}</h4>
-                  <p className="font-rajdhani text-sm text-haze-3 leading-relaxed">{row.desc}</p>
+                  <p className="font-rajdhani text-sm md:text-base text-haze-3 leading-[1.7] max-w-[30ch]">{row.desc}</p>
                 </motion.div>
               );
             })}
@@ -88,7 +88,7 @@ export function CoinEconomy() {
         </div>
 
         <div>
-          <div className="flex flex-col items-center justify-center gap-3 mb-10 text-center">
+          <div className="flex flex-col items-center justify-center gap-4 mb-12 md:mb-16 text-center">
             <h3 className="font-zen-dots text-2xl md:text-3xl text-haze">Coin Bundles</h3>
             <span className="font-space-mono text-[9px] tracking-[2px] uppercase text-haze-3">
               Stripe · Paystack
@@ -99,7 +99,7 @@ export function CoinEconomy() {
             initial="hidden"
             animate={inView ? "show" : "hidden"}
             variants={{ show: { transition: { staggerChildren: 0.07, delayChildren: 0.15 } } }}
-            className="flex flex-wrap justify-center gap-5 md:gap-6 max-w-5xl mx-auto"
+            className="flex flex-wrap justify-center gap-6 md:gap-8 max-w-5xl mx-auto"
           >
             {BUNDLES.map((b) => (
               <motion.div
@@ -108,7 +108,7 @@ export function CoinEconomy() {
                   hidden: { opacity: 0, y: 20 },
                   show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } },
                 }}
-                className="relative flex flex-col items-center text-center gap-3 p-6 md:p-7 rounded-xl w-[calc(50%-10px)] sm:w-44 md:w-48 transition-transform duration-300 hover:-translate-y-1"
+                className="landing-surface relative flex flex-col items-center text-center gap-4 md:gap-5 rounded-xl w-[calc(50%-12px)] sm:w-48 md:w-52 transition-transform duration-300 hover:-translate-y-1"
                 style={{
                   background: b.popular ? "var(--void-tint)" : "var(--cosmos-2)",
                   border: b.popular ? "1px solid var(--border-accent)" : "1px solid var(--border-1)",
@@ -121,8 +121,8 @@ export function CoinEconomy() {
                 )}
                 <p className="font-orbitron font-black text-2xl tabular-nums text-crown">{b.coins.toLocaleString()}</p>
                 <p className="font-space-mono text-[9px] text-haze-3 tracking-[2px] uppercase">Coins</p>
-                <p className="font-rajdhani text-sm text-haze-3 leading-snug flex-1">{b.desc}</p>
-                <p className="font-zen-dots text-lg text-haze pt-3 border-t border-[var(--border-1)] w-full">{b.price}</p>
+                <p className="font-rajdhani text-sm text-haze-3 leading-[1.65] flex-1 px-1">{b.desc}</p>
+                <p className="font-zen-dots text-lg text-haze pt-4 md:pt-5 border-t border-[var(--border-1)] w-full">{b.price}</p>
                 <p className="font-space-mono text-[9px] text-haze-3 tracking-[1px] uppercase">{b.label}</p>
               </motion.div>
             ))}

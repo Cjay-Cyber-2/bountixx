@@ -34,7 +34,7 @@ export function LandingSection({
   return (
     <section
       id={id}
-      className={`relative py-24 md:py-32 lg:py-40 overflow-hidden ${className}`}
+      className={`relative py-28 md:py-40 lg:py-48 xl:py-56 overflow-hidden ${className}`}
       style={{
         background: variant === "raised" ? "var(--cosmos-2)" : "var(--cosmos)",
         borderTop: variant === "raised" ? "1px solid var(--border-1)" : undefined,
@@ -111,7 +111,7 @@ export function CenteredSectionIntro({
   className?: string;
 }) {
   return (
-    <div className={`mb-16 md:mb-20 lg:mb-24 flex w-full justify-center ${className}`}>
+    <div className={`mb-20 md:mb-28 lg:mb-32 flex w-full justify-center ${className}`}>
       <SectionIntro
         eyebrow={eyebrow}
         title={title}
@@ -147,24 +147,24 @@ export function SectionIntro({
 
   return (
     <div
-      className={`mb-16 md:mb-20 lg:mb-24 w-full max-w-3xl ${
+      className={`mb-20 md:mb-28 lg:mb-32 w-full max-w-3xl ${
         centered ? "mx-auto flex flex-col items-center text-center" : ""
       } ${className}`}
     >
       <SpecLine className={`w-full ${centered ? "justify-center" : ""}`} centered={centered}>
         {eyebrow}
       </SpecLine>
-      <SectionHeading className={`mt-5 md:mt-6 ${centered ? "w-full text-center" : ""}`}>{title}</SectionHeading>
+      <SectionHeading className={`mt-6 md:mt-8 ${centered ? "w-full text-center" : ""}`}>{title}</SectionHeading>
       {description && (
         <p
-          className={`font-body text-lg md:text-xl text-haze-2 mt-6 md:mt-8 leading-relaxed max-w-[62ch] ${centered ? "mx-auto text-center" : ""}`}
+          className={`font-body text-lg md:text-xl text-haze-2 mt-8 md:mt-10 leading-[1.75] max-w-[58ch] ${centered ? "mx-auto text-center" : ""}`}
         >
           {description}
         </p>
       )}
       {extra && (
         <p
-          className={`font-body text-base text-haze-3 mt-4 leading-relaxed max-w-[62ch] ${centered ? "mx-auto text-center" : ""}`}
+          className={`font-body text-base md:text-lg text-haze-3 mt-5 md:mt-6 leading-[1.75] max-w-[58ch] ${centered ? "mx-auto text-center" : ""}`}
         >
           {extra}
         </p>

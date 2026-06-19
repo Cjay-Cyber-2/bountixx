@@ -15,7 +15,7 @@ export function FinalCTA() {
   return (
     <section
       ref={ref}
-      className="cyber-grid relative py-28 md:py-36 lg:py-40 bg-cosmos overflow-hidden text-center"
+      className="cyber-grid relative py-32 md:py-44 lg:py-52 bg-cosmos overflow-hidden text-center"
     >
       <div
         className="absolute inset-0 pointer-events-none"
@@ -41,7 +41,7 @@ export function FinalCTA() {
           initial={{ opacity: 0, y: 36 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className="font-zen-dots text-[clamp(2.2rem,5.5vw,4rem)] text-haze mb-6 md:mb-8 leading-[1.08] text-balance"
+          className="font-zen-dots text-[clamp(2.2rem,5.5vw,4rem)] text-haze mb-8 md:mb-10 leading-[1.12] text-balance"
         >
           Ready to enter <Accent>the arena?</Accent>
         </motion.h2>
@@ -50,7 +50,7 @@ export function FinalCTA() {
           initial={{ opacity: 0, y: 16 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6, delay: 0.12 }}
-          className="font-rajdhani text-lg md:text-xl text-haze-2 mb-10 md:mb-12 mx-auto max-w-lg leading-relaxed"
+          className="font-rajdhani text-lg md:text-xl text-haze-2 mb-12 md:mb-14 mx-auto max-w-lg leading-[1.75]"
         >
           No subscription. No card required. Start with 1,000 welcome coins. The AI structures the challenge, you bring the skill.
         </motion.p>
@@ -59,7 +59,7 @@ export function FinalCTA() {
           initial={{ opacity: 0, y: 16 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.55, delay: 0.25 }}
-          className="flex flex-col items-center gap-5 w-full"
+          className="flex flex-col items-center gap-6 md:gap-7 w-full"
         >
           <Link href="/signup" className="block w-full sm:w-auto">
             <Button
@@ -90,7 +90,7 @@ export function FinalCTA() {
           initial={{ opacity: 0 }}
           animate={inView ? { opacity: 1 } : {}}
           transition={{ delay: 0.5 }}
-          className="mt-12 md:mt-14 font-space-mono text-[10px] text-haze-3 tracking-[3px] uppercase"
+          className="mt-14 md:mt-16 font-space-mono text-[10px] text-haze-3 tracking-[3px] uppercase leading-[1.8]"
         >
           No subscription · Anti-cheat AI · Coins land instantly
         </motion.p>
