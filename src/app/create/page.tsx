@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { AlertCircle, Plus, Trash2, Loader2, ChevronRight } from "lucide-react";
 import { InviteSharePanel } from "@/components/arena/InviteSharePanel";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { PageShell } from "@/components/landing/_section";
+import { PageShell, APP_GUTTERS } from "@/components/landing/_section";
 import { Button } from "@/components/ui/Button";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { readApiError } from "@/lib/readApiError";
@@ -128,57 +128,80 @@ function SetupStep({
   }
 
   return (
-    <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} className="flex flex-col gap-7 md:gap-8">
-      {/* Entry fee banner */}
-      <div className="flex flex-col gap-2 rounded-xl bg-[var(--void-tint)] border border-[var(--border-accent)] px-5 py-4">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <span className="text-xs font-medium text-plum">Entry fee</span>
-          <span className="font-stats font-semibold text-sm text-haze">{ENTRY_FEE} coins / player</span>
-        </div>
-        <span className="text-xs text-haze-3">Hosting is free. Players pay when the arena starts.</span>
-      </div>
-
-      <div>
-        <label className="bx-label">Arena name</label>
-        <input type="text" maxLength={60} placeholder="e.g. Friday Coding Battle" value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="bx-input" />
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-        <div>
-        <label className="bx-label">Players (2–20)</label>
-          <div className="flex items-center border border-[var(--border-2)] bg-[var(--surface-inset)] h-12 rounded-xl overflow-hidden">
-            <button type="button" onClick={() => setPlayers((n) => Math.max(2, n - 1))} className="cursor-target w-12 h-full text-haze-2 hover:text-plum hover:bg-[var(--surface-hover)] transition-colors font-semibold text-lg">−</button>
-            <span className="flex-1 text-center font-stats font-semibold text-lg text-haze tabular-nums">{players}</span>
-            <button type="button" onClick={() => setPlayers((n) => Math.min(20, n + 1))} className="cursor-target w-12 h-full text-haze-2 hover:text-plum hover:bg-[var(--surface-hover)] transition-colors font-semibold text-lg">+</button>
+    <motion.div
+      initial={{ opacity: 0, y: 24 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -16 }}
+      className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8"
+    >
+      {/* Left Column */}
+      <div className="lg:col-span-7 flex flex-col gap-6">
+        {/* Entry fee banner */}
+        <div className="flex flex-col gap-2 rounded-xl bg-[var(--void-tint)] border border-[var(--border-accent)] px-5 py-4">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span className="text-xs font-medium text-plum">Entry fee</span>
+            <span className="font-stats font-semibold text-sm text-haze">{ENTRY_FEE} coins / player</span>
           </div>
-          <p className="text-xs text-haze-3 mt-2">Max prize pool: {players * ENTRY_FEE} coins</p>
+          <span className="text-xs text-haze-3">Hosting is free. Players pay when the arena starts.</span>
         </div>
+
         <div>
-          <label className="bx-label">Timer</label>
-          <button type="button" onClick={() => setTimer(!timer)} role="switch" aria-checked={timer}
-            className={`cursor-target w-full h-12 flex items-center justify-center gap-2 border rounded-xl text-sm font-medium transition-all ${timer ? "border-plum text-plum bg-[var(--void-tint)]" : "border-[var(--border-2)] text-haze-3"}`}>
-            <span className={`w-2.5 h-2.5 rounded-full transition-colors ${timer ? "bg-plum" : "bg-[var(--border-2)]"}`} aria-hidden />
-            {timer ? "On" : "Off"}
-          </button>
+          <label className="bx-label">Arena name</label>
+          <input
+            type="text"
+            maxLength={60}
+            placeholder="e.g. Friday Coding Battle"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="bx-input"
+          />
         </div>
       </div>
 
-      {timer && (
-        <div>
-          <label className="bx-label">Duration — {timerMin} minutes</label>
-          <input type="range" min={1} max={60} value={timerMin} onChange={(e) => setTimerMin(Number(e.target.value))} className="w-full accent-[#F92313]" />
-          <div className="flex justify-between text-xs text-haze-3 mt-2"><span>1 min</span><span>60 min</span></div>
+      {/* Right Column */}
+      <div className="lg:col-span-5 flex flex-col gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-5">
+          <div>
+            <label className="bx-label">Players (2–20)</label>
+            <div className="flex items-center border border-[var(--border-2)] bg-[var(--surface-inset)] h-12 rounded-xl overflow-hidden">
+              <button type="button" onClick={() => setPlayers((n) => Math.max(2, n - 1))} className="cursor-target w-12 h-full text-haze-2 hover:text-plum hover:bg-[var(--surface-hover)] transition-colors font-semibold text-lg">−</button>
+              <span className="flex-1 text-center font-stats font-semibold text-lg text-haze tabular-nums">{players}</span>
+              <button type="button" onClick={() => setPlayers((n) => Math.min(20, n + 1))} className="cursor-target w-12 h-full text-haze-2 hover:text-plum hover:bg-[var(--surface-hover)] transition-colors font-semibold text-lg">+</button>
+            </div>
+            <p className="text-xs text-haze-3 mt-2">Max prize pool: {players * ENTRY_FEE} coins</p>
+          </div>
+          <div>
+            <label className="bx-label">Timer</label>
+            <button type="button" onClick={() => setTimer(!timer)} role="switch" aria-checked={timer}
+              className={`cursor-target w-full h-12 flex items-center justify-center gap-2 border rounded-xl text-sm font-medium transition-all ${timer ? "border-plum text-plum bg-[var(--void-tint)]" : "border-[var(--border-2)] text-haze-3"}`}>
+              <span className={`w-2.5 h-2.5 rounded-full transition-colors ${timer ? "bg-plum" : "bg-[var(--border-2)]"}`} aria-hidden />
+              {timer ? "On" : "Off"}
+            </button>
+          </div>
+        </div>
+
+        {timer && (
+          <div>
+            <label className="bx-label">Duration — {timerMin} minutes</label>
+            <input type="range" min={1} max={60} value={timerMin} onChange={(e) => setTimerMin(Number(e.target.value))} className="w-full accent-[#F92313]" />
+            <div className="flex justify-between text-xs text-haze-3 mt-2"><span>1 min</span><span>60 min</span></div>
+          </div>
+        )}
+      </div>
+
+      {error && (
+        <div className="lg:col-span-12">
+          <p className="flex items-center gap-2 text-sm text-danger"><AlertCircle size={14} /> {error}</p>
         </div>
       )}
 
-      {error && <p className="flex items-center gap-2 text-sm text-danger"><AlertCircle size={14} /> {error}</p>}
-      <StepActions>
-        <Button variant="primary" size="lg" className="w-full sm:w-auto sm:min-w-[220px]" magnetic onClick={handleNext}>
-          Next — add questions <ChevronRight size={16} />
-        </Button>
-      </StepActions>
+      <div className="lg:col-span-12">
+        <StepActions>
+          <Button variant="primary" size="lg" className="w-full sm:w-auto sm:min-w-[220px]" magnetic onClick={handleNext}>
+            Next — add questions <ChevronRight size={16} />
+          </Button>
+        </StepActions>
+      </div>
     </motion.div>
   );
 }
@@ -694,63 +717,72 @@ export default function CreatePage() {
 
   return (
     <AppLayout>
-      <PageShell width="4xl" align="left">
-        <p className="text-xs font-medium text-plum mb-2">New arena</p>
-        <h1 className="font-display text-3xl md:text-4xl text-haze mb-3 text-balance">Create your arena</h1>
-        <p className="text-base md:text-lg text-haze-2 mb-8 md:mb-10 max-w-2xl leading-relaxed">
-          Set up your challenge. The AI validates and builds the rest.
-        </p>
+      <div className={`${APP_GUTTERS} py-6 md:py-10 max-w-7xl mx-auto w-full`}>
+        <div
+          className="w-full rounded-2xl border border-[var(--border-1)] px-6 py-8 sm:px-10 sm:py-10 md:px-12 md:py-12"
+          style={{
+            background: "var(--surface-card)",
+            boxShadow: "0 1px 3px rgba(78, 39, 37, 0.06), 0 8px 32px rgba(78, 39, 37, 0.08)",
+            transition: "var(--theme-transition)",
+          }}
+        >
+          <p className="text-xs font-medium text-plum mb-2">New arena</p>
+          <h1 className="font-display text-3xl md:text-4xl text-haze mb-3 text-balance">Create your arena</h1>
+          <p className="text-base md:text-lg text-haze-2 mb-8 md:mb-10 max-w-2xl leading-relaxed">
+            Set up your challenge. The AI validates and builds the rest.
+          </p>
 
-        <StepIndicator step={step} />
+          <StepIndicator step={step} />
 
-        <AnimatePresence mode="wait">
-          {step === "setup" && (
-            <SetupStep
-              key="setup"
-              onNext={(data) => {
-                setSetupData(data);
-                setStep("questions");
-              }}
-            />
-          )}
+          <AnimatePresence mode="wait">
+            {step === "setup" && (
+              <SetupStep
+                key="setup"
+                onNext={(data) => {
+                  setSetupData(data);
+                  setStep("questions");
+                }}
+              />
+            )}
 
-          {step === "questions" && setupData && (
-            <QuestionsStep
-              key="questions"
-              arenaName={setupData.name}
-              questions={questions}
-              onAnalyze={handleAnalyze}
-              onAdd={() => setQuestions((prev) => [...prev, { localId: crypto.randomUUID(), taskRaw: "", status: "idle" }])}
-              onDelete={(id) => setQuestions((prev) => prev.filter((q) => q.localId !== id))}
-              onChange={(id, taskRaw) => setQuestions((prev) => prev.map((q) => q.localId === id ? { ...q, taskRaw, status: q.status === "done" || q.status === "invalid" || q.status === "clarify" ? "idle" : q.status } : q))}
-              onAnswerChange={(id, answer) => setQuestions((prev) => prev.map((q) =>
-                q.localId === id && q.analysis
-                  ? { ...q, analysis: { ...q.analysis, canonicalAnswer: answer } }
-                  : q
-              ))}
-              onNext={() => setStep("review")}
-              onBack={() => setStep("setup")}
-            />
-          )}
+            {step === "questions" && setupData && (
+              <QuestionsStep
+                key="questions"
+                arenaName={setupData.name}
+                questions={questions}
+                onAnalyze={handleAnalyze}
+                onAdd={() => setQuestions((prev) => [...prev, { localId: crypto.randomUUID(), taskRaw: "", status: "idle" }])}
+                onDelete={(id) => setQuestions((prev) => prev.filter((q) => q.localId !== id))}
+                onChange={(id, taskRaw) => setQuestions((prev) => prev.map((q) => q.localId === id ? { ...q, taskRaw, status: q.status === "done" || q.status === "invalid" || q.status === "clarify" ? "idle" : q.status } : q))}
+                onAnswerChange={(id, answer) => setQuestions((prev) => prev.map((q) =>
+                  q.localId === id && q.analysis
+                    ? { ...q, analysis: { ...q.analysis, canonicalAnswer: answer } }
+                    : q
+                ))}
+                onNext={() => setStep("review")}
+                onBack={() => setStep("setup")}
+              />
+            )}
 
-          {step === "review" && setupData && (
-            <ReviewStep
-              key="review"
-              arenaName={setupData.name}
-              playerCap={setupData.playerCap}
-              questions={questions}
-              onLaunch={handleLaunch}
-              creating={creating}
-              createError={createError}
-              onBack={() => setStep("questions")}
-            />
-          )}
+            {step === "review" && setupData && (
+              <ReviewStep
+                key="review"
+                arenaName={setupData.name}
+                playerCap={setupData.playerCap}
+                questions={questions}
+                onLaunch={handleLaunch}
+                creating={creating}
+                createError={createError}
+                onBack={() => setStep("questions")}
+              />
+            )}
 
-          {step === "lobby" && createdRoom && (
-            <LobbyView key="lobby" room={createdRoom} />
-          )}
-        </AnimatePresence>
-      </PageShell>
+            {step === "lobby" && createdRoom && (
+              <LobbyView key="lobby" room={createdRoom} />
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
     </AppLayout>
   );
 }

@@ -1,12 +1,18 @@
 "use client";
 
+import { BountixxLogo } from "@/components/BountixxLogo";
 import { LANDING_GUTTERS } from "@/components/landing/_section";
 
 export function Footer() {
   return (
     <footer className="relative bg-cosmos overflow-hidden" style={{ borderTop: "1px solid var(--border-1)" }}>
-      <div className={`${LANDING_GUTTERS} py-12 md:py-16 relative`}>
-        <div className="flex flex-col items-center gap-6 mb-10 text-center">
+      <div className={`${LANDING_GUTTERS} py-16 md:py-20 relative`}>
+        <div className="grid grid-cols-1 gap-8 items-center mb-14 text-center">
+          {/* Centre: Logo */}
+          <div className="flex justify-center">
+            <BountixxLogo size={32} showWordmark className="text-haze" />
+          </div>
+
           {/* Socials */}
           <div className="flex justify-center gap-3">
             <SocialIcon label="Twitter / X" href="#">

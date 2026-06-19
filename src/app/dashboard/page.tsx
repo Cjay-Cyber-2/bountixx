@@ -69,7 +69,7 @@ export default function DashboardPage() {
 
   return (
     <AppLayout>
-      <div className={`${APP_GUTTERS} py-8 md:py-10 lg:py-12`}>
+      <div className={`${APP_GUTTERS} py-6 md:py-8 lg:py-10`}>
         <div className="w-full">
 
         {/* Header */}
