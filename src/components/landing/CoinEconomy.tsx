@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import { Accent, LandingSection, SectionIntro } from "@/components/landing/_section";
-import { ENTRY_FEE, STARTER_COINS } from "@/lib/coins";
+import { ENTRY_FEE } from "@/lib/coins";
 import { Trophy, Medal, CheckCircle, Flame, UserPlus, Star } from "lucide-react";
 
 const EARN = [
@@ -127,10 +127,6 @@ export function CoinEconomy() {
               </motion.div>
             ))}
           </motion.div>
-
-          <p className="text-center font-rajdhani text-sm text-haze-3 mt-10 max-w-md mx-auto">
-            New accounts start with {STARTER_COINS.toLocaleString()} welcome coins — enough to jump straight into the arena.
-          </p>
         </div>
       </div>
     </LandingSection>

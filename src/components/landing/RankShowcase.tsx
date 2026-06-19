@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import { motion, useInView, useReducedMotion } from "framer-motion";
-import { Accent, LandingSection, SectionIntro } from "@/components/landing/_section";
+import { Accent, LandingSection, CenteredSectionIntro } from "@/components/landing/_section";
 
 const RANKS = [
   { num: "01", name: "RECRUIT", xp: "0", reward: null, unlock: "Standard rooms", height: 18 },
@@ -24,7 +24,7 @@ export function RankShowcase() {
   return (
     <LandingSection id="ranks" variant="raised" className="pt-28 md:pt-36 lg:pt-40">
       <div ref={ref} className="w-full">
-        <SectionIntro
+        <CenteredSectionIntro
           eyebrow="5 ranks, 20,000 XP ceiling"
           title={
             <>
@@ -32,7 +32,6 @@ export function RankShowcase() {
             </>
           }
           description="Win, place, or just finish — XP accrues either way. Each rank unlocks bigger bounty tiers and a one-time coin payout the moment you cross it."
-          align="center"
         />
 
         <div className="hidden md:grid grid-cols-5 gap-px items-end" style={{ minHeight: 420 }}>
