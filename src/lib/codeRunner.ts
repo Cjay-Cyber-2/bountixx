@@ -6,7 +6,7 @@ import { getLanguage } from "./languages";
  *
  * Priority:
  *   1. Judge0 — set JUDGE0_URL (+ JUDGE0_KEY)
- *   2. Piston — set PISTON_URL (self-hosted recommended; see README setup notes)
+ *   2. Piston — set PISTON_URL to your self-hosted execute endpoint (see user_task.md)
  *   3. Built-in JavaScript VM — always available for javascript on Node runtime
  */
 

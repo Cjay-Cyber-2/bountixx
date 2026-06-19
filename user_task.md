@@ -55,15 +55,179 @@ If neither is set, **Analyze with AI** shows an error about missing keys (not a 
 
 ### ADD for CODING arenas (code execution)
 
-Coding challenges run players' code against AI-generated test cases. The old free public Piston endpoint became **whitelist-only in Feb 2026**, so you must point the app at a code-execution provider. Pick ONE (Production + Preview), then redeploy:
+Coding challenges run players' code against AI-generated test cases. **You need a code runner for every language except JavaScript** (JavaScript runs locally on the server with zero config).
 
-| Option | Variables | Notes |
-|--------|-----------|-------|
-| **Judge0 via RapidAPI** (easiest) | `JUDGE0_URL=https://judge0-ce.p.rapidapi.com` + `JUDGE0_KEY=<your RapidAPI key>` | Subscribe to "Judge0 CE" on RapidAPI (free tier available). |
-| **Self-hosted Judge0** | `JUDGE0_URL=https://your-judge0` + `JUDGE0_KEY=<X-Auth-Token or empty>` | Run Judge0 with Docker. |
-| **Self-hosted Piston** | `PISTON_URL=https://your-piston/api/v2/piston/execute` | Run Piston with Docker. |
+#### How Bountixx picks a runner (do not set more than one)
 
-If none is set, non-coding arenas (trivia / logic / math / text answers) still work, but coding submissions return a clear "execution not configured" message. Supported languages (auto-detected by the AI and locked in the editor): Python, JavaScript, TypeScript, Java, C++, C, Go, Rust, Ruby, PHP, C#.
+| Priority | Env var | What runs |
+|----------|---------|-----------|
+| 1 (highest) | `JUDGE0_URL` (+ optional `JUDGE0_KEY`) | Judge0 — all supported languages |
+| 2 | `PISTON_URL` | Piston — all supported languages |
+| 3 (fallback) | *(none)* | **JavaScript / TypeScript only** via built-in Node VM |
+
+If `JUDGE0_URL` is set, `PISTON_URL` is ignored. For Piston-only setup, leave `JUDGE0_URL` **unset**.
+
+**Supported languages** (AI-detected, locked in the editor): Python, JavaScript, TypeScript, Java, C++, C, Go, Rust, Ruby, PHP, C#.
+
+Non-coding arenas (trivia / logic / math) work without any of these variables.
+
+---
+
+#### Option A — Piston (recommended: self-hosted, free, all languages)
+
+> **Do not use `https://emkc.org/api/v2/piston/execute` without an authorization token.**  
+> As of **15 Feb 2026**, the public Piston API is **whitelist-only**. Bountixx does **not** send a Piston API key, so the public endpoint will fail for production. **Self-host Piston** (open source, MIT) on a VPS, Railway, Fly.io, etc.
+
+##### Step A1 — Run Piston with Docker (on a Linux VPS)
+
+**Host requirements:** Docker installed, **cgroup v2 enabled** (cgroup v1 disabled). Most Ubuntu 22.04+ VPS images work.
+
+```bash
+# One-container quick start (API on port 2000)
+docker run \
+  --privileged \
+  -v piston_data:/piston \
+  -dit \
+  -p 2000:2000 \
+  --name piston_api \
+  --restart unless-stopped \
+  ghcr.io/engineer-man/piston
+```
+
+The container starts with **zero language runtimes**. You must install the ones Bountixx uses (Step A2).
+
+Verify the API is up:
+
+```bash
+curl -s http://127.0.0.1:2000/api/v2/runtimes
+# Should return JSON (may be [] before packages are installed)
+```
+
+##### Step A2 — Install every language Bountixx needs
+
+On the **same machine** (or any machine that can reach your Piston API), clone Piston once to get the package manager CLI:
+
+```bash
+git clone https://github.com/engineer-man/piston
+cd piston/cli && npm install && cd -
+```
+
+Install all runtimes Bountixx maps to (run each command; first install downloads compilers — takes several minutes):
+
+```bash
+PISTON_HOST="http://127.0.0.1:2000"   # change to https://your-piston-domain.com when remote
+
+node cli/index.js -u "$PISTON_HOST" ppman install python
+node cli/index.js -u "$PISTON_HOST" ppman install javascript
+node cli/index.js -u "$PISTON_HOST" ppman install typescript
+node cli/index.js -u "$PISTON_HOST" ppman install java
+node cli/index.js -u "$PISTON_HOST" ppman install c++
+node cli/index.js -u "$PISTON_HOST" ppman install c
+node cli/index.js -u "$PISTON_HOST" ppman install go
+node cli/index.js -u "$PISTON_HOST" ppman install rust
+node cli/index.js -u "$PISTON_HOST" ppman install ruby
+node cli/index.js -u "$PISTON_HOST" ppman install php
+node cli/index.js -u "$PISTON_HOST" ppman install csharp
+```
+
+Confirm they are installed:
+
+```bash
+curl -s "$PISTON_HOST/api/v2/runtimes" | grep -E '"language"|python|javascript|java'
+```
+
+You should see `python`, `javascript`, `typescript`, `java`, `c++`, `c`, `go`, `rust`, `ruby`, `php`, `csharp` in the list.
+
+##### Step A3 — Expose Piston over HTTPS (required for Vercel)
+
+Vercel serverless functions call your Piston API over the public internet. Port 2000 must be reachable via **HTTPS** (use Caddy, Nginx, or a platform load balancer).
+
+Example with Caddy on the VPS (after pointing `piston.yourdomain.com` DNS to the server):
+
+```
+piston.yourdomain.com {
+  reverse_proxy localhost:2000
+}
+```
+
+##### Step A4 — Set `PISTON_URL` in Vercel
+
+Add to **Production** and **Preview**, then **Redeploy**:
+
+| Variable | Value |
+|----------|-------|
+| `PISTON_URL` | `https://piston.yourdomain.com/api/v2/execute` |
+
+**Critical URL difference:**
+
+| Deployment | Correct execute URL |
+|------------|---------------------|
+| **Self-hosted** (you run Docker) | `https://YOUR-HOST/api/v2/execute` |
+| Public emkc.org (token required — not supported by Bountixx out of the box) | `https://emkc.org/api/v2/piston/execute` |
+
+Bountixx posts this JSON to `PISTON_URL` for each test case:
+
+```json
+{
+  "language": "python",
+  "version": "*",
+  "files": [{ "name": "main.py", "content": "<player code>" }],
+  "stdin": "<test input>",
+  "run_timeout": 5000,
+  "compile_timeout": 10000
+}
+```
+
+The `language` field must match Piston’s runtime name (`c++` not `cpp`, `csharp` not `cs` — Bountixx maps these automatically).
+
+##### Step A5 — Smoke-test before going live
+
+Replace the URL with your real `PISTON_URL`:
+
+```bash
+curl -s -X POST "https://piston.yourdomain.com/api/v2/execute" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "language": "python",
+    "version": "*",
+    "files": [{ "name": "main.py", "content": "import sys\nprint(sys.stdin.read().strip())" }],
+    "stdin": "hello",
+    "run_timeout": 5000,
+    "compile_timeout": 10000
+  }'
+```
+
+Expected: HTTP 200, `"run": { "stdout": "hello", "code": 0 }`.
+
+Then in Bountixx: create a **coding** arena → **Run** in the editor → **Submit**. You should see real stdout, not “execution error” or “not configured”.
+
+##### Piston troubleshooting
+
+| Symptom | Fix |
+|---------|-----|
+| `400` — `runtime is unknown` | Language not installed — rerun `ppman install <language>` (Step A2) |
+| `Connection refused` / timeout from Vercel | Piston not public HTTPS; open firewall port 443; check reverse proxy |
+| Works locally, fails on Vercel | `PISTON_URL` missing in **Production** env or you forgot to redeploy |
+| `Judge0` runs instead of Piston | Remove `JUDGE0_URL` if you only want Piston |
+| Only JS works | `PISTON_URL` unset — JS uses built-in VM; Python/etc. need Piston |
+| emkc.org returns 401/403 | Public API needs a token Bountixx does not send — self-host instead |
+
+---
+
+#### Option B — Judge0 (alternative to Piston)
+
+Pick **one** provider. If you use Judge0, leave `PISTON_URL` unset.
+
+| Setup | Variables | Notes |
+|-------|-----------|-------|
+| **Judge0 via RapidAPI** (easiest hosted) | `JUDGE0_URL=https://judge0-ce.p.rapidapi.com` + `JUDGE0_KEY=<RapidAPI key>` | Subscribe to [Judge0 CE on RapidAPI](https://rapidapi.com/judge0-official/api/judge0-ce) (free tier available). |
+| **Self-hosted Judge0** | `JUDGE0_URL=https://your-judge0` + `JUDGE0_KEY=<X-Auth-Token or empty>` | [Judge0 CE Docker docs](https://github.com/judge0/judge0). |
+
+---
+
+#### Option C — JavaScript only (no setup)
+
+Leave `PISTON_URL` and `JUDGE0_URL` unset. Players can run/submit **JavaScript** arenas only. All other coding languages show “execution not configured”.
 
 ### Database migration (run once)
 
@@ -209,6 +373,8 @@ Open `http://localhost:3000/login` — you should see **your** Bountixx UI, not 
 | **Analyze with AI** fails / “could not reach service” | Add `GROQ_API_KEY` or `GEMINI_API_KEY` in Vercel → redeploy. Open `/api/health` to see which env check failed |
 | **Analyze with AI** — “Clerk server auth failed” | `CLERK_SECRET_KEY` missing or mismatched with your publishable key — add in Vercel Production + Preview, redeploy |
 | **Analyze with AI** — Groq/Gemini error in UI | API key invalid or rate-limited — the UI now shows the provider message |
+| **Coding Run/Submit** — “execution not configured” | Set `PISTON_URL` (self-hosted) or `JUDGE0_URL` — see **ADD for CODING arenas** above. JS works without config. |
+| **Coding Run/Submit** — “runtime is unknown” / execution error | Piston language not installed — run `ppman install python` (etc.) on your Piston server |
 | **Invite link / QR not working** | Set `NEXT_PUBLIC_APP_URL=https://bountixx.vercel.app` in Vercel so links always use your production domain, then redeploy |
 
 ### D. Browser DevTools check
@@ -247,7 +413,14 @@ NEXT_PUBLIC_CLERK_SIGN_IN_FORCE_REDIRECT_URL=/dashboard
 NEXT_PUBLIC_CLERK_SIGN_UP_FORCE_REDIRECT_URL=/dashboard
 NEXT_PUBLIC_APP_URL=https://YOUR-DOMAIN.com
 GROQ_API_KEY=your-groq-api-key
-CLERK_SECRET_KEY=sk_test_xxxxxxxx
+
+# Coding execution — pick ONE (see "ADD for CODING arenas" section)
+# Self-hosted Piston (recommended):
+PISTON_URL=https://piston.yourdomain.com/api/v2/execute
+
+# OR Judge0 via RapidAPI:
+# JUDGE0_URL=https://judge0-ce.p.rapidapi.com
+# JUDGE0_KEY=your-rapidapi-key
 ```
 
 Then **remove** the Firebase auth variables listed in Step 1 unless you need push notifications.
@@ -261,5 +434,6 @@ When all tests pass:
 - [ ] Google sign-in reaches `/dashboard`
 - [ ] No `accounts.dev` redirects
 - [ ] Sign out works and returns to `/`
+- [ ] Coding arena **Run** + **Submit** work for Python (or your target language) when `PISTON_URL` is set
 
 If you are still stuck, run `npm run auth:diagnose` locally and share the output.
