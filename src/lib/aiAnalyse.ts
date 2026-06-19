@@ -130,11 +130,11 @@ function extractMathNumber(s: string): number | null {
 }
 
 function answerResolverProvider(): { provider: Provider; apiKey: string } | null {
-  const gemini = process.env.GEMINI_API_KEY?.trim();
-  if (gemini) return { provider: "gemini", apiKey: gemini };
-
   const groq = process.env.GROQ_API_KEY?.trim();
   if (groq) return { provider: "groq", apiKey: groq };
+
+  const gemini = process.env.GEMINI_API_KEY?.trim();
+  if (gemini) return { provider: "gemini", apiKey: gemini };
 
   return null;
 }
@@ -247,11 +247,11 @@ export class AiParseError extends Error {
 }
 
 function resolveProvider(): { provider: Provider; apiKey: string } | null {
-  const gemini = process.env.GEMINI_API_KEY?.trim();
-  if (gemini) return { provider: "gemini", apiKey: gemini };
-
   const groq = process.env.GROQ_API_KEY?.trim();
   if (groq) return { provider: "groq", apiKey: groq };
+
+  const gemini = process.env.GEMINI_API_KEY?.trim();
+  if (gemini) return { provider: "gemini", apiKey: gemini };
 
   return null;
 }
@@ -261,42 +261,11 @@ export function isAiRateLimitError(message: string): boolean {
 }
 
 export function friendlyAiRateLimitMessage(): string {
-  return "Groq AI hit its daily limit. Add GEMINI_API_KEY in Vercel (recommended), or wait about an hour and try again.";
-}
-
-async function runPrimaryAnalysis(
-  userMessage: string,
-): Promise<{ result: AnalysisResult; provider: Provider }> {
-  const geminiKey = process.env.GEMINI_API_KEY?.trim();
-  const groqKey = process.env.GROQ_API_KEY?.trim();
-
-  if (geminiKey) {
-    try {
-      return { result: await analyseWithGemini(geminiKey, userMessage), provider: "gemini" };
-    } catch (err) {
-      if (groqKey && err instanceof AiProviderError && !isAiRateLimitError(err.message)) {
-        return { result: await analyseWithGroq(groqKey, userMessage), provider: "groq" };
-      }
-      throw err;
-    }
-  }
-
-  if (groqKey) {
-    try {
-      return { result: await analyseWithGroq(groqKey, userMessage), provider: "groq" };
-    } catch (err) {
-      if (err instanceof AiProviderError && isAiRateLimitError(err.message)) {
-        throw new AiProviderError(friendlyAiRateLimitMessage());
-      }
-      throw err;
-    }
-  }
-
-  throw new AiConfigError(missingAiKeyMessage());
+  return "Groq AI hit its daily limit. Wait about an hour and try again, or analyze questions one at a time.";
 }
 
 export function missingAiKeyMessage(): string {
-  return "AI analysis unavailable — set GEMINI_API_KEY (recommended) or GROQ_API_KEY in Vercel, then redeploy";
+  return "AI analysis unavailable — set GROQ_API_KEY in Vercel, then redeploy";
 }
 
 async function readHttpError(res: Response, label: string): Promise<string> {
@@ -531,14 +500,27 @@ export async function analyseChallenge(
   userMessage: string,
   languageHint?: string
 ): Promise<AnalysisResult> {
-  if (!resolveProvider()) {
+  const resolved = resolveProvider();
+  if (!resolved) {
     throw new AiConfigError(missingAiKeyMessage());
   }
 
   const taskText = extractTaskText(userMessage);
 
-  const { result, provider } = await runPrimaryAnalysis(userMessage);
+  let result: AnalysisResult;
+  try {
+    result =
+      resolved.provider === "gemini"
+        ? await analyseWithGemini(resolved.apiKey, userMessage)
+        : await analyseWithGroq(resolved.apiKey, userMessage);
+  } catch (err) {
+    if (err instanceof AiProviderError && isAiRateLimitError(err.message)) {
+      throw new AiProviderError(friendlyAiRateLimitMessage());
+    }
+    throw err;
+  }
 
+  const provider = resolved.provider;
   const { analysis, reclassified } = normaliseAnalysis(result, languageHint, taskText);
 
   const needsAnswer =

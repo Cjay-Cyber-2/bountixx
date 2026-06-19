@@ -68,7 +68,7 @@ export function friendlyErrorMessage(
 
   if (status === 502 || status === 503) {
     if (raw && isAiRateLimitish(raw)) {
-      return "Groq AI hit its daily limit. Add GEMINI_API_KEY in Vercel (recommended), or wait about an hour and try again.";
+      return "Groq AI hit its daily limit. Wait about an hour and try again, or analyze questions one at a time.";
     }
     if (raw && !ROBOTIC.test(raw)) return raw;
     return "We're having trouble reaching the AI service. Please try again in a moment.";
