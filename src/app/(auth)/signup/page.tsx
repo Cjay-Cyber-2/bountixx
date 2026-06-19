@@ -215,9 +215,7 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-cosmos">
-      <div data-legacy-aesthetic={theme === "light" ? undefined : ""} className="contents">
-        <AuthBrandPanel />
-      </div>
+      <AuthBrandPanel />
 
       <AuthFormShell
         eyebrow="Join the arena"
