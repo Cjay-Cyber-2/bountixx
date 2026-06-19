@@ -257,14 +257,14 @@ footer,
   width: 100%;
   max-width: 1680px;
   margin-inline: auto;
-  padding-left: max(2rem, env(safe-area-inset-left, 0px));
-  padding-right: max(2rem, env(safe-area-inset-right, 0px));
+  padding-left: max(2.25rem, env(safe-area-inset-left, 0px));
+  padding-right: max(2.25rem, env(safe-area-inset-right, 0px));
 }
 
 @media (min-width: 640px) {
   .page-gutters {
-    padding-left: max(2.5rem, env(safe-area-inset-left, 0px));
-    padding-right: max(2.5rem, env(safe-area-inset-right, 0px));
+    padding-left: max(2.75rem, env(safe-area-inset-left, 0px));
+    padding-right: max(2.75rem, env(safe-area-inset-right, 0px));
   }
 }
 
@@ -296,27 +296,65 @@ footer,
   }
 }
 
-/* ─── Landing bordered surfaces — match dashboard card breathing room ─── */
+/* ─── Landing layout rhythm (matches create arena spacing) ─── */
+.landing-block-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 5rem;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .landing-block-stack {
+    gap: 6.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .landing-block-stack {
+    gap: 8rem;
+  }
+}
+
+.landing-subsection-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .landing-subsection-stack {
+    gap: 4rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .landing-subsection-stack {
+    gap: 5rem;
+  }
+}
+
 .landing-surface {
-  border-radius: 0.75rem;
-  padding: 2rem;
+  border-radius: 1rem;
+  padding: 2rem 1.75rem;
 }
 
 @media (min-width: 640px) {
   .landing-surface {
-    padding: 2.25rem;
+    padding: 2.25rem 2rem;
   }
 }
 
 @media (min-width: 768px) {
   .landing-surface {
-    padding: 2.75rem;
+    padding: 3rem 2.5rem;
   }
 }
 
 @media (min-width: 1024px) {
   .landing-surface {
-    padding: 3.25rem;
+    padding: 3.5rem 3rem;
   }
 }
 

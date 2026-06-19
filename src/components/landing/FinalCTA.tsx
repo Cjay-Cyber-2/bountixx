@@ -15,7 +15,7 @@ export function FinalCTA() {
   return (
     <section
       ref={ref}
-      className="cyber-grid relative py-32 md:py-44 lg:py-52 bg-cosmos overflow-hidden text-center"
+      className="cyber-grid relative py-40 md:py-56 lg:py-72 bg-cosmos overflow-hidden text-center"
     >
       <div
         className="absolute inset-0 pointer-events-none"
@@ -27,8 +27,9 @@ export function FinalCTA() {
 
       <span
         aria-hidden
-        className="absolute top-0 left-0 right-0 h-px mx-[max(1.75rem,env(safe-area-inset-left,0px))] sm:mx-9 md:mx-12 lg:mx-16 xl:mx-20 2xl:mx-28"
+        className="absolute top-0 left-0 right-0 h-px"
         style={{
+          marginInline: "max(2.25rem, env(safe-area-inset-left, 0px))",
           width: "auto",
           background:
             "linear-gradient(90deg, transparent, var(--border-2) 40%, var(--border-2) 60%, transparent)",
@@ -37,63 +38,63 @@ export function FinalCTA() {
 
       <div className={`${LANDING_GUTTERS} relative flex w-full flex-col items-center`}>
         <div className="w-full max-w-3xl mx-auto flex flex-col items-center text-center">
-        <motion.h2
-          initial={{ opacity: 0, y: 36 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className="font-zen-dots text-[clamp(2.2rem,5.5vw,4rem)] text-haze mb-8 md:mb-10 leading-[1.12] text-balance"
-        >
-          Ready to enter <Accent>the arena?</Accent>
-        </motion.h2>
-
-        <motion.p
-          initial={{ opacity: 0, y: 16 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6, delay: 0.12 }}
-          className="font-rajdhani text-lg md:text-xl text-haze-2 mb-12 md:mb-14 mx-auto max-w-lg leading-[1.75]"
-        >
-          No subscription. No card required. Start with 1,000 welcome coins. The AI structures the challenge, you bring the skill.
-        </motion.p>
-
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.55, delay: 0.25 }}
-          className="flex flex-col items-center gap-6 md:gap-7 w-full"
-        >
-          <Link href="/signup" className="block w-full sm:w-auto">
-            <Button
-              variant="primary"
-              size="lg"
-              magnetic
-              className="w-full sm:w-auto text-base px-12 h-[56px] gap-3 group justify-center"
-              style={{
-                background: "var(--void)",
-                borderColor: "var(--void)",
-                boxShadow: "0 0 48px rgba(168,85,247,0.30)",
-              } as React.CSSProperties}
-            >
-              Create your first arena
-              <ArrowRight size={16} aria-hidden className="transition-transform group-hover:translate-x-1" />
-            </Button>
-          </Link>
-
-          <Link
-            href="/login"
-            className="cursor-target font-space-mono text-[11px] text-haze-2 hover:text-haze transition-colors tracking-[2px] uppercase"
+          <motion.h2
+            initial={{ opacity: 0, y: 36 }}
+            animate={inView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+            className="font-zen-dots text-[clamp(2.2rem,5.5vw,4rem)] text-haze mb-10 md:mb-12 leading-[1.15] text-balance"
           >
-            Already competing? Sign in →
-          </Link>
-        </motion.div>
+            Ready to enter <Accent>the arena?</Accent>
+          </motion.h2>
 
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={inView ? { opacity: 1 } : {}}
-          transition={{ delay: 0.5 }}
-          className="mt-14 md:mt-16 font-space-mono text-[10px] text-haze-3 tracking-[3px] uppercase leading-[1.8]"
-        >
-          No subscription · Anti-cheat AI · Coins land instantly
-        </motion.p>
+          <motion.p
+            initial={{ opacity: 0, y: 16 }}
+            animate={inView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.6, delay: 0.12 }}
+            className="font-rajdhani text-lg md:text-xl text-haze-2 mb-14 md:mb-16 mx-auto max-w-lg leading-[1.85]"
+          >
+            No subscription. No card required. Start with 1,000 welcome coins. The AI structures the challenge, you bring the skill.
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={inView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.55, delay: 0.25 }}
+            className="flex flex-col items-center gap-8 md:gap-9 w-full"
+          >
+            <Link href="/signup" className="block w-full sm:w-auto">
+              <Button
+                variant="primary"
+                size="lg"
+                magnetic
+                className="w-full sm:w-auto text-base px-12 h-[56px] gap-3 group justify-center"
+                style={{
+                  background: "var(--void)",
+                  borderColor: "var(--void)",
+                  boxShadow: "0 0 48px rgba(168,85,247,0.30)",
+                } as React.CSSProperties}
+              >
+                Create your first arena
+                <ArrowRight size={16} aria-hidden className="transition-transform group-hover:translate-x-1" />
+              </Button>
+            </Link>
+
+            <Link
+              href="/login"
+              className="cursor-target font-space-mono text-[11px] text-haze-2 hover:text-haze transition-colors tracking-[2px] uppercase"
+            >
+              Already competing? Sign in →
+            </Link>
+          </motion.div>
+
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={inView ? { opacity: 1 } : {}}
+            transition={{ delay: 0.5 }}
+            className="mt-16 md:mt-20 font-space-mono text-[10px] text-haze-3 tracking-[3px] uppercase leading-[2]"
+          >
+            No subscription · Anti-cheat AI · Coins land instantly
+          </motion.p>
         </div>
       </div>
     </section>

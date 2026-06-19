@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
-import { LandingSection, CenteredSectionIntro } from "@/components/landing/_section";
+import { CenteredSectionIntro, LANDING_SURFACE, LandingSection } from "@/components/landing/_section";
 
 const CATEGORIES = [
   {
@@ -40,7 +40,7 @@ export function Categories() {
   const inView = useInView(ref, { once: true, margin: "-10% 0px" });
 
   return (
-    <LandingSection id="categories" variant="raised" className="pt-40 md:pt-48 lg:pt-56">
+    <LandingSection id="categories" variant="raised">
       <div ref={ref} className="w-full">
         <CenteredSectionIntro
           eyebrow="Four formats"
@@ -52,7 +52,7 @@ export function Categories() {
           initial="hidden"
           animate={inView ? "show" : "hidden"}
           variants={{ show: { transition: { staggerChildren: 0.1 } } }}
-          className="grid sm:grid-cols-2 gap-8 md:gap-10 lg:gap-14"
+          className="grid sm:grid-cols-2 gap-10 md:gap-12 lg:gap-16"
         >
           {CATEGORIES.map((cat) => (
             <motion.article
@@ -61,15 +61,15 @@ export function Categories() {
                 hidden: { opacity: 0, y: 24 },
                 show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } },
               }}
-              className="landing-surface group relative flex flex-col items-center text-center rounded-xl transition-transform duration-300 hover:-translate-y-1"
+              className={`${LANDING_SURFACE} group relative flex flex-col items-center text-center rounded-2xl border-2 transition-transform duration-300 hover:-translate-y-1`}
               style={{
                 background: "var(--cosmos)",
-                border: "1px solid var(--border-1)",
+                borderColor: "var(--border-1)",
                 borderTop: "2px solid var(--void)",
               }}
             >
               <div
-                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-xl"
+                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-2xl"
                 style={{
                   background:
                     "radial-gradient(ellipse 70% 50% at 50% 0%, rgba(168,85,247,0.12), transparent 70%)",
@@ -77,24 +77,27 @@ export function Categories() {
                 aria-hidden
               />
 
-              <h3 className="font-zen-dots text-2xl md:text-[1.65rem] lg:text-3xl text-haze leading-none mb-6 md:mb-8">
+              <h3 className="font-zen-dots text-2xl md:text-[1.65rem] lg:text-3xl text-haze leading-none mb-8 md:mb-10">
                 {cat.label}
               </h3>
 
-              <p className="font-rajdhani text-[17px] md:text-lg text-haze-2 leading-[1.75] mb-8 md:mb-10 max-w-[44ch]">
+              <p className="font-rajdhani text-[17px] md:text-lg text-haze-2 leading-[1.85] mb-10 md:mb-12 max-w-[42ch]">
                 {cat.desc}
               </p>
 
-              <p className="font-space-mono text-[13px] text-haze-3 mb-10 md:mb-12 leading-relaxed">
+              <p className="font-space-mono text-[13px] text-haze-3 mb-12 md:mb-14 leading-[1.7] px-2">
                 <span className="text-void mr-2">&rsaquo;</span>
                 {cat.sample}
               </p>
 
-              <div className="mt-auto pt-8 md:pt-10 space-y-4 w-full" style={{ borderTop: "1px solid var(--border-1)" }}>
-                <p className="font-space-mono text-[11px] uppercase tracking-[2px] text-haze leading-[1.7] px-2">
+              <div
+                className="mt-auto pt-10 md:pt-12 space-y-5 w-full px-2"
+                style={{ borderTop: "1px solid var(--border-1)" }}
+              >
+                <p className="font-space-mono text-[11px] uppercase tracking-[2px] text-haze leading-[1.8]">
                   {cat.win}
                 </p>
-                <p className="font-space-mono text-[10px] uppercase tracking-[2px] text-haze-3 leading-[1.7] px-2">
+                <p className="font-space-mono text-[10px] uppercase tracking-[2px] text-haze-3 leading-[1.8]">
                   {cat.partial}
                 </p>
               </div>

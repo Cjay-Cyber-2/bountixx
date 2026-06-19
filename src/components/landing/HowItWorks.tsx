@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import { motion, useInView, useScroll, useTransform, useReducedMotion } from "framer-motion";
-import { LandingSection, SectionIntro } from "@/components/landing/_section";
+import { LandingSection, LANDING_SURFACE, SectionIntro } from "@/components/landing/_section";
 
 const STEPS = [
   {
@@ -36,7 +36,7 @@ export function HowItWorks() {
   const railFill = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
 
   return (
-    <LandingSection id="how-it-works" className="relative pb-32 md:pb-40 lg:pb-48">
+    <LandingSection id="how-it-works" className="relative">
       <div
         className="absolute inset-0 pointer-events-none z-0"
         style={{ background: "radial-gradient(circle 900px at 50% -100px, var(--glow-1), transparent)" }}
@@ -51,7 +51,6 @@ export function HowItWorks() {
       />
 
       <div ref={railRef} className="relative z-[1] w-full">
-        {/* Single continuous vertical rail on the left */}
         <div
           className="absolute top-0 bottom-0 w-px pointer-events-none"
           style={{ left: RAIL_LEFT }}
@@ -66,7 +65,7 @@ export function HowItWorks() {
           )}
         </div>
 
-        <div className="flex flex-col gap-32 md:gap-40 lg:gap-48 pb-16 md:pb-24 lg:pb-32">
+        <div className="flex flex-col gap-40 md:gap-52 lg:gap-64 pb-20 md:pb-28 lg:pb-36">
           {STEPS.map((step, i) => (
             <Stage key={step.num} step={step} isLast={i === STEPS.length - 1} />
           ))}
@@ -81,8 +80,7 @@ function Stage({ step, isLast = false }: { step: (typeof STEPS)[number]; isLast?
   const inView = useInView(ref, { once: true, margin: "-18% 0px" });
 
   return (
-    <div ref={ref} className={`relative w-full ${isLast ? "mb-8 md:mb-12" : ""}`}>
-      {/* Dot anchored to the left rail */}
+    <div ref={ref} className={`relative w-full ${isLast ? "mb-4 md:mb-8" : ""}`}>
       <motion.span
         initial={{ scale: 0 }}
         animate={inView ? { scale: 1 } : {}}
@@ -90,7 +88,7 @@ function Stage({ step, isLast = false }: { step: (typeof STEPS)[number]; isLast?
         className="absolute z-[2] flex h-4 w-4 -translate-x-1/2 items-center justify-center rounded-full"
         style={{
           left: RAIL_LEFT,
-          top: "0.35rem",
+          top: "1.25rem",
           background: "var(--cosmos)",
           border: "2px solid var(--void)",
           boxShadow: "0 0 12px var(--glow-1)",
@@ -98,32 +96,35 @@ function Stage({ step, isLast = false }: { step: (typeof STEPS)[number]; isLast?
         aria-hidden
       />
 
-      {/* Text centered in the viewport — independent of the rail */}
       <motion.div
         initial={{ opacity: 0, y: 32 }}
         animate={inView ? { opacity: 1, y: 0 } : {}}
         transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
         className="flex w-full flex-col items-center text-center"
       >
-        <span
-          className="font-orbitron font-black leading-none select-none tabular-nums"
-          style={{
-            fontSize: "clamp(3.5rem, 8vw, 6.5rem)",
-            color: "transparent",
-            WebkitTextStroke: "1.5px var(--border-2)",
-          }}
-          aria-hidden
+        <div
+          className={`${LANDING_SURFACE} w-full max-w-2xl rounded-2xl border-2 border-[var(--border-1)] bg-[var(--cosmos-2)]`}
         >
-          {step.num}
-        </span>
+          <span
+            className="font-orbitron font-black leading-none select-none tabular-nums block"
+            style={{
+              fontSize: "clamp(3rem, 7vw, 5.5rem)",
+              color: "transparent",
+              WebkitTextStroke: "1.5px var(--border-2)",
+            }}
+            aria-hidden
+          >
+            {step.num}
+          </span>
 
-        <div className="mt-7 md:mt-9 max-w-[50ch]">
-          <h3 className="font-zen-dots text-xl md:text-2xl text-haze mb-5 md:mb-7">
-            {step.title}
-          </h3>
-          <p className="font-rajdhani text-base md:text-lg text-haze-2 leading-[1.8]">
-            {step.body}
-          </p>
+          <div className="mt-8 md:mt-10 max-w-[48ch] mx-auto">
+            <h3 className="font-zen-dots text-xl md:text-2xl text-haze mb-6 md:mb-8">
+              {step.title}
+            </h3>
+            <p className="font-rajdhani text-base md:text-lg text-haze-2 leading-[1.9]">
+              {step.body}
+            </p>
+          </div>
         </div>
       </motion.div>
     </div>

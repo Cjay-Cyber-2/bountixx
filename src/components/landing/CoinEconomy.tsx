@@ -2,7 +2,14 @@
 
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
-import { Accent, LandingSection, SectionIntro } from "@/components/landing/_section";
+import {
+  Accent,
+  LANDING_STACK,
+  LANDING_SUBSTACK,
+  LANDING_SURFACE,
+  LandingSection,
+  SectionIntro,
+} from "@/components/landing/_section";
 import { ENTRY_FEE, ENTRY_FEE_SUMMARY, HOSTING_FREE_SUMMARY } from "@/lib/coins";
 import { Trophy, Medal, CheckCircle, Flame, UserPlus, Star } from "lucide-react";
 
@@ -35,7 +42,7 @@ export function CoinEconomy() {
 
   return (
     <LandingSection>
-      <div ref={ref} className="w-full flex flex-col items-center">
+      <div ref={ref} className={`w-full flex flex-col items-center ${LANDING_STACK}`}>
         <SectionIntro
           eyebrow="Coins, not cash"
           title={
@@ -46,10 +53,11 @@ export function CoinEconomy() {
           description={`${HOSTING_FREE_SUMMARY} ${ENTRY_FEE_SUMMARY}`}
           extra="Coins are non-transferable values inside Bountixx. They drive progression and competitive stake, not cash transactions."
           align="center"
+          className="mb-0"
         />
 
-        <div className="mb-28 md:mb-36 lg:mb-40">
-          <div className="flex flex-col items-center justify-center gap-4 mb-12 md:mb-16 text-center">
+        <div className={`w-full max-w-5xl mx-auto pt-16 md:pt-24 border-t border-[var(--border-1)] ${LANDING_SUBSTACK}`}>
+          <div className="flex flex-col items-center justify-center gap-5 text-center">
             <h3 className="font-zen-dots text-2xl md:text-3xl text-haze">Earning</h3>
             <span className="font-space-mono text-[10px] tracking-[3px] uppercase text-crown">◈ Coins</span>
           </div>
@@ -58,7 +66,7 @@ export function CoinEconomy() {
             initial="hidden"
             animate={inView ? "show" : "hidden"}
             variants={{ show: { transition: { staggerChildren: 0.08 } } }}
-            className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 lg:gap-10 max-w-5xl mx-auto"
+            className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10 lg:gap-12"
           >
             {EARN.map((row) => {
               const Icon = row.icon;
@@ -69,26 +77,26 @@ export function CoinEconomy() {
                     hidden: { opacity: 0, y: 16 },
                     show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } },
                   }}
-                  className="landing-surface flex flex-col items-center text-center gap-4 md:gap-5 rounded-xl"
-                  style={{ background: "var(--cosmos-2)", border: "1px solid var(--border-1)" }}
+                  className={`${LANDING_SURFACE} flex flex-col items-center text-center gap-5 md:gap-6 rounded-2xl border-2`}
+                  style={{ background: "var(--cosmos-2)", borderColor: "var(--border-1)" }}
                 >
                   <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center"
+                    className="w-12 h-12 rounded-full flex items-center justify-center"
                     style={{ background: "rgba(240,165,0,0.1)", border: "1px solid rgba(240,165,0,0.25)" }}
                   >
-                    <Icon size={18} className="text-crown" aria-hidden />
+                    <Icon size={20} className="text-crown" aria-hidden />
                   </div>
                   <p className="font-space-mono text-base font-bold text-crown">{row.value}</p>
                   <h4 className="font-rajdhani font-semibold text-lg text-haze">{row.label}</h4>
-                  <p className="font-rajdhani text-sm md:text-base text-haze-3 leading-[1.7] max-w-[30ch]">{row.desc}</p>
+                  <p className="font-rajdhani text-sm md:text-base text-haze-3 leading-[1.8] max-w-[28ch]">{row.desc}</p>
                 </motion.div>
               );
             })}
           </motion.div>
         </div>
 
-        <div>
-          <div className="flex flex-col items-center justify-center gap-4 mb-12 md:mb-16 text-center">
+        <div className={`w-full max-w-5xl mx-auto pt-16 md:pt-24 border-t border-[var(--border-1)] ${LANDING_SUBSTACK}`}>
+          <div className="flex flex-col items-center justify-center gap-5 text-center">
             <h3 className="font-zen-dots text-2xl md:text-3xl text-haze">Coin Bundles</h3>
             <span className="font-space-mono text-[9px] tracking-[2px] uppercase text-haze-3">
               Stripe · Paystack
@@ -99,7 +107,7 @@ export function CoinEconomy() {
             initial="hidden"
             animate={inView ? "show" : "hidden"}
             variants={{ show: { transition: { staggerChildren: 0.07, delayChildren: 0.15 } } }}
-            className="flex flex-wrap justify-center gap-6 md:gap-8 max-w-5xl mx-auto"
+            className="flex flex-wrap justify-center gap-8 md:gap-10"
           >
             {BUNDLES.map((b) => (
               <motion.div
@@ -108,10 +116,10 @@ export function CoinEconomy() {
                   hidden: { opacity: 0, y: 20 },
                   show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } },
                 }}
-                className="landing-surface relative flex flex-col items-center text-center gap-4 md:gap-5 rounded-xl w-[calc(50%-12px)] sm:w-48 md:w-52 transition-transform duration-300 hover:-translate-y-1"
+                className={`${LANDING_SURFACE} relative flex flex-col items-center text-center gap-5 md:gap-6 rounded-2xl border-2 w-[calc(50%-16px)] sm:w-52 md:w-56 transition-transform duration-300 hover:-translate-y-1`}
                 style={{
                   background: b.popular ? "var(--void-tint)" : "var(--cosmos-2)",
-                  border: b.popular ? "1px solid var(--border-accent)" : "1px solid var(--border-1)",
+                  borderColor: b.popular ? "var(--border-accent)" : "var(--border-1)",
                 }}
               >
                 {b.popular && (
@@ -121,9 +129,9 @@ export function CoinEconomy() {
                 )}
                 <p className="font-orbitron font-black text-2xl tabular-nums text-crown">{b.coins.toLocaleString()}</p>
                 <p className="font-space-mono text-[9px] text-haze-3 tracking-[2px] uppercase">Coins</p>
-                <p className="font-rajdhani text-sm text-haze-3 leading-[1.65] flex-1 px-1">{b.desc}</p>
-                <p className="font-zen-dots text-lg text-haze pt-4 md:pt-5 border-t border-[var(--border-1)] w-full">{b.price}</p>
-                <p className="font-space-mono text-[9px] text-haze-3 tracking-[1px] uppercase">{b.label}</p>
+                <p className="font-rajdhani text-sm text-haze-3 leading-[1.75] flex-1 px-2">{b.desc}</p>
+                <p className="font-zen-dots text-lg text-haze pt-6 md:pt-7 border-t border-[var(--border-1)] w-full">{b.price}</p>
+                <p className="font-space-mono text-[9px] text-haze-3 tracking-[1px] uppercase pb-1">{b.label}</p>
               </motion.div>
             ))}
           </motion.div>
