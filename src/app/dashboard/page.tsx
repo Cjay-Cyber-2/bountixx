@@ -144,7 +144,7 @@ export default function DashboardPage() {
           initial="hidden"
           animate="show"
           variants={{ show: { transition: { staggerChildren: 0.07 } } }}
-          className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-12 md:mb-14"
+          className="grid grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 mb-12 md:mb-14"
         >
           {statCards.map((s) => {
             const Icon = s.icon;
@@ -152,7 +152,7 @@ export default function DashboardPage() {
               <motion.div
                 key={s.label}
                 variants={{ hidden: { opacity: 0, y: 18 }, show: { opacity: 1, y: 0 } }}
-                className="relative flex min-h-[148px] flex-col rounded-xl border border-[var(--border-1)] bg-[var(--surface-inset)] p-5 sm:p-6 md:p-7 group shadow-sm"
+                className="relative flex min-h-[148px] flex-col rounded-xl border border-[var(--border-1)] bg-[var(--surface-inset)] p-6 sm:p-8 md:p-9 group shadow-sm"
               >
                 <div
                   className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-xl"
@@ -221,13 +221,13 @@ export default function DashboardPage() {
         )}
 
         {/* Create CTA + Online */}
-        <div className="grid lg:grid-cols-2 gap-4 md:gap-6 mb-10">
+        <div className="grid lg:grid-cols-2 gap-6 md:gap-8 mb-10 md:mb-12">
           {/* Create arena CTA */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.5 }}
-            className="relative overflow-hidden p-7 md:p-8 flex flex-col gap-5"
+            className="relative overflow-hidden p-8 md:p-10 flex flex-col gap-6"
             style={{
               background: "var(--void-tint)",
               border: "1px solid var(--border-accent)",
@@ -269,7 +269,7 @@ export default function DashboardPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.5 }}
-            className="p-6"
+            className="p-7 md:p-8"
             style={{ background: "var(--cosmos-2)", border: "1px solid var(--border-1)" }}
           >
             <div className="flex items-center gap-3 mb-5">

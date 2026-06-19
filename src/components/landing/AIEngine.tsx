@@ -74,7 +74,7 @@ export function AIEngine() {
             </span>
           </div>
 
-          <div className="grid sm:grid-cols-2 gap-5 md:gap-6 max-w-4xl mx-auto">
+          <div className="grid sm:grid-cols-2 gap-6 md:gap-8 max-w-4xl mx-auto w-full">
             {ANTI_CHEAT.map((ac, i) => {
               const Icon = ac.icon;
               return (
@@ -83,7 +83,7 @@ export function AIEngine() {
                   initial={{ opacity: 0, y: 16 }}
                   animate={inView ? { opacity: 1, y: 0 } : {}}
                   transition={{ duration: 0.45, delay: 0.3 + i * 0.08, ease: [0.16, 1, 0.3, 1] }}
-                  className="flex flex-col items-center text-center gap-4 p-8 md:p-9 rounded-xl"
+                  className="flex flex-col items-center text-center gap-4 p-8 md:p-10 rounded-xl"
                   style={{
                     background: "var(--cosmos-2)",
                     border: "1px solid var(--border-1)",

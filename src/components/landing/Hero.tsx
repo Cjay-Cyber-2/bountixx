@@ -8,6 +8,7 @@ import { Zap, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import Lottie from "lottie-react";
 import bountixxAnimation from "@/data/bountixx.json";
+import { LANDING_GUTTERS } from "@/components/landing/_section";
 
 const fadeUp = (delay: number) => ({
   initial: { opacity: 0, y: 20 },
@@ -78,7 +79,7 @@ export function Hero() {
 
       {/* ── HUD content — single centered column, normal flow so nothing overlaps ── */}
       <motion.div
-        className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-6 pt-28 pb-16 md:pt-32"
+        className={`relative z-10 flex-1 flex flex-col items-center justify-center text-center w-full ${LANDING_GUTTERS} pt-28 pb-20 md:pt-32 md:pb-24`}
         style={{ opacity: fadeOut }}
       >
         <motion.h1

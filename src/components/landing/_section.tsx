@@ -6,8 +6,8 @@
 
 import type { ReactNode, CSSProperties } from "react";
 
-export const LANDING_GUTTERS =
-  "w-full mx-auto px-6 sm:px-10 md:px-14 lg:px-16 xl:px-20 2xl:px-24";
+/** Horizontal gutters — defined in globals.css (.page-gutters) with safe-area insets. */
+export const LANDING_GUTTERS = "page-gutters";
 
 export const APP_GUTTERS = LANDING_GUTTERS;
 
@@ -34,7 +34,7 @@ export function LandingSection({
   return (
     <section
       id={id}
-      className={`relative py-20 md:py-28 lg:py-32 overflow-hidden ${className}`}
+      className={`relative py-24 md:py-32 lg:py-40 overflow-hidden ${className}`}
       style={{
         background: variant === "raised" ? "var(--cosmos-2)" : "var(--cosmos)",
         borderTop: variant === "raised" ? "1px solid var(--border-1)" : undefined,
@@ -111,7 +111,7 @@ export function CenteredSectionIntro({
   className?: string;
 }) {
   return (
-    <div className={`mb-14 md:mb-18 lg:mb-20 flex w-full justify-center ${className}`}>
+    <div className={`mb-16 md:mb-20 lg:mb-24 flex w-full justify-center ${className}`}>
       <SectionIntro
         eyebrow={eyebrow}
         title={title}
@@ -147,24 +147,24 @@ export function SectionIntro({
 
   return (
     <div
-      className={`mb-14 md:mb-18 lg:mb-20 w-full max-w-3xl ${
+      className={`mb-16 md:mb-20 lg:mb-24 w-full max-w-3xl ${
         centered ? "mx-auto flex flex-col items-center text-center" : ""
       } ${className}`}
     >
       <SpecLine className={`w-full ${centered ? "justify-center" : ""}`} centered={centered}>
         {eyebrow}
       </SpecLine>
-      <SectionHeading className={`mt-4 md:mt-5 ${centered ? "w-full text-center" : ""}`}>{title}</SectionHeading>
+      <SectionHeading className={`mt-5 md:mt-6 ${centered ? "w-full text-center" : ""}`}>{title}</SectionHeading>
       {description && (
         <p
-          className={`font-body text-lg md:text-xl text-haze-2 mt-5 md:mt-6 leading-relaxed max-w-[62ch] ${centered ? "mx-auto text-center" : ""}`}
+          className={`font-body text-lg md:text-xl text-haze-2 mt-6 md:mt-8 leading-relaxed max-w-[62ch] ${centered ? "mx-auto text-center" : ""}`}
         >
           {description}
         </p>
       )}
       {extra && (
         <p
-          className={`font-body text-base text-haze-3 mt-3 leading-relaxed max-w-[62ch] ${centered ? "mx-auto text-center" : ""}`}
+          className={`font-body text-base text-haze-3 mt-4 leading-relaxed max-w-[62ch] ${centered ? "mx-auto text-center" : ""}`}
         >
           {extra}
         </p>
@@ -183,9 +183,9 @@ export function AppPage({
 }) {
   return (
     <div
-      className={`flex-1 w-full min-h-0 ${APP_GUTTERS} py-10 md:py-14 lg:py-16`}
+      className={`flex-1 w-full min-h-0 ${APP_GUTTERS} py-10 md:py-14 lg:py-16 pb-[max(2.5rem,calc(5rem+env(safe-area-inset-bottom,0px)))] md:pb-14 lg:pb-16`}
     >
-      <div className={`w-full flex flex-col ${className}`}>{children}</div>
+      <div className={`w-full flex flex-col min-w-0 ${className}`}>{children}</div>
     </div>
   );
 }
@@ -214,9 +214,9 @@ export function PageShell({
   const alignClass = align === "center" ? "text-center" : "";
 
   return (
-    <div className={`${APP_GUTTERS} py-8 md:py-12 lg:py-14`}>
+    <div className={`${APP_GUTTERS} py-10 md:py-14 lg:py-16`}>
       <div
-        className={`${widthClass} mx-auto rounded-2xl border border-[var(--border-1)] px-6 py-8 sm:px-10 sm:py-10 md:px-12 md:py-12 ${alignClass} ${className}`}
+        className={`${widthClass} mx-auto rounded-2xl border border-[var(--border-1)] px-7 py-9 sm:px-10 sm:py-11 md:px-12 md:py-14 ${alignClass} ${className}`}
         style={{
           background: "var(--surface-card)",
           boxShadow: "0 1px 3px rgba(78, 39, 37, 0.06), 0 8px 32px rgba(78, 39, 37, 0.08)",

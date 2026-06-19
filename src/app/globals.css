@@ -252,6 +252,50 @@ footer,
   font-family: var(--font-legacy-body), "Chakra Petch", sans-serif;
 }
 
+/* ─── Shared horizontal page gutters (app + landing) ─── */
+.page-gutters {
+  width: 100%;
+  max-width: 1680px;
+  margin-inline: auto;
+  padding-left: max(1.75rem, env(safe-area-inset-left, 0px));
+  padding-right: max(1.75rem, env(safe-area-inset-right, 0px));
+}
+
+@media (min-width: 640px) {
+  .page-gutters {
+    padding-left: max(2.25rem, env(safe-area-inset-left, 0px));
+    padding-right: max(2.25rem, env(safe-area-inset-right, 0px));
+  }
+}
+
+@media (min-width: 768px) {
+  .page-gutters {
+    padding-left: max(3rem, env(safe-area-inset-left, 0px));
+    padding-right: max(3rem, env(safe-area-inset-right, 0px));
+  }
+}
+
+@media (min-width: 1024px) {
+  .page-gutters {
+    padding-left: max(4rem, env(safe-area-inset-left, 0px));
+    padding-right: max(4rem, env(safe-area-inset-right, 0px));
+  }
+}
+
+@media (min-width: 1280px) {
+  .page-gutters {
+    padding-left: max(5rem, env(safe-area-inset-left, 0px));
+    padding-right: max(5rem, env(safe-area-inset-right, 0px));
+  }
+}
+
+@media (min-width: 1536px) {
+  .page-gutters {
+    padding-left: max(7rem, env(safe-area-inset-left, 0px));
+    padding-right: max(7rem, env(safe-area-inset-right, 0px));
+  }
+}
+
 /* ─── Form primitives ─── */
 .bx-label {
   display: block;

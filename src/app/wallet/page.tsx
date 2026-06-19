@@ -121,14 +121,14 @@ export default function WalletPage() {
         <p className="font-space-mono text-[11px] text-plum tracking-[3px] uppercase mb-2">Treasury</p>
         <h1 className="font-zen-dots text-2xl md:text-3xl text-haze mb-8">Your wallet</h1>
 
-        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(300px,380px)] gap-6 xl:gap-10 w-full">
+        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(300px,380px)] gap-8 xl:gap-12 w-full">
           {/* Left */}
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-8">
             {/* Balance */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="relative p-6 md:p-8 flex items-center gap-5 md:gap-6 clip-arena overflow-hidden"
+              className="relative p-7 md:p-9 flex items-center gap-5 md:gap-6 clip-arena overflow-hidden"
               style={{ background: "rgba(240,165,0,0.05)", border: "1px solid rgba(240,165,0,0.3)" }}
             >
               <div

@@ -52,7 +52,7 @@ export function Categories() {
           initial="hidden"
           animate={inView ? "show" : "hidden"}
           variants={{ show: { transition: { staggerChildren: 0.1 } } }}
-          className="grid sm:grid-cols-2 gap-6 md:gap-8 lg:gap-10"
+          className="grid sm:grid-cols-2 gap-7 md:gap-9 lg:gap-12"
         >
           {CATEGORIES.map((cat) => (
             <motion.article
@@ -61,7 +61,7 @@ export function Categories() {
                 hidden: { opacity: 0, y: 24 },
                 show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } },
               }}
-              className="group relative flex flex-col items-center text-center p-8 md:p-10 lg:p-11 rounded-xl transition-transform duration-300 hover:-translate-y-1"
+              className="group relative flex flex-col items-center text-center p-8 md:p-11 lg:p-12 rounded-xl transition-transform duration-300 hover:-translate-y-1"
               style={{
                 background: "var(--cosmos)",
                 border: "1px solid var(--border-1)",

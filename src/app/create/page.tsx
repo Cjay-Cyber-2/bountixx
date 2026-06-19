@@ -162,7 +162,7 @@ function SetupStep({
     >
       {/* Left Column */}
       <div className="flex flex-col gap-10 min-w-0">
-        <div className="flex flex-col gap-4 rounded-2xl bg-[var(--void-tint)] border-2 border-[var(--border-accent)] px-8 py-6 md:px-10 md:py-8">
+        <div className="flex flex-col gap-4 rounded-2xl bg-[var(--void-tint)] border-2 border-[var(--border-accent)] px-8 py-7 md:px-10 md:py-9">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <span className="text-sm font-semibold text-plum uppercase tracking-wide">Bounty entry fee</span>
             <span className="font-stats font-bold text-lg text-haze">{ENTRY_FEE} coins / player</span>
@@ -266,7 +266,7 @@ function QuestionCard({
 
   return (
     <motion.div layout initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }}
-      className="rounded-2xl border-2 border-[var(--border-1)] bg-[var(--surface-inset)] p-8 md:p-12 lg:p-14">
+      className="rounded-2xl border-2 border-[var(--border-1)] bg-[var(--surface-inset)] p-8 md:p-12 lg:p-14 shadow-sm">
       <div className="flex items-center justify-between mb-6 md:mb-8">
         <span className="font-space-mono text-sm text-void tracking-widest uppercase">Question {index + 1}</span>
         <div className="flex items-center gap-3">
@@ -513,7 +513,7 @@ function QuestionsStep({
   const hasContent = filledQuestions.length > 0;
 
   return (
-    <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} className="flex flex-col gap-10 md:gap-12 lg:gap-14">
+    <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} className="flex flex-col gap-12 md:gap-14 lg:gap-16">
       <AnimatePresence mode="popLayout">
         {questions.map((q, i) => (
           <QuestionCard
@@ -598,7 +598,7 @@ function ReviewStep({
   const maxPrizePool = maxBountyPool(playerCap);
 
   return (
-    <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} className="flex flex-col gap-10 md:gap-12 lg:gap-14">
+    <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} className="flex flex-col gap-12 md:gap-14 lg:gap-16">
       <div className="bg-cosmos-2 border border-cosmos-4 p-6 md:p-8 rounded-2xl">
         <p className="font-space-mono text-sm text-void tracking-widest mb-4 uppercase">Arena summary</p>
         <div className="flex flex-col gap-3 font-rajdhani text-base md:text-lg">

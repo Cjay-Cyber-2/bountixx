@@ -23,7 +23,7 @@ const STEPS = [
 ] as const;
 
 /** Left-rail x offset — dots and line share this anchor */
-const RAIL_LEFT = "clamp(1.25rem, 6vw, 4.5rem)";
+const RAIL_LEFT = "clamp(1.75rem, 8vw, 4.5rem)";
 
 export function HowItWorks() {
   const railRef = useRef<HTMLDivElement>(null);
@@ -103,7 +103,7 @@ function Stage({ step, isLast = false }: { step: (typeof STEPS)[number]; isLast?
         initial={{ opacity: 0, y: 32 }}
         animate={inView ? { opacity: 1, y: 0 } : {}}
         transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
-        className="flex w-full flex-col items-center text-center px-5 sm:px-8"
+        className="flex w-full flex-col items-center text-center"
       >
         <span
           className="font-orbitron font-black leading-none select-none tabular-nums"

@@ -5,7 +5,7 @@ import { LANDING_GUTTERS } from "@/components/landing/_section";
 export function Footer() {
   return (
     <footer className="relative bg-cosmos overflow-hidden" style={{ borderTop: "1px solid var(--border-1)" }}>
-      <div className={`${LANDING_GUTTERS} py-16 md:py-20 relative`}>
+      <div className={`${LANDING_GUTTERS} py-20 md:py-24 lg:py-28 relative`}>
         <div className="flex justify-center gap-3 mb-14">
           <SocialIcon label="Twitter / X" href="#">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">

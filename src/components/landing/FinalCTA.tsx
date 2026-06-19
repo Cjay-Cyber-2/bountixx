@@ -27,8 +27,9 @@ export function FinalCTA() {
 
       <span
         aria-hidden
-        className="absolute top-0 left-6 right-6 md:left-12 md:right-12 lg:left-16 lg:right-16 h-px"
+        className="absolute top-0 left-0 right-0 h-px mx-[max(1.75rem,env(safe-area-inset-left,0px))] sm:mx-9 md:mx-12 lg:mx-16 xl:mx-20 2xl:mx-28"
         style={{
+          width: "auto",
           background:
             "linear-gradient(90deg, transparent, var(--border-2) 40%, var(--border-2) 60%, transparent)",
         }}

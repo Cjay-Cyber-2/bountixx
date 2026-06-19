@@ -201,6 +201,7 @@ export function TopNav() {
             className="md:hidden fixed top-16 inset-x-0 z-40 border-b border-[var(--border-1)] pb-2"
             style={{ background: "var(--surface-raised)", backdropFilter: "blur(20px)" }}
           >
+            <div className={APP_GUTTERS}>
             {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
               const active = pathname === href;
               return (
@@ -209,7 +210,7 @@ export function TopNav() {
                   href={href}
                   onClick={() => setMobileOpen(false)}
                   className={cn(
-                    "flex items-center gap-3 px-6 py-4 font-medium text-base border-b border-[var(--border-1)] transition-colors",
+                    "flex items-center gap-3 py-4 font-medium text-base border-b border-[var(--border-1)] transition-colors",
                     active
                       ? "text-plum bg-[var(--void-tint)]"
                       : "text-haze-2 hover:text-haze hover:bg-[var(--surface-hover)]"
@@ -220,7 +221,7 @@ export function TopNav() {
                 </Link>
               );
             })}
-            <div className="flex items-center justify-between px-6 py-4">
+            <div className="flex items-center justify-between py-4">
               <div className="flex items-center gap-1.5 bg-[var(--surface-inset)] border border-[var(--border-2)] rounded-full px-3 py-1.5">
                 <span className="text-coin-gold text-xs">◈</span>
                 <span className="font-stats font-semibold text-sm text-coin-gold tabular-nums">
@@ -239,6 +240,7 @@ export function TopNav() {
                 Sign out
               </button>
             </div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -250,7 +252,7 @@ export function MobileBottomNav() {
   const pathname = usePathname();
   return (
     <nav
-      className="md:hidden fixed bottom-0 inset-x-0 z-50 border-t border-[var(--border-1)] flex"
+      className="md:hidden fixed bottom-0 inset-x-0 z-50 border-t border-[var(--border-1)] flex pb-[max(0.5rem,env(safe-area-inset-bottom,0px))]"
       style={{ background: "var(--surface-raised)", backdropFilter: "blur(20px)" }}
     >
       {NAV_ITEMS.map(({ href, label, icon: Icon }) => {

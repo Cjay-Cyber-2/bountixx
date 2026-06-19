@@ -150,7 +150,7 @@ export default function ProfilePage() {
 
   return (
     <AppLayout>
-      <div className={`${APP_GUTTERS} pt-10 md:pt-14 lg:pt-16 pb-12 md:pb-16`}>
+      <div className={`${APP_GUTTERS} pt-10 md:pt-14 lg:pt-16 pb-[max(3rem,calc(5rem+env(safe-area-inset-bottom,0px)))] md:pb-16`}>
         {/* Banner */}
         <div
           className="relative border-b border-cosmos-4"
@@ -164,7 +164,7 @@ export default function ProfilePage() {
             style={{ background: "radial-gradient(ellipse 70% 100% at 20% 100%, rgba(155,107,255,0.12), transparent 70%)" }}
             aria-hidden
           />
-          <div className="relative px-5 md:px-10 pt-10 pb-8">
+          <div className="relative px-0 md:px-2 pt-10 pb-8">
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-5">
               {/* Avatar + identity */}
               <div className="flex items-end gap-5">
@@ -290,7 +290,7 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        <div className="px-5 md:px-10 py-8 flex flex-col gap-9">
+        <div className="px-0 md:px-2 py-8 md:py-10 flex flex-col gap-10 md:gap-12">
           {/* Stats */}
           <motion.div
             initial="hidden"
