@@ -41,7 +41,7 @@ export function Categories() {
 
   return (
     <LandingSection id="categories" variant="raised" className="pt-28 md:pt-36 lg:pt-40">
-      <div ref={ref}>
+      <div ref={ref} className="w-full">
         <SectionIntro
           eyebrow="Four formats"
           title="Choose your battleground."

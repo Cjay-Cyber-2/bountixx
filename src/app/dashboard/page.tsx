@@ -100,24 +100,25 @@ export default function DashboardPage() {
               <motion.div
                 key={s.label}
                 variants={{ hidden: { opacity: 0, y: 18 }, show: { opacity: 1, y: 0 } }}
-                className="relative rounded-xl bg-[var(--surface-inset)] border border-[var(--border-1)] p-6 md:p-8 overflow-hidden group shadow-sm"
+                className="relative flex min-h-[148px] flex-col rounded-xl border border-[var(--border-1)] bg-[var(--surface-inset)] p-5 sm:p-6 md:p-7 group shadow-sm"
               >
                 <div
-                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-xl"
                   style={{ background: `radial-gradient(circle at 85% 15%, ${s.accentRaw}18, transparent 60%)` }}
                   aria-hidden
                 />
                 <div
-                  className="w-10 h-10 mb-5 flex items-center justify-center rounded-lg"
+                  className="relative z-[1] mb-4 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
                   style={{ background: `${s.accentRaw}14`, border: `1px solid ${s.accentRaw}33` }}
                 >
                   <Icon size={18} style={{ color: s.accent }} aria-hidden />
                 </div>
+                <div className="relative z-[1] mt-auto">
                 {loading ? (
-                  <div className="h-8 w-16 bg-cosmos-3 animate-pulse mb-1.5" />
+                  <div className="mb-2 h-9 w-20 animate-pulse rounded bg-cosmos-3" />
                 ) : s.gold && data?.coinsUnlimited ? (
                   <span
-                    className="font-orbitron font-black text-2xl md:text-3xl block leading-none mb-1.5"
+                    className="font-orbitron font-black text-2xl md:text-3xl block leading-tight mb-2"
                     style={{ color: s.gold ? "var(--coin-gold-text)" : "var(--haze)" }}
                   >
                     ∞
@@ -125,11 +126,14 @@ export default function DashboardPage() {
                 ) : (
                   <AnimatedNumber
                     value={s.value}
-                    className="font-orbitron font-black text-2xl md:text-3xl block leading-none mb-1.5"
+                    className="font-orbitron font-black text-2xl md:text-3xl block leading-tight mb-2"
                     style={{ color: s.gold ? "var(--coin-gold-text)" : "var(--haze)" }}
                   />
                 )}
-                <p className="font-space-mono text-[10px] text-haze-3 tracking-[2px] uppercase break-words">{s.label}</p>
+                <p className="font-space-mono text-[11px] sm:text-xs text-haze-2 tracking-wide uppercase leading-snug break-words hyphens-auto">
+                  {s.label}
+                </p>
+                </div>
               </motion.div>
             );
           })}

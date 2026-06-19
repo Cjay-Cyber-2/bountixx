@@ -35,7 +35,7 @@ export function CoinEconomy() {
 
   return (
     <LandingSection>
-      <div ref={ref}>
+      <div ref={ref} className="w-full flex flex-col items-center">
         <SectionIntro
           eyebrow="Coins, not cash"
           title={

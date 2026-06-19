@@ -42,7 +42,7 @@ export function LandingSection({
         ...style,
       }}
     >
-      <div className={LANDING_GUTTERS}>{children}</div>
+      <div className={`${LANDING_GUTTERS} flex w-full flex-col items-center`}>{children}</div>
     </section>
   );
 }
@@ -111,22 +111,24 @@ export function SectionIntro({
 
   return (
     <div
-      className={`mb-14 md:mb-18 lg:mb-20 w-full max-w-3xl ${centered ? "mx-auto text-center" : ""} ${className}`}
+      className={`mb-14 md:mb-18 lg:mb-20 w-full max-w-3xl ${
+        centered ? "mx-auto flex flex-col items-center text-center" : ""
+      } ${className}`}
     >
-      <SpecLine className={centered ? "justify-center" : ""} centered={centered}>
+      <SpecLine className={`w-full ${centered ? "justify-center" : ""}`} centered={centered}>
         {eyebrow}
       </SpecLine>
-      <SectionHeading className="mt-4 md:mt-5">{title}</SectionHeading>
+      <SectionHeading className={`mt-4 md:mt-5 ${centered ? "w-full" : ""}`}>{title}</SectionHeading>
       {description && (
         <p
-          className={`font-body text-lg md:text-xl text-haze-2 mt-5 md:mt-6 leading-relaxed max-w-[62ch] ${centered ? "mx-auto" : ""}`}
+          className={`font-body text-lg md:text-xl text-haze-2 mt-5 md:mt-6 leading-relaxed max-w-[62ch] ${centered ? "mx-auto w-full" : ""}`}
         >
           {description}
         </p>
       )}
       {extra && (
         <p
-          className={`font-body text-base text-haze-3 mt-3 leading-relaxed max-w-[62ch] ${centered ? "mx-auto" : ""}`}
+          className={`font-body text-base text-haze-3 mt-3 leading-relaxed max-w-[62ch] ${centered ? "mx-auto w-full" : ""}`}
         >
           {extra}
         </p>
