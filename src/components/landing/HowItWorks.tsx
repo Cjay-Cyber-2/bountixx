@@ -66,9 +66,9 @@ export function HowItWorks() {
           )}
         </div>
 
-        <div className="flex flex-col gap-28 md:gap-36 lg:gap-44">
-          {STEPS.map((step) => (
-            <Stage key={step.num} step={step} />
+        <div className="flex flex-col gap-28 md:gap-36 lg:gap-44 pb-12 md:pb-20 lg:pb-28">
+          {STEPS.map((step, i) => (
+            <Stage key={step.num} step={step} isLast={i === STEPS.length - 1} />
           ))}
         </div>
       </div>
@@ -76,12 +76,12 @@ export function HowItWorks() {
   );
 }
 
-function Stage({ step }: { step: (typeof STEPS)[number] }) {
+function Stage({ step, isLast = false }: { step: (typeof STEPS)[number]; isLast?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-18% 0px" });
 
   return (
-    <div ref={ref} className="relative w-full">
+    <div ref={ref} className={`relative w-full ${isLast ? "mb-8 md:mb-12" : ""}`}>
       {/* Dot anchored to the left rail */}
       <motion.span
         initial={{ scale: 0 }}

@@ -40,7 +40,7 @@ export function Categories() {
   const inView = useInView(ref, { once: true, margin: "-10% 0px" });
 
   return (
-    <LandingSection id="categories" variant="raised" className="pt-28 md:pt-36 lg:pt-40">
+    <LandingSection id="categories" variant="raised" className="pt-36 md:pt-44 lg:pt-52">
       <div ref={ref} className="w-full">
         <CenteredSectionIntro
           eyebrow="Four formats"
