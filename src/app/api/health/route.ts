@@ -4,13 +4,15 @@ import { NextResponse } from "next/server";
 import { clerkAuthHealth } from "@/lib/requireAuth";
 import { pingDatabase, getDatabaseUrl } from "@/lib/db";
 import { activeAiProvider } from "@/lib/aiAnalyse";
+import { groqApiKeyCount, hasGroqApiKeys } from "@/lib/groqKeys";
 import { ensureDatabaseSchema } from "@/lib/ensureSchema";
 
 export async function GET(req: Request) {
   const clerkSecret = Boolean(process.env.CLERK_SECRET_KEY?.trim());
   const clerkPublishable = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.trim());
   const databaseUrl = Boolean(getDatabaseUrl());
-  const groq = Boolean(process.env.GROQ_API_KEY?.trim());
+  const groq = hasGroqApiKeys();
+  const groqKeyCount = groqApiKeyCount();
   const gemini = Boolean(process.env.GEMINI_API_KEY?.trim());
 
   const clerkProbe = await clerkAuthHealth(req);
@@ -54,6 +56,7 @@ export async function GET(req: Request) {
       ai: {
         provider: activeAiProvider(),
         groq: groq,
+        groqKeyCount: groqKeyCount,
         gemini: gemini,
       },
     },

@@ -2,6 +2,13 @@ import "server-only";
 
 import { LANGUAGE_KEYS, isLanguageKey, type LanguageKey } from "./languages";
 import { isAiRateLimitError } from "./apiErrors";
+import {
+  GroqApiError,
+  hasGroqApiKeys,
+  groqApiKeyCount,
+  readGroqHttpError,
+  withGroqKeyRotation,
+} from "./groqKeys";
 
 export type AnalysisResult = {
   valid: boolean;
@@ -132,12 +139,11 @@ function extractMathNumber(s: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-function answerResolverProvider(): { provider: Provider; apiKey: string } | null {
-  const groq = process.env.GROQ_API_KEY?.trim();
-  if (groq) return { provider: "groq", apiKey: groq };
+function answerResolverProvider(): { provider: Provider } | null {
+  if (hasGroqApiKeys()) return { provider: "groq" };
 
   const gemini = process.env.GEMINI_API_KEY?.trim();
-  if (gemini) return { provider: "gemini", apiKey: gemini };
+  if (gemini) return { provider: "gemini" };
 
   return null;
 }
@@ -249,19 +255,26 @@ export class AiParseError extends Error {
   }
 }
 
-function resolveProvider(): { provider: Provider; apiKey: string } | null {
-  const groq = process.env.GROQ_API_KEY?.trim();
-  if (groq) return { provider: "groq", apiKey: groq };
+function resolveProvider(): { provider: Provider } | null {
+  if (hasGroqApiKeys()) return { provider: "groq" };
 
   const gemini = process.env.GEMINI_API_KEY?.trim();
-  if (gemini) return { provider: "gemini", apiKey: gemini };
+  if (gemini) return { provider: "gemini" };
 
   return null;
+}
+
+function geminiApiKey(): string | null {
+  return process.env.GEMINI_API_KEY?.trim() || null;
 }
 
 export { isAiRateLimitError } from "./apiErrors";
 
 export function friendlyAiRateLimitMessage(): string {
+  const count = groqApiKeyCount();
+  if (count > 1) {
+    return "All Groq API keys hit their limit. Wait about an hour and try again, or analyze questions one at a time.";
+  }
   return "Groq AI hit its daily limit. Wait about an hour and try again, or analyze questions one at a time.";
 }
 
@@ -353,9 +366,9 @@ async function analyseWithGroq(apiKey: string, userMessage: string): Promise<Ana
   });
 
   if (!groqRes.ok) {
-    const errDetail = await readHttpError(groqRes, "Groq");
+    const errDetail = await readGroqHttpError(groqRes);
     console.error("[analyse] Groq error:", errDetail);
-    throw new AiProviderError(errDetail);
+    throw new GroqApiError(errDetail, groqRes.status);
   }
 
   const groqData = (await groqRes.json()) as {
@@ -363,6 +376,10 @@ async function analyseWithGroq(apiKey: string, userMessage: string): Promise<Ana
   };
   const rawText = groqData?.choices?.[0]?.message?.content ?? "{}";
   return parseAnalysis(rawText);
+}
+
+async function analyseWithGroqRotating(userMessage: string): Promise<AnalysisResult> {
+  return withGroqKeyRotation("analyse", (apiKey) => analyseWithGroq(apiKey, userMessage));
 }
 
 /** Force/repair category, language, and clarification flags after the model returns. */
@@ -413,6 +430,46 @@ function normaliseAnalysis(
   return { analysis, reclassified };
 }
 
+async function groqFactCheck(apiKey: string, userMessage: string): Promise<ResolvedAnswer> {
+  const groqRes = await fetch(GROQ_API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: GROQ_MODEL,
+      messages: [
+        { role: "system", content: ANSWER_PROMPT },
+        { role: "user", content: userMessage },
+      ],
+      temperature: 0,
+      max_tokens: 256,
+      response_format: { type: "json_object" },
+    }),
+  });
+
+  if (!groqRes.ok) {
+    const errDetail = await readGroqHttpError(groqRes);
+    throw new GroqApiError(errDetail, groqRes.status);
+  }
+
+  const data = (await groqRes.json()) as {
+    choices?: { message?: { content?: string } }[];
+  };
+  const raw = data?.choices?.[0]?.message?.content ?? "{}";
+  const parsed = JSON.parse(raw) as {
+    canonicalAnswer?: string;
+    confident?: boolean;
+    issue?: string;
+  };
+  return {
+    answer: parsed.canonicalAnswer?.trim() ?? "",
+    confident: parsed.confident !== false,
+    issue: parsed.issue?.trim(),
+  };
+}
+
 async function resolveCanonicalAnswer(
   category: TaskCategory,
   taskText: string,
@@ -426,7 +483,12 @@ async function resolveCanonicalAnswer(
 
   try {
     if (resolved.provider === "gemini") {
-      const geminiRes = await fetch(`${GEMINI_API_URL}?key=${resolved.apiKey}`, {
+      const apiKey = geminiApiKey();
+      if (!apiKey) {
+        return { answer: "", confident: false, issue: missingAiKeyMessage() };
+      }
+
+      const geminiRes = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -458,40 +520,7 @@ async function resolveCanonicalAnswer(
       };
     }
 
-    const groqRes = await fetch(GROQ_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${resolved.apiKey}`,
-      },
-      body: JSON.stringify({
-        model: GROQ_MODEL,
-        messages: [
-          { role: "system", content: ANSWER_PROMPT },
-          { role: "user", content: userMessage },
-        ],
-        temperature: 0,
-        max_tokens: 256,
-        response_format: { type: "json_object" },
-      }),
-    });
-    if (!groqRes.ok) {
-      return { answer: "", confident: false, issue: "Fact-check service unavailable" };
-    }
-    const data = (await groqRes.json()) as {
-      choices?: { message?: { content?: string } }[];
-    };
-    const raw = data?.choices?.[0]?.message?.content ?? "{}";
-    const parsed = JSON.parse(raw) as {
-      canonicalAnswer?: string;
-      confident?: boolean;
-      issue?: string;
-    };
-    return {
-      answer: parsed.canonicalAnswer?.trim() ?? "",
-      confident: parsed.confident !== false,
-      issue: parsed.issue?.trim(),
-    };
+    return await withGroqKeyRotation("fact-check", (apiKey) => groqFactCheck(apiKey, userMessage));
   } catch {
     return { answer: "", confident: false, issue: "Could not verify the answer" };
   }
@@ -510,13 +539,22 @@ export async function analyseChallenge(
 
   let result: AnalysisResult;
   try {
-    result =
-      resolved.provider === "gemini"
-        ? await analyseWithGemini(resolved.apiKey, userMessage)
-        : await analyseWithGroq(resolved.apiKey, userMessage);
+    if (resolved.provider === "gemini") {
+      const apiKey = geminiApiKey();
+      if (!apiKey) throw new AiConfigError(missingAiKeyMessage());
+      result = await analyseWithGemini(apiKey, userMessage);
+    } else {
+      result = await analyseWithGroqRotating(userMessage);
+    }
   } catch (err) {
-    if (err instanceof AiProviderError && isAiRateLimitError(err.message)) {
+    if (
+      (err instanceof GroqApiError || err instanceof AiProviderError) &&
+      isAiRateLimitError(err instanceof Error ? err.message : String(err))
+    ) {
       throw new AiProviderError(friendlyAiRateLimitMessage());
+    }
+    if (err instanceof GroqApiError) {
+      throw new AiProviderError(err.message);
     }
     throw err;
   }

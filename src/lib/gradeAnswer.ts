@@ -1,4 +1,11 @@
 import { missingAiKeyMessage } from "./aiAnalyse";
+import {
+  GroqApiError,
+  hasGroqApiKeys,
+  isRotatableGroqError,
+  readGroqHttpError,
+  withGroqKeyRotation,
+} from "./groqKeys";
 
 export type AnswerVerdict = "correct" | "close_enough" | "incorrect";
 
@@ -38,14 +45,17 @@ Strictness:
 
 type Provider = "gemini" | "groq";
 
-function resolveProvider(): { provider: Provider; apiKey: string } | null {
-  const groq = process.env.GROQ_API_KEY?.trim();
-  if (groq) return { provider: "groq", apiKey: groq };
+function resolveProvider(): { provider: Provider } | null {
+  if (hasGroqApiKeys()) return { provider: "groq" };
 
   const gemini = process.env.GEMINI_API_KEY?.trim();
-  if (gemini) return { provider: "gemini", apiKey: gemini };
+  if (gemini) return { provider: "gemini" };
 
   return null;
+}
+
+function geminiApiKey(): string | null {
+  return process.env.GEMINI_API_KEY?.trim() || null;
 }
 
 function normaliseText(s: string): string {
@@ -194,13 +204,29 @@ async function gradeWithGroq(apiKey: string, userMessage: string): Promise<{ ver
     }),
   });
 
-  if (!res.ok) return { verdict: "incorrect", feedback: "AI grading unavailable" };
+  if (!res.ok) {
+    const detail = await readGroqHttpError(res);
+    if (isRotatableGroqError(new GroqApiError(detail, res.status))) {
+      throw new GroqApiError(detail, res.status);
+    }
+    return { verdict: "incorrect", feedback: "AI grading unavailable" };
+  }
 
   const data = (await res.json()) as {
     choices?: { message?: { content?: string } }[];
   };
   const raw = data?.choices?.[0]?.message?.content ?? "{}";
   return parseGradeResponse(raw);
+}
+
+async function gradeWithGroqRotating(
+  userMessage: string,
+): Promise<{ verdict: AnswerVerdict; feedback?: string }> {
+  try {
+    return await withGroqKeyRotation("grade", (apiKey) => gradeWithGroq(apiKey, userMessage));
+  } catch {
+    return { verdict: "incorrect", feedback: "AI grading unavailable" };
+  }
 }
 
 export async function gradePlayerAnswer(opts: {
@@ -260,8 +286,8 @@ export async function gradePlayerAnswer(opts: {
 
   const graded =
     resolved.provider === "gemini"
-      ? await gradeWithGemini(resolved.apiKey, userMessage)
-      : await gradeWithGroq(resolved.apiKey, userMessage);
+      ? await gradeWithGemini(geminiApiKey()!, userMessage)
+      : await gradeWithGroqRotating(userMessage);
 
   const accepted = graded.verdict === "correct" || graded.verdict === "close_enough";
 
