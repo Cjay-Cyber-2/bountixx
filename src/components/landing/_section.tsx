@@ -183,7 +183,7 @@ export function AppPage({
 }) {
   return (
     <div
-      className={`flex-1 w-full min-h-0 ${APP_GUTTERS} py-6 md:py-8 lg:py-10`}
+      className={`flex-1 w-full min-h-0 ${APP_GUTTERS} py-8 md:py-12 lg:py-14`}
     >
       <div className={`w-full flex flex-col ${className}`}>{children}</div>
     </div>

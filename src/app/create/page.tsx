@@ -54,7 +54,7 @@ function StepActions({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col sm:flex-row gap-3 mt-8 w-full sm:w-auto">
+    <div className="flex flex-col sm:flex-row gap-4 mt-10 md:mt-12 w-full">
       {children}
     </div>
   );
@@ -73,80 +73,25 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function questionsFromLines(lines: string[]): Question[] {
-  return lines.slice(0, 10).map((line) => ({
-    localId: crypto.randomUUID(),
-    taskRaw: line,
-    status: "idle" as const,
-  }));
-}
-
-/* ─── Render-style bulk question import ─── */
-function BulkQuestionImport({
-  onImport,
-  disabled,
-}: {
-  onImport: (lines: string[]) => void;
-  disabled?: boolean;
-}) {
-  const [draft, setDraft] = useState("");
-  const [importedCount, setImportedCount] = useState<number | null>(null);
-
-  function applyImport(text: string) {
-    const lines = parseBulkQuestions(text);
-    if (lines.length < 2) return false;
-    onImport(lines);
-    setDraft("");
-    setImportedCount(lines.length);
-    return true;
+function mergeBulkPaste(
+  prev: Question[],
+  lines: string[],
+  startIndex: number,
+): Question[] {
+  const next = [...prev];
+  for (let i = 0; i < lines.length && startIndex + i < 10; i++) {
+    const idx = startIndex + i;
+    const card: Question = {
+      localId: next[idx]?.localId ?? crypto.randomUUID(),
+      taskRaw: lines[i],
+      status: "idle",
+      analysis: undefined,
+      error: undefined,
+    };
+    if (idx < next.length) next[idx] = card;
+    else next.push(card);
   }
-
-  return (
-    <div
-      className="rounded-xl border border-dashed border-void/40 bg-void/5 p-4 md:p-5"
-      onPaste={(e) => {
-        const text = e.clipboardData.getData("text/plain");
-        if (isBulkQuestionPaste(text)) {
-          e.preventDefault();
-          applyImport(text);
-        }
-      }}
-    >
-      <p className="font-space-mono text-[10px] text-void tracking-widest uppercase mb-1">
-        Bulk import
-      </p>
-      <textarea
-        rows={4}
-        value={draft}
-        onChange={(e) => {
-          setDraft(e.target.value);
-          setImportedCount(null);
-        }}
-        onPaste={(e) => {
-          const text = e.clipboardData.getData("text/plain");
-          if (isBulkQuestionPaste(text)) {
-            e.preventDefault();
-            applyImport(text);
-          }
-        }}
-        onKeyDown={(e) => {
-          if ((e.ctrlKey || e.metaKey) && e.key === "v") return;
-          if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-            e.preventDefault();
-            applyImport(draft);
-          }
-        }}
-        disabled={disabled}
-        placeholder={"What is the capital of France?\nWho wrote Hamlet?\nWhat is the file extension for Go source code?"}
-        className="w-full px-4 py-3 bg-cosmos border border-cosmos-4 text-haze font-rajdhani text-sm placeholder:text-haze-3 focus:outline-none focus:border-void resize-none disabled:opacity-50"
-      />
-      {importedCount !== null && (
-        <p className="font-rajdhani text-xs text-success mt-2">
-          Imported {importedCount} questions — review each card below, then analyze.
-        </p>
-      )}
-    </div>
-  );
+  return next.slice(0, 10);
 }
 
 /* ─── Step indicator ─── */
@@ -159,29 +104,29 @@ function StepIndicator({ step }: { step: Step }) {
   ];
   const activeIdx = ["setup", "questions", "review", "lobby"].indexOf(step);
   return (
-    <div className="mb-8 md:mb-10">
-      <p className="sm:hidden text-xs font-medium text-plum mb-3">
+    <div className="mb-10 md:mb-14">
+      <p className="sm:hidden text-sm font-medium text-plum mb-4">
         Step {activeIdx + 1} of {steps.length} · {steps[activeIdx]?.label}
       </p>
-      <div className="flex items-center justify-start sm:justify-center gap-2 sm:gap-3 flex-wrap">
+      <div className="flex items-center justify-start sm:justify-center gap-3 sm:gap-5 flex-wrap">
         {steps.map((s, i) => (
-          <div key={s.id} className="flex items-center gap-2 sm:gap-3 shrink-0">
-            <div className="flex items-center gap-2 shrink-0">
-              <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+          <div key={s.id} className="flex items-center gap-3 sm:gap-4 shrink-0">
+            <div className="flex items-center gap-3 shrink-0">
+              <div className={`w-10 h-10 md:w-11 md:h-11 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
                 i < activeIdx ? "bg-[var(--brand-primary)] border-[var(--brand-primary)] text-white" : i === activeIdx ? "border-[var(--brand-primary)] bg-[var(--void-tint)]" : "border-[var(--border-2)] bg-transparent"
               }`}>
                 {i < activeIdx ? (
-                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  <svg width="12" height="12" viewBox="0 0 10 10" fill="none"><path d="M2 5l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
                 ) : (
-                  <span className={`text-[10px] font-semibold tabular-nums ${i === activeIdx ? "text-[var(--brand-primary)]" : "text-haze-3"}`}>{i + 1}</span>
+                  <span className={`text-sm font-semibold tabular-nums ${i === activeIdx ? "text-[var(--brand-primary)]" : "text-haze-3"}`}>{i + 1}</span>
                 )}
               </div>
-              <span className={`hidden sm:inline text-xs font-medium ${i === activeIdx ? "text-haze" : i < activeIdx ? "text-[var(--brand-primary)]" : "text-haze-3"}`}>
+              <span className={`hidden sm:inline text-sm md:text-base font-medium ${i === activeIdx ? "text-haze" : i < activeIdx ? "text-[var(--brand-primary)]" : "text-haze-3"}`}>
                 {s.label.charAt(0) + s.label.slice(1).toLowerCase()}
               </span>
             </div>
             {i < steps.length - 1 && (
-              <div className={`w-8 sm:w-12 h-px transition-all ${i < activeIdx ? "bg-[var(--brand-primary)]" : "bg-[var(--border-2)]"}`} />
+              <div className={`w-10 sm:w-16 h-px transition-all ${i < activeIdx ? "bg-[var(--brand-primary)]" : "bg-[var(--border-2)]"}`} />
             )}
           </div>
         ))}
@@ -213,50 +158,49 @@ function SetupStep({
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -16 }}
-      className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[1.15fr_1fr] gap-6 md:gap-8 w-full"
+      className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-10 xl:gap-12 w-full"
     >
       {/* Left Column */}
-      <div className="flex flex-col gap-6 min-w-0">
-        {/* Entry fee banner */}
-        <div className="flex flex-col gap-2 rounded-xl bg-[var(--void-tint)] border border-[var(--border-accent)] px-5 py-4">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <span className="text-xs font-medium text-plum">Bounty entry fee</span>
-            <span className="font-stats font-semibold text-sm text-haze">{ENTRY_FEE} coins / player</span>
+      <div className="flex flex-col gap-8 min-w-0">
+        <div className="flex flex-col gap-3 rounded-2xl bg-[var(--void-tint)] border border-[var(--border-accent)] px-6 py-5 md:px-8 md:py-6">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <span className="text-sm font-semibold text-plum uppercase tracking-wide">Bounty entry fee</span>
+            <span className="font-stats font-bold text-lg text-haze">{ENTRY_FEE} coins / player</span>
           </div>
-          <span className="text-xs text-haze-2 leading-relaxed">{ENTRY_FEE_SUMMARY}</span>
-          <span className="text-xs text-haze-3">{HOSTING_FREE_SUMMARY}</span>
+          <span className="text-base text-haze-2 leading-relaxed">{ENTRY_FEE_SUMMARY}</span>
+          <span className="text-sm text-haze-3">{HOSTING_FREE_SUMMARY}</span>
         </div>
 
         <div>
-          <label className="bx-label">Arena name</label>
+          <label className="block text-sm font-semibold uppercase tracking-wide text-haze-2 mb-3">Arena name</label>
           <input
             type="text"
             maxLength={60}
             placeholder="e.g. Friday Coding Battle"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="bx-input"
+            className="w-full h-14 md:h-16 px-5 bg-[var(--surface-inset)] border border-[var(--border-2)] rounded-xl text-haze font-rajdhani text-lg md:text-xl placeholder:text-haze-3 focus:outline-none focus:border-[var(--brand-primary)] focus:shadow-[0_0_0_3px_var(--focus-ring)] transition-all"
           />
         </div>
       </div>
 
       {/* Right Column */}
-      <div className="flex flex-col gap-6 min-w-0">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-5">
+      <div className="flex flex-col gap-8 min-w-0">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-6">
           <div>
-            <label className="bx-label">Players (2–20)</label>
-            <div className="flex items-center border border-[var(--border-2)] bg-[var(--surface-inset)] h-12 rounded-xl overflow-hidden">
-              <button type="button" onClick={() => setPlayers((n) => Math.max(2, n - 1))} className="cursor-target w-12 h-full text-haze-2 hover:text-plum hover:bg-[var(--surface-hover)] transition-colors font-semibold text-lg">−</button>
-              <span className="flex-1 text-center font-stats font-semibold text-lg text-haze tabular-nums">{players}</span>
-              <button type="button" onClick={() => setPlayers((n) => Math.min(20, n + 1))} className="cursor-target w-12 h-full text-haze-2 hover:text-plum hover:bg-[var(--surface-hover)] transition-colors font-semibold text-lg">+</button>
+            <label className="block text-sm font-semibold uppercase tracking-wide text-haze-2 mb-3">Players (2–20)</label>
+            <div className="flex items-center border border-[var(--border-2)] bg-[var(--surface-inset)] h-14 md:h-16 rounded-xl overflow-hidden">
+              <button type="button" onClick={() => setPlayers((n) => Math.max(2, n - 1))} className="cursor-target w-14 h-full text-haze-2 hover:text-plum hover:bg-[var(--surface-hover)] transition-colors font-semibold text-2xl">−</button>
+              <span className="flex-1 text-center font-stats font-bold text-2xl md:text-3xl text-haze tabular-nums">{players}</span>
+              <button type="button" onClick={() => setPlayers((n) => Math.min(20, n + 1))} className="cursor-target w-14 h-full text-haze-2 hover:text-plum hover:bg-[var(--surface-hover)] transition-colors font-semibold text-2xl">+</button>
             </div>
-            <p className="text-xs text-haze-3 mt-2">Max bounty pool: {maxBountyPool(players)} coins ({ENTRY_FEE} × competing players)</p>
+            <p className="text-sm text-haze-3 mt-3">Max bounty pool: {maxBountyPool(players)} coins ({ENTRY_FEE} × competing players)</p>
           </div>
           <div>
-            <label className="bx-label">Timer</label>
+            <label className="block text-sm font-semibold uppercase tracking-wide text-haze-2 mb-3">Timer</label>
             <button type="button" onClick={() => setTimer(!timer)} role="switch" aria-checked={timer}
-              className={`cursor-target w-full h-12 flex items-center justify-center gap-2 border rounded-xl text-sm font-medium transition-all ${timer ? "border-plum text-plum bg-[var(--void-tint)]" : "border-[var(--border-2)] text-haze-3"}`}>
-              <span className={`w-2.5 h-2.5 rounded-full transition-colors ${timer ? "bg-plum" : "bg-[var(--border-2)]"}`} aria-hidden />
+              className={`cursor-target w-full h-14 md:h-16 flex items-center justify-center gap-3 border rounded-xl text-base md:text-lg font-semibold transition-all ${timer ? "border-plum text-plum bg-[var(--void-tint)]" : "border-[var(--border-2)] text-haze-3"}`}>
+              <span className={`w-3 h-3 rounded-full transition-colors ${timer ? "bg-plum" : "bg-[var(--border-2)]"}`} aria-hidden />
               {timer ? "On" : "Off"}
             </button>
           </div>
@@ -264,23 +208,23 @@ function SetupStep({
 
         {timer && (
           <div>
-            <label className="bx-label">Duration — {timerMin} minutes</label>
-            <input type="range" min={1} max={60} value={timerMin} onChange={(e) => setTimerMin(Number(e.target.value))} className="w-full accent-[#F92313]" />
-            <div className="flex justify-between text-xs text-haze-3 mt-2"><span>1 min</span><span>60 min</span></div>
+            <label className="block text-sm font-semibold uppercase tracking-wide text-haze-2 mb-3">Duration — {timerMin} minutes</label>
+            <input type="range" min={1} max={60} value={timerMin} onChange={(e) => setTimerMin(Number(e.target.value))} className="w-full h-2 accent-[#F92313]" />
+            <div className="flex justify-between text-sm text-haze-3 mt-3"><span>1 min</span><span>60 min</span></div>
           </div>
         )}
       </div>
 
       {error && (
-        <div className="md:col-span-2">
-          <p className="flex items-center gap-2 text-sm text-danger"><AlertCircle size={14} /> {error}</p>
+        <div className="lg:col-span-2">
+          <p className="flex items-center gap-2 text-base text-danger"><AlertCircle size={18} /> {error}</p>
         </div>
       )}
 
-      <div className="md:col-span-2">
+      <div className="lg:col-span-2">
         <StepActions>
-          <Button variant="primary" size="lg" className="w-full sm:w-auto sm:min-w-[220px]" magnetic onClick={handleNext}>
-            Next — add questions <ChevronRight size={16} />
+          <Button variant="primary" size="lg" className="w-full sm:w-auto sm:min-w-[280px] h-14 text-base" magnetic onClick={handleNext}>
+            Next — add questions <ChevronRight size={18} />
           </Button>
         </StepActions>
       </div>
@@ -301,7 +245,7 @@ function QuestionCard({
   onAnswerChange: (answer: string) => void;
   onDelete: () => void;
   onAnalyze: (languageHint?: string) => void;
-  onBulkPaste: (lines: string[]) => void;
+  onBulkPaste: (lines: string[], startIndex: number) => void;
   showAnalyzeButton: boolean;
 }) {
   const catColor = q.analysis ? (CAT_COLORS[q.analysis.category] ?? "#9B8FC0") : "#4A3F70";
@@ -310,70 +254,69 @@ function QuestionCard({
 
   return (
     <motion.div layout initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }}
-      className="rounded-xl border border-[var(--border-1)] bg-[var(--surface-inset)] p-6 md:p-8">
-      <div className="flex items-center justify-between mb-3">
-        <span className="font-space-mono text-[10px] text-void tracking-widest">QUESTION {index + 1}</span>
-        <div className="flex items-center gap-2">
+      className="rounded-2xl border border-[var(--border-1)] bg-[var(--surface-inset)] p-7 md:p-10">
+      <div className="flex items-center justify-between mb-5">
+        <span className="font-space-mono text-sm text-void tracking-widest uppercase">Question {index + 1}</span>
+        <div className="flex items-center gap-3">
           {q.status === "done" && q.analysis?.valid && (
-            <span className="font-space-mono text-[9px] text-success tracking-wider">✓ READY</span>
+            <span className="font-space-mono text-xs text-success tracking-wider uppercase">Ready</span>
           )}
           {q.status === "clarify" && (
-            <span className="font-space-mono text-[9px] text-crown tracking-wider">⚠ NEEDS INPUT</span>
+            <span className="font-space-mono text-xs text-crown tracking-wider uppercase">Needs input</span>
           )}
           {q.status === "invalid" && (
-            <span className="font-space-mono text-[9px] text-danger tracking-wider">✗ INVALID</span>
+            <span className="font-space-mono text-xs text-danger tracking-wider uppercase">Invalid</span>
           )}
           {total > 1 && (
-            <button onClick={onDelete} className="cursor-target text-haze-3 hover:text-danger transition-colors p-2 rounded-lg hover:bg-danger/10" aria-label="Remove question">
-              <Trash2 size={20} />
+            <button type="button" onClick={onDelete} className="cursor-target text-haze-3 hover:text-danger transition-colors p-2.5 rounded-lg hover:bg-danger/10" aria-label="Remove question">
+              <Trash2 size={22} />
             </button>
           )}
         </div>
       </div>
 
       <textarea
-        rows={4}
-        placeholder={`Paste question ${index + 1} here — or paste multiple lines to fill every question slot at once.`}
+        rows={5}
+        placeholder="Type your question here"
         value={q.taskRaw}
         onChange={(e) => onChange(e.target.value)}
         onPaste={(e) => {
           const text = e.clipboardData.getData("text/plain");
           if (isBulkQuestionPaste(text)) {
             e.preventDefault();
-            onBulkPaste(parseBulkQuestions(text));
+            onBulkPaste(parseBulkQuestions(text), index);
           }
         }}
         disabled={q.status === "analyzing"}
-        className="w-full px-4 py-3 bg-cosmos border border-cosmos-4 text-haze font-rajdhani text-base placeholder:text-haze-3 focus:outline-none focus:border-void focus:shadow-[0_0_0_2px_rgba(168,85,247,0.2)] transition-all resize-none disabled:opacity-50"
-        style={{ borderRadius: 0 }}
+        className="w-full min-h-[160px] px-5 py-4 bg-cosmos border border-cosmos-4 text-haze font-rajdhani text-lg md:text-xl placeholder:text-haze-3 focus:outline-none focus:border-void focus:shadow-[0_0_0_3px_rgba(168,85,247,0.2)] transition-all resize-y disabled:opacity-50 rounded-xl"
       />
 
       {/* Error */}
-      {q.error && <p className="font-rajdhani text-xs text-danger mt-2">{q.error}</p>}
+      {q.error && <p className="font-rajdhani text-base text-danger mt-3">{q.error}</p>}
       {q.status === "invalid" && q.analysis && (
-        <p className="font-rajdhani text-xs text-danger mt-2">{q.analysis.invalidReason}</p>
+        <p className="font-rajdhani text-base text-danger mt-3">{q.analysis.invalidReason}</p>
       )}
 
       {/* Clarification needed — task is real but the AI needs the host to decide something */}
       {q.status === "clarify" && q.analysis && (
-        <div className="mt-3 border border-crown/30 bg-crown/5 p-4">
-          <div className="flex items-start gap-2 mb-3">
-            <AlertCircle size={14} className="text-crown shrink-0 mt-0.5" aria-hidden />
-            <p className="font-rajdhani text-sm text-haze leading-snug">{q.analysis.clarificationReason}</p>
+        <div className="mt-5 border border-crown/30 bg-crown/5 p-5 md:p-6 rounded-xl">
+          <div className="flex items-start gap-3 mb-4">
+            <AlertCircle size={18} className="text-crown shrink-0 mt-0.5" aria-hidden />
+            <p className="font-rajdhani text-base md:text-lg text-haze leading-relaxed">{q.analysis.clarificationReason}</p>
           </div>
 
           {q.analysis.category === "coding" ? (
             <>
-              <p className="font-space-mono text-[9px] text-haze-3 tracking-widest uppercase mb-2">
+              <p className="font-space-mono text-xs text-haze-3 tracking-widest uppercase mb-3">
                 Pick the language for this challenge
               </p>
-              <div className="flex flex-wrap gap-1.5 mb-3">
+              <div className="flex flex-wrap gap-2 mb-4">
                 {LANGUAGE_KEYS.map((k) => (
                   <button
                     key={k}
                     type="button"
                     onClick={() => setPickLang(k)}
-                    className={`cursor-target font-space-mono text-[10px] px-2.5 py-1.5 border transition-all ${
+                    className={`cursor-target font-space-mono text-sm px-4 py-2 border rounded-lg transition-all ${
                       pickLang === k
                         ? "border-void text-void bg-void/10"
                         : "border-cosmos-4 text-haze-3 hover:text-haze-2 hover:border-void/40"
@@ -383,22 +326,22 @@ function QuestionCard({
                   </button>
                 ))}
               </div>
-              <Button variant="primary" size="sm" fullWidth onClick={() => onAnalyze(pickLang)}>
-                BUILD CODING ROOM IN {LANGUAGES[pickLang].label.toUpperCase()}
+              <Button variant="primary" size="lg" fullWidth onClick={() => onAnalyze(pickLang)}>
+                Build coding room in {LANGUAGES[pickLang].label}
               </Button>
             </>
           ) : (
             <>
               {q.analysis.suggestions && q.analysis.suggestions.length > 0 && (
-                <ul className="mb-3 space-y-1">
+                <ul className="mb-4 space-y-2">
                   {q.analysis.suggestions.map((s, i) => (
-                    <li key={i} className="font-rajdhani text-xs text-haze-2 flex gap-2">
+                    <li key={i} className="font-rajdhani text-base text-haze-2 flex gap-2">
                       <span className="text-crown">›</span> {s}
                     </li>
                   ))}
                 </ul>
               )}
-              <p className="font-space-mono text-[9px] text-haze-3">
+              <p className="font-rajdhani text-sm text-haze-3">
                 Edit the question above to be more specific, then re-analyze.
               </p>
             </>
@@ -409,24 +352,23 @@ function QuestionCard({
       {/* Analysis preview */}
       {q.status === "done" && q.analysis?.valid && (
         <>
-          <div className="mt-3 flex flex-wrap gap-2 items-center">
-            <span className="font-space-mono text-sm px-3 py-1 border" style={{ color: catColor, borderColor: `${catColor}44`, background: `${catColor}11` }}>
+          <div className="mt-5 flex flex-wrap gap-3 items-center">
+            <span className="font-space-mono text-sm px-4 py-1.5 border rounded-lg" style={{ color: catColor, borderColor: `${catColor}44`, background: `${catColor}11` }}>
               {q.analysis.category.toUpperCase()}
             </span>
-            <span className="font-space-mono text-sm px-3 py-1 border" style={{ color: DIFF_COLORS[q.analysis.difficulty], borderColor: `${DIFF_COLORS[q.analysis.difficulty]}44`, background: `${DIFF_COLORS[q.analysis.difficulty]}11` }}>
+            <span className="font-space-mono text-sm px-4 py-1.5 border rounded-lg" style={{ color: DIFF_COLORS[q.analysis.difficulty], borderColor: `${DIFF_COLORS[q.analysis.difficulty]}44`, background: `${DIFF_COLORS[q.analysis.difficulty]}11` }}>
               {q.analysis.difficulty.toUpperCase()}
             </span>
-            <span className="font-rajdhani text-base text-haze font-semibold">"{q.analysis.title}"</span>
+            <span className="font-rajdhani text-lg md:text-xl text-haze font-semibold">"{q.analysis.title}"</span>
           </div>
 
-          {/* AI answer — visible and editable before the room is created */}
           {q.analysis.category !== "coding" && (
-            <div className="mt-4 border border-crown/30 bg-crown/5 p-4 rounded-lg">
+            <div className="mt-6 border border-crown/30 bg-crown/5 p-5 md:p-6 rounded-xl">
               <label
                 htmlFor={`answer-${q.localId}`}
-                className="font-space-mono text-sm text-crown tracking-widest uppercase block mb-2"
+                className="font-space-mono text-sm text-crown tracking-widest uppercase block mb-3"
               >
-                Correct Answer (AI) — edit if wrong
+                Correct answer (AI) — edit if wrong
               </label>
               <input
                 id={`answer-${q.localId}`}
@@ -434,23 +376,22 @@ function QuestionCard({
                 value={q.analysis.canonicalAnswer ?? ""}
                 onChange={(e) => onAnswerChange(e.target.value)}
                 placeholder="The answer players must match"
-                className="w-full h-11 px-4 bg-cosmos border border-cosmos-4 text-haze font-rajdhani text-base focus:outline-none focus:border-crown transition-colors rounded-lg"
+                className="w-full h-14 px-5 bg-cosmos border border-cosmos-4 text-haze font-rajdhani text-lg focus:outline-none focus:border-crown transition-colors rounded-xl"
               />
-                    <p className="font-rajdhani text-sm text-haze-2 mt-2 leading-relaxed">
-                      The AI fact-checks this answer. It must be one specific name, number, or fact — edit it if the AI got it wrong.
-                    </p>
+              <p className="font-rajdhani text-base text-haze-2 mt-3 leading-relaxed">
+                The AI fact-checks this answer. It must be one specific name, number, or fact — edit it if the AI got it wrong.
+              </p>
             </div>
           )}
 
-          {/* Coding: environment summary (language + I/O + tests) */}
           {q.analysis.category === "coding" && (
-            <div className="mt-3 border border-void/30 bg-void/5 p-3">
-              <div className="flex items-center justify-between gap-2 mb-2">
-                <span className="font-space-mono text-[9px] text-void tracking-widest uppercase">Coding Environment</span>
+            <div className="mt-5 border border-void/30 bg-void/5 p-5 md:p-6 rounded-xl">
+              <div className="flex items-center justify-between gap-3 mb-3">
+                <span className="font-space-mono text-xs text-void tracking-widest uppercase">Coding environment</span>
                 <select
                   value={q.analysis.language ?? "javascript"}
                   onChange={(e) => onAnalyze(e.target.value)}
-                  className="bg-cosmos border border-cosmos-4 text-haze-2 font-space-mono text-[10px] px-2 py-1 focus:outline-none focus:border-void"
+                  className="bg-cosmos border border-cosmos-4 text-haze-2 font-space-mono text-sm px-3 py-2 rounded-lg focus:outline-none focus:border-void"
                   aria-label="Change language"
                 >
                   {LANGUAGE_KEYS.map((k) => (
@@ -458,13 +399,13 @@ function QuestionCard({
                   ))}
                 </select>
               </div>
-              <p className="font-rajdhani text-xs text-haze-2 mb-1.5">
+              <p className="font-rajdhani text-base text-haze-2 mb-2">
                 Editor language: <span className="text-void font-semibold">{getLanguage(q.analysis.language).label}</span>
               </p>
               {q.analysis.ioFormat && (
-                <p className="font-space-mono text-[9px] text-haze-3 leading-relaxed mb-1.5">I/O: {q.analysis.ioFormat}</p>
+                <p className="font-space-mono text-sm text-haze-3 leading-relaxed mb-2">I/O: {q.analysis.ioFormat}</p>
               )}
-              <p className="font-space-mono text-[9px] text-haze-3">
+              <p className="font-space-mono text-sm text-haze-3">
                 {q.analysis.publicTests?.length ?? 0} public + {q.analysis.hiddenTests?.length ?? 0} hidden tests · change the language to rebuild the room
               </p>
             </div>
@@ -477,18 +418,18 @@ function QuestionCard({
         type="button"
         onClick={() => onAnalyze()}
         disabled={q.status === "analyzing" || !q.taskRaw.trim()}
-        className={`cursor-target mt-3 w-full h-10 flex items-center justify-center gap-2 border font-space-mono text-[10px] tracking-widest transition-all disabled:opacity-40 ${
+        className={`cursor-target mt-5 w-full h-12 md:h-14 flex items-center justify-center gap-2 border rounded-xl font-space-mono text-sm tracking-widest uppercase transition-all disabled:opacity-40 ${
           q.status === "done" && q.analysis?.valid
             ? "border-success/40 text-success bg-success/5 hover:bg-success/10"
             : "border-void/40 text-void bg-void/5 hover:bg-void/10"
         }`}
       >
         {q.status === "analyzing" ? (
-          <><Loader2 size={12} className="animate-spin" /> ANALYZING...</>
+          <><Loader2 size={16} className="animate-spin" /> Analyzing…</>
         ) : q.status === "done" && q.analysis?.valid ? (
-          <>RE-ANALYZE</>
+          <>Re-analyze</>
         ) : (
-          <>ANALYZE WITH AI</>
+          <>Analyze with AI</>
         )}
       </button>
       )}
@@ -520,7 +461,7 @@ function QuestionsStep({
   onDelete: (localId: string) => void;
   onChange: (localId: string, taskRaw: string) => void;
   onAnswerChange: (localId: string, answer: string) => void;
-  onBulkPaste: (lines: string[]) => void;
+  onBulkPaste: (lines: string[], startIndex: number) => void;
   onNext: () => void;
   onBack: () => void;
   batchAnalyzing: boolean;
@@ -540,9 +481,7 @@ function QuestionsStep({
   const hasContent = filledQuestions.length > 0;
 
   return (
-    <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} className="flex flex-col gap-4">
-      <BulkQuestionImport onImport={onBulkPaste} disabled={anyAnalyzing} />
-
+    <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} className="flex flex-col gap-8 md:gap-10">
       <AnimatePresence mode="popLayout">
         {questions.map((q, i) => (
           <QuestionCard
@@ -553,7 +492,7 @@ function QuestionsStep({
             arenaName={arenaName}
             onChange={(taskRaw) => onChange(q.localId, taskRaw)}
             onAnswerChange={(answer) => onAnswerChange(q.localId, answer)}
-            onBulkPaste={onBulkPaste}
+            onBulkPaste={(lines, startIndex) => onBulkPaste(lines, startIndex)}
             onDelete={() => onDelete(q.localId)}
             onAnalyze={(hint) => onAnalyzeOne(q.localId, hint)}
             showAnalyzeButton
@@ -569,37 +508,37 @@ function QuestionsStep({
             onClick={onAnalyzeAll}
             disabled={anyAnalyzing || !hasContent}
             loading={batchAnalyzing}
-            className="gap-2"
+            className="gap-2 h-14 text-base"
           >
             {batchAnalyzing && analyzeProgress
-              ? `ANALYZING ${analyzeProgress.current} OF ${analyzeProgress.total}…`
+              ? `Analyzing ${analyzeProgress.current} of ${analyzeProgress.total}…`
               : batchAnalyzing
-                ? "ANALYZING ALL QUESTIONS…"
-                : "ANALYZE ALL WITH AI"}
+                ? "Analyzing all questions…"
+                : "Analyze all with AI"}
           </Button>
       )}
 
       {!multi && questions.length === 1 && questions[0].status !== "done" && (
-        <p className="font-rajdhani text-sm text-haze-3 text-center">Analyze your question before continuing.</p>
+        <p className="font-rajdhani text-base md:text-lg text-haze-3 text-center">Analyze your question before continuing.</p>
       )}
 
       {questions.length < 10 && (
-        <button onClick={onAdd}
-          className="cursor-target flex items-center justify-center gap-2 h-12 border border-dashed border-cosmos-4 text-haze-3 hover:text-void hover:border-void/50 font-space-mono text-[10px] tracking-widest transition-all">
-          <Plus size={14} /> ADD QUESTION ({questions.length}/10)
+        <button type="button" onClick={onAdd}
+          className="cursor-target flex items-center justify-center gap-3 h-14 md:h-16 border-2 border-dashed border-cosmos-4 text-haze-3 hover:text-void hover:border-void/50 font-space-mono text-sm tracking-widest uppercase transition-all rounded-xl">
+          <Plus size={18} /> Add question ({questions.length}/10)
         </button>
       )}
 
       {!allValid && questions.length > 0 && (
-        <p className="font-space-mono text-[10px] text-haze-3 text-center">
+        <p className="font-rajdhani text-base text-haze-3 text-center">
           Analyze all questions and confirm each has a specific correct answer before continuing
         </p>
       )}
 
       <StepActions>
-        <Button variant="secondary" size="md" onClick={onBack} className="w-full sm:flex-1">← BACK</Button>
-        <Button variant="primary" size="md" onClick={onNext} disabled={!allValid || anyAnalyzing} className="w-full sm:flex-1">
-          REVIEW & LAUNCH →
+        <Button variant="secondary" size="lg" onClick={onBack} className="w-full sm:flex-1 h-14">← Back</Button>
+        <Button variant="primary" size="lg" onClick={onNext} disabled={!allValid || anyAnalyzing} className="w-full sm:flex-1 h-14">
+          Review & launch →
         </Button>
       </StepActions>
     </motion.div>
@@ -627,60 +566,60 @@ function ReviewStep({
   const maxPrizePool = maxBountyPool(playerCap);
 
   return (
-    <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} className="flex flex-col gap-6">
-      <div className="bg-cosmos-2 border border-cosmos-4 p-5 md:p-6">
-        <p className="font-space-mono text-[10px] text-void tracking-widest mb-3 uppercase">Arena Summary</p>
-        <div className="flex flex-col gap-2 font-space-mono text-xs">
-          <div className="flex justify-between"><span className="text-haze-3">Name</span><span className="text-haze">{arenaName}</span></div>
-          <div className="flex justify-between"><span className="text-haze-3">Questions</span><span className="text-haze">{questions.length}</span></div>
-          <div className="flex justify-between"><span className="text-haze-3">Entry fee</span><span className="text-coin-gold">{ENTRY_FEE} coins / player → bounty</span></div>
-          <div className="flex justify-between"><span className="text-haze-3">Max bounty pool</span><span className="text-coin-gold font-bold">{maxPrizePool} coins</span></div>
-          <p className="text-haze-3 text-[9px] pt-2 border-t border-cosmos-4 mt-2 leading-relaxed">
+    <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} className="flex flex-col gap-8 md:gap-10">
+      <div className="bg-cosmos-2 border border-cosmos-4 p-6 md:p-8 rounded-2xl">
+        <p className="font-space-mono text-sm text-void tracking-widest mb-4 uppercase">Arena summary</p>
+        <div className="flex flex-col gap-3 font-rajdhani text-base md:text-lg">
+          <div className="flex justify-between gap-4"><span className="text-haze-3">Name</span><span className="text-haze font-semibold text-right">{arenaName}</span></div>
+          <div className="flex justify-between gap-4"><span className="text-haze-3">Questions</span><span className="text-haze font-semibold">{questions.length}</span></div>
+          <div className="flex justify-between gap-4"><span className="text-haze-3">Entry fee</span><span className="text-coin-gold font-semibold">{ENTRY_FEE} coins / player → bounty</span></div>
+          <div className="flex justify-between gap-4"><span className="text-haze-3">Max bounty pool</span><span className="text-coin-gold font-bold text-xl">{maxPrizePool} coins</span></div>
+          <p className="text-haze-3 text-sm pt-4 border-t border-cosmos-4 mt-2 leading-relaxed">
             {HOSTING_FREE_SUMMARY} {ENTRY_FEE_SUMMARY}
           </p>
         </div>
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-5">
         {questions.map((q, i) => {
           const a = q.analysis!;
           const catColor = CAT_COLORS[a.category] ?? "#9B8FC0";
           return (
-            <div key={q.localId} className="bg-cosmos-2 border border-cosmos-4 p-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-space-mono text-[9px] text-haze-3">Q{i + 1}</span>
+            <div key={q.localId} className="bg-cosmos-2 border border-cosmos-4 p-5 md:p-6 rounded-xl">
+              <div className="flex items-center justify-between mb-3">
+                <span className="font-space-mono text-sm text-haze-3 uppercase">Q{i + 1}</span>
                 <div className="flex items-center gap-2">
-                  <span className="font-space-mono text-[9px] px-2 py-0.5 border" style={{ color: catColor, borderColor: `${catColor}44`, background: `${catColor}11` }}>
+                  <span className="font-space-mono text-xs px-3 py-1 border rounded-lg" style={{ color: catColor, borderColor: `${catColor}44`, background: `${catColor}11` }}>
                     {a.category.toUpperCase()}
                   </span>
-                  <span className="font-space-mono text-[9px]" style={{ color: DIFF_COLORS[a.difficulty] }}>
+                  <span className="font-space-mono text-xs font-semibold" style={{ color: DIFF_COLORS[a.difficulty] }}>
                     {a.difficulty.toUpperCase()}
                   </span>
                 </div>
               </div>
-              <p className="font-rajdhani font-bold text-sm text-haze mb-1">"{a.title}"</p>
-              <p className="font-rajdhani text-xs text-haze-2 line-clamp-2">{a.taskNormalised}</p>
+              <p className="font-rajdhani font-bold text-lg md:text-xl text-haze mb-2">"{a.title}"</p>
+              <p className="font-rajdhani text-base text-haze-2 line-clamp-3">{a.taskNormalised}</p>
               {a.category !== "coding" && a.canonicalAnswer && (
-                <p className="font-space-mono text-[9px] text-crown mt-1.5 truncate">
-                  ANSWER: <span className="text-haze">{a.canonicalAnswer}</span>
+                <p className="font-space-mono text-sm text-crown mt-3">
+                  Answer: <span className="text-haze">{a.canonicalAnswer}</span>
                 </p>
               )}
-              {a.publicTests && <p className="font-space-mono text-[9px] text-haze-3 mt-1">{a.publicTests.length} public · {a.hiddenTests?.length ?? 0} hidden tests</p>}
+              {a.publicTests && <p className="font-space-mono text-sm text-haze-3 mt-2">{a.publicTests.length} public · {a.hiddenTests?.length ?? 0} hidden tests</p>}
             </div>
           );
         })}
       </div>
 
       {createError && (
-        <p className="flex items-center justify-center gap-2 font-rajdhani text-sm text-danger text-center">
-          <AlertCircle size={14} /> {createError}
+        <p className="flex items-center justify-center gap-2 font-rajdhani text-base text-danger text-center">
+          <AlertCircle size={18} /> {createError}
         </p>
       )}
 
       <StepActions>
-        <Button variant="secondary" size="md" onClick={onBack} className="w-full sm:flex-1">← BACK</Button>
-        <Button variant="primary" size="lg" onClick={onLaunch} disabled={creating} loading={creating} className="w-full sm:flex-1">
-          {creating ? "CREATING…" : "CREATE ARENA (FREE) →"}
+        <Button variant="secondary" size="lg" onClick={onBack} className="w-full sm:flex-1 h-14">← Back</Button>
+        <Button variant="primary" size="lg" onClick={onLaunch} disabled={creating} loading={creating} className="w-full sm:flex-1 h-14 text-base">
+          {creating ? "Creating…" : "Create arena (free) →"}
         </Button>
       </StepActions>
     </motion.div>
@@ -692,24 +631,24 @@ function LobbyView({ room }: { room: CreatedRoom }) {
   const router = useRouter();
 
   return (
-    <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-6">
-      <div className="text-center">
-        <h2 className="font-orbitron font-black text-3xl text-haze mb-1">ARENA CREATED</h2>
-        <p className="font-rajdhani font-bold text-lg text-void">{room.name}</p>
-        <p className="font-space-mono text-[10px] text-success mt-2 tracking-widest">✓ LOBBY READY</p>
+    <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-8 md:gap-10">
+      <div className="text-center py-4">
+        <h2 className="font-orbitron font-black text-4xl md:text-5xl text-haze mb-2">Arena created</h2>
+        <p className="font-rajdhani font-bold text-xl md:text-2xl text-void">{room.name}</p>
+        <p className="font-space-mono text-sm text-success mt-3 tracking-widest uppercase">Lobby ready</p>
       </div>
 
       <div>
-        <p className="font-space-mono text-[10px] text-haze-3 tracking-widest mb-3 uppercase">Invite friends</p>
-        <InviteSharePanel roomId={room.id} qrSize={132} />
+        <p className="font-space-mono text-sm text-haze-3 tracking-widest mb-4 uppercase">Invite friends</p>
+        <InviteSharePanel roomId={room.id} qrSize={160} />
       </div>
 
-      <div className="flex flex-col gap-3 mt-2">
-        <Button variant="primary" size="lg" fullWidth magnetic onClick={() => router.push(`/lobby/${room.id}`)}>
-          ENTER LOBBY →
+      <div className="flex flex-col gap-4 mt-2">
+        <Button variant="primary" size="lg" fullWidth magnetic className="h-14 text-base" onClick={() => router.push(`/lobby/${room.id}`)}>
+          Enter lobby →
         </Button>
-        <button onClick={() => router.push("/dashboard")} className="font-space-mono text-[11px] text-haze-3 hover:text-void transition-colors text-center py-2">
-          Go to Dashboard
+        <button type="button" onClick={() => router.push("/dashboard")} className="font-rajdhani text-base text-haze-3 hover:text-void transition-colors text-center py-3">
+          Go to dashboard
         </button>
       </div>
     </motion.div>
@@ -748,9 +687,9 @@ export default function CreatePage() {
     setQuestions((prev) => prev.map((x) => (x.localId === localId ? { ...x, status: "done", analysis } : x)));
   }, []);
 
-  const handleBulkPaste = useCallback((lines: string[]) => {
+  const handleBulkPaste = useCallback((lines: string[], startIndex: number) => {
     if (lines.length < 2) return;
-    setQuestions(questionsFromLines(lines));
+    setQuestions((prev) => mergeBulkPaste(prev, lines, startIndex));
   }, []);
 
   const runAnalyzeRequest = useCallback(async (
@@ -905,10 +844,10 @@ export default function CreatePage() {
 
   return (
     <AppLayout>
-      <AppPage>
-        <p className="text-xs font-medium text-plum mb-2">New arena</p>
-        <h1 className="font-display text-3xl md:text-4xl text-haze mb-3 text-balance">Create your arena</h1>
-        <p className="text-base md:text-lg text-haze-2 mb-8 md:mb-10 max-w-3xl leading-relaxed">
+      <AppPage className="max-w-none">
+        <p className="text-sm font-semibold uppercase tracking-wide text-plum mb-3">New arena</p>
+        <h1 className="font-display text-4xl md:text-5xl lg:text-6xl text-haze mb-4 md:mb-6 text-balance leading-[1.05]">Create your arena</h1>
+        <p className="text-lg md:text-xl lg:text-2xl text-haze-2 mb-10 md:mb-14 max-w-4xl leading-relaxed">
           Set up your challenge. The AI validates and builds the rest.
         </p>
 
