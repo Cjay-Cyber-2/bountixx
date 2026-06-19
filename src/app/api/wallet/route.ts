@@ -6,8 +6,8 @@ import { coinTransactions, users } from "@/lib/schema";
 import { eq, desc } from "drizzle-orm";
 import { getSession, unauthorized } from "@/lib/getSession";
 
-export async function GET() {
-  const session = await getSession();
+export async function GET(req: Request) {
+  const session = await getSession(req);
   if (!session) return unauthorized();
 
   const transactions = await db

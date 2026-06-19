@@ -63,18 +63,19 @@ async function readClerkProfile() {
   return { email, avatarUrl, rawUsername };
 }
 
-async function hasMainEventGrant(userId: string): Promise<boolean> {
-  const [tx] = await db
-    .select({ id: coinTransactions.id })
+async function mainEventStarterGrantedTotal(userId: string): Promise<number> {
+  const txs = await db
+    .select({ amount: coinTransactions.amount })
     .from(coinTransactions)
     .where(
       and(
         eq(coinTransactions.userId, userId),
         eq(coinTransactions.reference, "main_event_starter"),
+        eq(coinTransactions.type, "gifted"),
       ),
-    )
-    .limit(1);
-  return Boolean(tx);
+    );
+
+  return txs.reduce((total, tx) => total + Math.max(0, tx.amount ?? 0), 0);
 }
 
 /** One-time main-event grant: 1,000 coins once per account. Spent coins stay spent. */
@@ -102,7 +103,10 @@ async function ensureOneTimeStarterCoins(
     return updated ?? { ...user, ...updates };
   }
 
-  if (await hasMainEventGrant(user.id)) {
+  const grantedTotal = await mainEventStarterGrantedTotal(user.id);
+  const owed = Math.max(0, STARTER_COINS - grantedTotal);
+
+  if (owed === 0) {
     if (Object.keys(updates).length === 0) return user;
     const [updated] = await db
       .update(users)
@@ -113,9 +117,9 @@ async function ensureOneTimeStarterCoins(
   }
 
   const previous = user.coinsBalance ?? 0;
-  const grantAmount = Math.max(0, STARTER_COINS - previous);
-  if (grantAmount > 0) {
-    updates.coinsBalance = previous + grantAmount;
+  const credit = Math.min(owed, Math.max(0, STARTER_COINS - previous));
+  if (credit > 0) {
+    updates.coinsBalance = previous + credit;
   }
 
   const [updated] = await db
@@ -132,16 +136,20 @@ async function ensureOneTimeStarterCoins(
     await db.insert(coinTransactions).values({
       id: randomUUID(),
       userId: user.id,
-      amount: grantAmount,
+      amount: owed,
       type: "gifted",
       reference: "main_event_starter",
     });
   } catch (err) {
     console.error("[getSession] main event starter tx failed:", err);
+    if (credit > 0) {
+      return updated ?? { ...user, coinsBalance: previous + credit };
+    }
+    return updated ?? user;
   }
 
-  if (grantAmount > 0) {
-    return updated ?? { ...user, coinsBalance: previous + grantAmount };
+  if (credit > 0) {
+    return updated ?? { ...user, coinsBalance: previous + credit };
   }
   return updated ?? user;
 }
