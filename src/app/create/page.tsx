@@ -13,7 +13,7 @@ import { readApiError } from "@/lib/readApiError";
 import { ENTRY_FEE, ENTRY_FEE_SUMMARY, HOSTING_FREE_SUMMARY, maxBountyPool } from "@/lib/coins";
 import { LANGUAGES, LANGUAGE_KEYS, getLanguage, type LanguageKey } from "@/lib/languages";
 import { isBulkQuestionPaste, parseBulkQuestions } from "@/lib/parseBulkQuestions";
-import { isAiRateLimitError } from "@/lib/aiAnalyse";
+import { isAiRateLimitError } from "@/lib/apiErrors";
 
 /* ─── Types ─── */
 type Category = "coding" | "trivia" | "logic" | "math" | "writing" | "design" | "meme";
@@ -114,9 +114,6 @@ function BulkQuestionImport({
     >
       <p className="font-space-mono text-[10px] text-void tracking-widest uppercase mb-1">
         Bulk import
-      </p>
-      <p className="font-rajdhani text-sm text-haze-2 mb-3 leading-relaxed">
-        Paste multiple questions here with <kbd className="px-1.5 py-0.5 bg-cosmos-3 border border-cosmos-4 text-[10px] font-space-mono">Ctrl+V</kbd> — one question per line, like Render env vars. Each line becomes its own question card.
       </p>
       <textarea
         rows={4}
@@ -477,6 +474,7 @@ function QuestionCard({
 
       {showAnalyzeButton && (
       <button
+        type="button"
         onClick={() => onAnalyze()}
         disabled={q.status === "analyzing" || !q.taskRaw.trim()}
         className={`cursor-target mt-3 w-full h-10 flex items-center justify-center gap-2 border font-space-mono text-[10px] tracking-widest transition-all disabled:opacity-40 ${
@@ -537,8 +535,9 @@ function QuestionsStep({
     return true;
   });
   const anyAnalyzing = questions.some((q) => q.status === "analyzing") || batchAnalyzing;
-  const multi = questions.length > 1;
-  const hasContent = questions.some((q) => q.taskRaw.trim());
+  const filledQuestions = questions.filter((q) => q.taskRaw.trim());
+  const multi = filledQuestions.length > 1;
+  const hasContent = filledQuestions.length > 0;
 
   return (
     <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} className="flex flex-col gap-4">
@@ -557,7 +556,7 @@ function QuestionsStep({
             onBulkPaste={onBulkPaste}
             onDelete={() => onDelete(q.localId)}
             onAnalyze={(hint) => onAnalyzeOne(q.localId, hint)}
-            showAnalyzeButton={!multi}
+            showAnalyzeButton
           />
         ))}
       </AnimatePresence>
@@ -808,29 +807,31 @@ export default function CreatePage() {
     setBatchAnalyzing(true);
     setAnalyzeProgress({ current: 0, total: pending.length });
 
-    for (let i = 0; i < pending.length; i++) {
-      const q = pending[i];
-      setAnalyzeProgress({ current: i + 1, total: pending.length });
+    try {
+      for (let i = 0; i < pending.length; i++) {
+        const q = pending[i];
+        setAnalyzeProgress({ current: i + 1, total: pending.length });
 
-      let attempts = 0;
-      while (attempts < 3) {
-        const result = await runAnalyzeRequest(q.localId, q.taskRaw);
-        if (result.ok) break;
-        if (result.rateLimited) {
-          await sleep(8_000 * (attempts + 1));
-          attempts++;
-          continue;
+        let attempts = 0;
+        while (attempts < 3) {
+          const result = await runAnalyzeRequest(q.localId, q.taskRaw);
+          if (result.ok) break;
+          if (result.rateLimited) {
+            await sleep(8_000 * (attempts + 1));
+            attempts++;
+            continue;
+          }
+          break;
         }
-        break;
-      }
 
-      if (i < pending.length - 1) {
-        await sleep(6_500);
+        if (i < pending.length - 1) {
+          await sleep(6_500);
+        }
       }
+    } finally {
+      setBatchAnalyzing(false);
+      setAnalyzeProgress(null);
     }
-
-    setBatchAnalyzing(false);
-    setAnalyzeProgress(null);
   }, [questions, runAnalyzeRequest]);
 
   /* ─── Launch room ─── */

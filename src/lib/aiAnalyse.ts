@@ -1,4 +1,7 @@
+import "server-only";
+
 import { LANGUAGE_KEYS, isLanguageKey, type LanguageKey } from "./languages";
+import { isAiRateLimitError } from "./apiErrors";
 
 export type AnalysisResult = {
   valid: boolean;
@@ -256,9 +259,7 @@ function resolveProvider(): { provider: Provider; apiKey: string } | null {
   return null;
 }
 
-export function isAiRateLimitError(message: string): boolean {
-  return /rate limit|tokens per (minute|day|hour)|too many requests|quota exceeded/i.test(message);
-}
+export { isAiRateLimitError } from "./apiErrors";
 
 export function friendlyAiRateLimitMessage(): string {
   return "Groq AI hit its daily limit. Wait about an hour and try again, or analyze questions one at a time.";
