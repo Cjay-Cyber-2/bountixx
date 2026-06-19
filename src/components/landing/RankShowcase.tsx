@@ -22,7 +22,7 @@ export function RankShowcase() {
   const reduce = useReducedMotion();
 
   return (
-    <LandingSection id="ranks" variant="raised" className="pt-28 md:pt-36 lg:pt-40">
+    <LandingSection id="ranks" variant="raised" className="pt-36 md:pt-44 lg:pt-52">
       <div ref={ref} className="w-full">
         <CenteredSectionIntro
           eyebrow="5 ranks, 20,000 XP ceiling"
@@ -34,7 +34,7 @@ export function RankShowcase() {
           description="Win, place, or just finish — XP accrues either way. Each rank unlocks bigger bounty tiers and a one-time coin payout the moment you cross it."
         />
 
-        <div className="hidden md:grid grid-cols-5 gap-px items-end" style={{ minHeight: 420 }}>
+        <div className="hidden md:grid grid-cols-5 gap-4 lg:gap-5 items-end" style={{ minHeight: 440 }}>
           {RANKS.map((rank, i) => (
             <motion.div
               key={rank.name}
@@ -43,11 +43,11 @@ export function RankShowcase() {
               transition={{ duration: 0.6, delay: i * 0.12, ease: [0.16, 1, 0.3, 1] }}
               className="flex flex-col justify-end"
             >
-              <div className="px-4 lg:px-5 pb-5 md:pb-6 text-center">
-                <p className="font-zen-dots text-base lg:text-lg mb-2 tracking-wide text-void" style={{ opacity: rankOpacity(i) }}>
+              <div className="px-5 lg:px-6 pb-7 md:pb-8 text-center">
+                <p className="font-zen-dots text-base lg:text-lg mb-3 tracking-wide text-void" style={{ opacity: rankOpacity(i) }}>
                   {rank.name}
                 </p>
-                <p className="font-rajdhani text-[13px] text-haze-3 leading-snug mb-3 min-h-[2.6em]">
+                <p className="font-rajdhani text-[13px] text-haze-3 leading-[1.65] mb-4 min-h-[2.8em] px-1">
                   {rank.unlock}
                 </p>
                 <p className="font-space-mono text-[11px] text-haze-2 tabular-nums">{rank.xp} XP</p>
@@ -81,19 +81,19 @@ export function RankShowcase() {
           ))}
         </div>
 
-        <div className="md:hidden flex flex-col gap-4">
+        <div className="md:hidden flex flex-col gap-5 md:gap-6">
           {[...RANKS].reverse().map((rank) => (
             <div
               key={rank.name}
-              className="p-5 md:p-6 rounded-xl text-center"
+              className="landing-surface rounded-xl text-center"
               style={{ background: "var(--cosmos-2)", border: "1px solid var(--border-1)", borderLeft: "3px solid rgba(168,85,247,0.45)" }}
             >
-              <div className="flex items-baseline justify-between mb-1.5 gap-4">
+              <div className="flex items-baseline justify-between mb-2.5 gap-4">
                 <span className="font-zen-dots text-base text-void">{rank.name}</span>
                 <span className="font-space-mono text-[11px] text-haze-2 tabular-nums">{rank.xp} XP</span>
               </div>
-              <div className="flex items-baseline justify-between gap-3">
-                <p className="font-rajdhani text-[13px] text-haze-3">{rank.unlock}</p>
+              <div className="flex items-baseline justify-between gap-4 pt-1">
+                <p className="font-rajdhani text-[13px] text-haze-3 leading-[1.6]">{rank.unlock}</p>
                 <span
                   className="font-space-mono text-[12px] tabular-nums shrink-0"
                   style={{ color: rank.reward ? "var(--crown)" : "var(--border-2)" }}

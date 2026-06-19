@@ -40,7 +40,7 @@ export function Categories() {
   const inView = useInView(ref, { once: true, margin: "-10% 0px" });
 
   return (
-    <LandingSection id="categories" variant="raised" className="pt-36 md:pt-44 lg:pt-52">
+    <LandingSection id="categories" variant="raised" className="pt-40 md:pt-48 lg:pt-56">
       <div ref={ref} className="w-full">
         <CenteredSectionIntro
           eyebrow="Four formats"
@@ -52,7 +52,7 @@ export function Categories() {
           initial="hidden"
           animate={inView ? "show" : "hidden"}
           variants={{ show: { transition: { staggerChildren: 0.1 } } }}
-          className="grid sm:grid-cols-2 gap-7 md:gap-9 lg:gap-12"
+          className="grid sm:grid-cols-2 gap-8 md:gap-10 lg:gap-14"
         >
           {CATEGORIES.map((cat) => (
             <motion.article
@@ -61,7 +61,7 @@ export function Categories() {
                 hidden: { opacity: 0, y: 24 },
                 show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } },
               }}
-              className="group relative flex flex-col items-center text-center p-8 md:p-11 lg:p-12 rounded-xl transition-transform duration-300 hover:-translate-y-1"
+              className="landing-surface group relative flex flex-col items-center text-center rounded-xl transition-transform duration-300 hover:-translate-y-1"
               style={{
                 background: "var(--cosmos)",
                 border: "1px solid var(--border-1)",
@@ -77,24 +77,24 @@ export function Categories() {
                 aria-hidden
               />
 
-              <h3 className="font-zen-dots text-2xl md:text-[1.65rem] lg:text-3xl text-haze leading-none mb-5 md:mb-6">
+              <h3 className="font-zen-dots text-2xl md:text-[1.65rem] lg:text-3xl text-haze leading-none mb-6 md:mb-8">
                 {cat.label}
               </h3>
 
-              <p className="font-rajdhani text-[17px] md:text-lg text-haze-2 leading-relaxed mb-6 md:mb-8 max-w-[48ch]">
+              <p className="font-rajdhani text-[17px] md:text-lg text-haze-2 leading-[1.75] mb-8 md:mb-10 max-w-[44ch]">
                 {cat.desc}
               </p>
 
-              <p className="font-space-mono text-[13px] text-haze-3 mb-8 md:mb-10">
+              <p className="font-space-mono text-[13px] text-haze-3 mb-10 md:mb-12 leading-relaxed">
                 <span className="text-void mr-2">&rsaquo;</span>
                 {cat.sample}
               </p>
 
-              <div className="mt-auto pt-6 md:pt-7 space-y-3 w-full" style={{ borderTop: "1px solid var(--border-1)" }}>
-                <p className="font-space-mono text-[11px] uppercase tracking-[2px] text-haze leading-relaxed">
+              <div className="mt-auto pt-8 md:pt-10 space-y-4 w-full" style={{ borderTop: "1px solid var(--border-1)" }}>
+                <p className="font-space-mono text-[11px] uppercase tracking-[2px] text-haze leading-[1.7] px-2">
                   {cat.win}
                 </p>
-                <p className="font-space-mono text-[10px] uppercase tracking-[2px] text-haze-3 leading-relaxed">
+                <p className="font-space-mono text-[10px] uppercase tracking-[2px] text-haze-3 leading-[1.7] px-2">
                   {cat.partial}
                 </p>
               </div>
