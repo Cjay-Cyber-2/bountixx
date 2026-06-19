@@ -2,12 +2,14 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { rooms, roomPlayers, submissions, testCases, users, coinTransactions, achievements } from "@/lib/schema";
-import { eq, and, count, sql } from "drizzle-orm";
+import { rooms, roomPlayers, submissions, testCases, users, coinTransactions } from "@/lib/schema";
+import { eq, and, sql } from "drizzle-orm";
 import { getSession, unauthorized } from "@/lib/getSession";
 import { randomUUID } from "crypto";
-import { sendNotificationToUser } from "@/lib/sendNotification";
-import { runCode } from "@/lib/codeRunner";
+import { runCode, codeExecutionEnabled } from "@/lib/codeRunner";
+import { getRoomQuestions } from "@/lib/roomQuestions";
+import { allCompetitorsFinished, finalizeArena } from "@/lib/arenaResolver";
+import { checkAndAwardAchievements, updateConsecutiveWins } from "@/lib/achievements";
 
 const XP_WIN = 200;
 const XP_PARTICIPATION = 25;
@@ -24,8 +26,10 @@ async function runTests(
       const run = await runCode({ language, source: code, stdin: test.input });
       const output = (run.stdout ?? "").trim();
       const expected = test.expectedOutput.trim();
-      // A run that errored out (non-zero exit / compile error) never passes.
-      results.push({ pass: run.ok && output === expected, output: output || run.stderr.trim().slice(0, 200) || (run.timedOut ? "Timed out" : "No output") });
+      results.push({
+        pass: run.ok && output === expected,
+        output: output || run.stderr.trim().slice(0, 200) || (run.timedOut ? "Timed out" : "No output"),
+      });
     } catch {
       results.push({ pass: false, output: "Execution service error" });
     }
@@ -33,6 +37,78 @@ async function runTests(
 
   const passed = results.filter((r) => r.pass).length;
   return { passed, total: tests.length, results };
+}
+
+async function grantSingleQuestionWinner(
+  roomId: string,
+  userId: string,
+  prizePool: number,
+  roomCategory: string | null,
+  startedAt: Date | null,
+) {
+  await db.update(users).set({
+    coinsBalance: sql`${users.coinsBalance} + ${prizePool}`,
+    xp: sql`${users.xp} + ${XP_WIN}`,
+  }).where(eq(users.id, userId));
+
+  await db.insert(coinTransactions).values({
+    id: randomUUID(),
+    userId,
+    amount: prizePool,
+    type: "earned",
+    reference: `room:${roomId}:winner`,
+  });
+
+  const streak = await updateConsecutiveWins(userId, true);
+  await updateRank(userId);
+
+  const [winnerSub] = await db
+    .select({ submittedAt: submissions.submittedAt })
+    .from(submissions)
+    .where(and(eq(submissions.roomId, roomId), eq(submissions.userId, userId)))
+    .limit(1);
+
+  const solveSeconds =
+    startedAt && winnerSub?.submittedAt
+      ? Math.round((new Date(winnerSub.submittedAt).getTime() - new Date(startedAt).getTime()) / 1000)
+      : null;
+
+  const [winnerUser] = await db
+    .select({ coinsBalance: users.coinsBalance, rank: users.rank, roomsCreatedCount: users.roomsCreatedCount })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  await checkAndAwardAchievements(userId, {
+    won: true,
+    roomCategory,
+    solveSeconds,
+    coinsBalance: winnerUser?.coinsBalance,
+    rank: winnerUser?.rank,
+    roomsCreatedCount: winnerUser?.roomsCreatedCount,
+    consecutiveWins: streak,
+  });
+}
+
+async function grantParticipationRewards(userId: string) {
+  await db.update(users).set({
+    xp: sql`${users.xp} + ${XP_PARTICIPATION}`,
+  }).where(eq(users.id, userId));
+  await updateRank(userId);
+}
+
+async function updateRank(userId: string) {
+  const [user] = await db.select({ xp: users.xp }).from(users).where(eq(users.id, userId)).limit(1);
+  if (!user) return;
+
+  const xp = user.xp;
+  let rank: "recruit" | "challenger" | "elite" | "champion" | "legendary" = "recruit";
+  if (xp >= 20000) rank = "legendary";
+  else if (xp >= 7500) rank = "champion";
+  else if (xp >= 2000) rank = "elite";
+  else if (xp >= 500) rank = "challenger";
+
+  await db.update(users).set({ rank }).where(eq(users.id, userId));
 }
 
 export async function POST(
@@ -54,12 +130,10 @@ export async function POST(
   if (room.status !== "live") {
     return NextResponse.json({ error: "Room is not live" }, { status: 409 });
   }
-  // The host set the answer — they referee, they can't submit
   if (room.adminId === session.id) {
     return NextResponse.json({ error: "The host cannot compete in their own arena" }, { status: 403 });
   }
 
-  // Confirm player is in the room
   const [playerRow] = await db
     .select()
     .from(roomPlayers)
@@ -73,9 +147,9 @@ export async function POST(
     answer?: string;
     language?: string;
     runTestsOnly?: boolean;
+    questionIndex?: number;
   };
 
-  // Anti-cheat forfeit: mark the player disqualified, no submission recorded
   if (body.answer === "__forfeit__") {
     await db
       .update(roomPlayers)
@@ -84,91 +158,140 @@ export async function POST(
     return NextResponse.json({ forfeited: true });
   }
 
-  // Integrity guard: once a player has completed or forfeited, no more recorded
-  // submissions. This stops XP farming and answer brute-forcing on a second try.
-  // Preview-only test runs (runTestsOnly) are still allowed since they record nothing.
-  if (
-    !body.runTestsOnly &&
-    (playerRow.status === "completed" || playerRow.status === "forfeited")
-  ) {
-    return NextResponse.json(
-      { error: "You have already submitted in this arena" },
-      { status: 409 }
-    );
+  const questions = getRoomQuestions(room);
+  const questionIndex = body.questionIndex ?? 0;
+  const currentQuestion = questions[questionIndex];
+
+  if (!currentQuestion) {
+    return NextResponse.json({ error: "Invalid question index" }, { status: 400 });
   }
 
-  // ── Coding room ──────────────────────────────────────────────────────────
-  if (room.category === "coding") {
+  const isMulti = questions.length > 1;
+
+  const [existingForQuestion] = await db
+    .select({ id: submissions.id })
+    .from(submissions)
+    .where(
+      and(
+        eq(submissions.roomId, roomId),
+        eq(submissions.userId, session.id),
+        eq(submissions.questionIndex, questionIndex),
+      ),
+    )
+    .limit(1);
+
+  if (!body.runTestsOnly && existingForQuestion) {
+    return NextResponse.json({ error: "You already answered this question" }, { status: 409 });
+  }
+
+  if (!body.runTestsOnly && playerRow.status === "forfeited") {
+    return NextResponse.json({ error: "You have been disqualified from this arena" }, { status: 409 });
+  }
+
+  const category = currentQuestion.category ?? room.category;
+
+  if (category === "coding") {
     if (!body.code) return NextResponse.json({ error: "Code is required" }, { status: 400 });
 
-    const { codeExecutionEnabled } = await import("@/lib/codeRunner");
-    if (!codeExecutionEnabled()) {
+    const lang = currentQuestion.language ?? room.language ?? body.language ?? "javascript";
+    if (!codeExecutionEnabled(lang)) {
       return NextResponse.json(
-        { error: "Code execution is not configured. The room host must set a JUDGE0_URL (or PISTON_URL) — see user_task.md." },
-        { status: 503 }
+        { error: "Code execution is not configured for this language. Set PISTON_URL or JUDGE0_URL — JavaScript works out of the box." },
+        { status: 503 },
       );
     }
 
-    // The room's analysed language is authoritative (the editor is locked to it).
-    const lang = room.language ?? body.language ?? "javascript";
-
-    const allTests = await db
+    let allTests = await db
       .select()
       .from(testCases)
       .where(and(eq(testCases.roomId, roomId), eq(testCases.isActive, true)));
 
+    if (allTests.length === 0 && isMulti) {
+      const pub = currentQuestion.publicTests ?? [];
+      const hid = currentQuestion.hiddenTests ?? [];
+      allTests = [
+        ...pub.map((t, i) => ({
+          id: `pub-${i}`,
+          roomId,
+          input: t.input,
+          expectedOutput: t.expectedOutput,
+          isHidden: false,
+          isActive: true,
+        })),
+        ...hid.map((t, i) => ({
+          id: `hid-${i}`,
+          roomId,
+          input: t.input,
+          expectedOutput: t.expectedOutput,
+          isHidden: true,
+          isActive: true,
+        })),
+      ];
+    }
+
     if (body.runTestsOnly) {
-      // Only run public tests for preview
       const publicTests = allTests.filter((t) => !t.isHidden);
       const result = await runTests(body.code, lang, publicTests);
       return NextResponse.json({ testResults: result, runOnly: true });
     }
 
-    // Full submission — run hidden tests
     const hiddenTests = allTests.filter((t) => t.isHidden);
-    const testResult = await runTests(body.code, lang, hiddenTests);
-
-    const isWinner = testResult.passed === testResult.total && testResult.total > 0;
-
-    // Check if someone already won
-    const [existingWinner] = await db
-      .select({ id: submissions.id })
-      .from(submissions)
-      .where(and(eq(submissions.roomId, roomId), eq(submissions.isWinner, true)))
-      .limit(1);
+    const testResult = await runTests(body.code, lang, hiddenTests.length ? hiddenTests : allTests);
+    const isCorrect = testResult.passed === testResult.total && testResult.total > 0;
 
     const [submission] = await db
       .insert(submissions)
       .values({
-        id:          randomUUID(),
+        id: randomUUID(),
         roomId,
-        userId:      session.id,
-        code:        body.code,
-        language:    lang,
+        userId: session.id,
+        questionIndex,
+        code: body.code,
+        language: lang,
         testsPassed: testResult.passed,
-        testsTotal:  testResult.total,
-        isWinner:    isWinner && !existingWinner,
+        testsTotal: testResult.total,
+        isWinner: false,
       })
       .returning();
 
-    // Mark player as completed
-    await db
-      .update(roomPlayers)
-      .set({ status: "completed", submittedAt: new Date() })
-      .where(and(eq(roomPlayers.roomId, roomId), eq(roomPlayers.userId, session.id)));
+    const answeredCount = questionIndex + 1;
+    const hasMore = questionIndex + 1 < questions.length;
 
-    if (isWinner && !existingWinner) {
-      await grantWinnerRewards(room.id, session.id, room.prizePool ?? 0);
-      await db.update(rooms).set({ status: "ended", endedAt: new Date() }).where(eq(rooms.id, roomId));
-      const players = await db
-        .select({ userId: roomPlayers.userId })
-        .from(roomPlayers)
-        .where(eq(roomPlayers.roomId, roomId));
-      await Promise.all(
-        players.map((p) =>
-          sendNotificationToUser(p.userId, "Arena ended!", "Check the results.", { url: `/arena/${roomId}` })
-        )
-      );
+    if (!hasMore) {
+      await db
+        .update(roomPlayers)
+        .set({ status: "completed", submittedAt: new Date() })
+        .where(and(eq(roomPlayers.roomId, roomId), eq(roomPlayers.userId, session.id)));
+    }
+
+    let won = false;
+
+    if (!isMulti && isCorrect) {
+      const [existingWinner] = await db
+        .select({ id: submissions.id })
+        .from(submissions)
+        .where(and(eq(submissions.roomId, roomId), eq(submissions.isWinner, true)))
+        .limit(1);
+
+      if (!existingWinner) {
+        won = true;
+        await db.update(submissions).set({ isWinner: true }).where(eq(submissions.id, submission.id));
+        await grantSingleQuestionWinner(room.id, session.id, room.prizePool ?? 0, room.category, room.startedAt);
+        await db.update(rooms).set({ status: "ended", endedAt: new Date() }).where(eq(rooms.id, roomId));
+      } else {
+        await grantParticipationRewards(session.id);
+      }
+    } else if (isMulti) {
+      const finished = await allCompetitorsFinished(roomId, room.adminId, questions.length);
+      if (finished) {
+        await finalizeArena(roomId);
+        const [winnerSub] = await db
+          .select({ isWinner: submissions.isWinner })
+          .from(submissions)
+          .where(and(eq(submissions.roomId, roomId), eq(submissions.userId, session.id), eq(submissions.isWinner, true)))
+          .limit(1);
+        won = Boolean(winnerSub?.isWinner);
+      }
     } else {
       await grantParticipationRewards(session.id);
     }
@@ -176,131 +299,108 @@ export async function POST(
     return NextResponse.json({
       submission,
       testResults: testResult,
-      won: isWinner && !existingWinner,
+      won,
+      correct: isCorrect,
+      questionsAnswered: answeredCount,
+      totalQuestions: questions.length,
+      nextQuestionIndex: hasMore ? questionIndex + 1 : null,
     });
   }
 
-  // ── Trivia / Logic / Math rooms ──────────────────────────────────────────
   if (!body.answer) return NextResponse.json({ error: "Answer is required" }, { status: 400 });
 
-  // Judge against the canonical answer the creator approved (and possibly edited)
-  // before the room was created. Legacy fallback: "ANSWER:" embedded in taskNormalised.
   const canonicalAnswer =
+    currentQuestion.canonicalAnswer?.trim() ||
     room.canonicalAnswer?.trim() ||
     (room.taskNormalised?.includes("ANSWER:")
       ? room.taskNormalised.split("ANSWER:")[1]?.split("\n")[0]?.trim()
       : null);
 
   const normalise = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
-  const isCorrect = canonicalAnswer
-    ? normalise(body.answer) === normalise(canonicalAnswer)
-    : false;
-
-  const [existingWinner] = await db
-    .select({ id: submissions.id })
-    .from(submissions)
-    .where(and(eq(submissions.roomId, roomId), eq(submissions.isWinner, true)))
-    .limit(1);
-
-  const isWinner = isCorrect && !existingWinner;
+  const isCorrect = canonicalAnswer ? normalise(body.answer) === normalise(canonicalAnswer) : false;
 
   const [submission] = await db
     .insert(submissions)
     .values({
-      id:       randomUUID(),
+      id: randomUUID(),
       roomId,
-      userId:   session.id,
-      answer:   body.answer,
-      isWinner,
+      userId: session.id,
+      questionIndex,
+      answer: body.answer,
+      isWinner: false,
       testsPassed: isCorrect ? 1 : 0,
-      testsTotal:  1,
+      testsTotal: 1,
     })
     .returning();
 
-  await db
-    .update(roomPlayers)
-    .set({ status: "completed", submittedAt: new Date() })
-    .where(and(eq(roomPlayers.roomId, roomId), eq(roomPlayers.userId, session.id)));
+  const answeredCount = questionIndex + 1;
+  const hasMore = questionIndex + 1 < questions.length;
 
-  if (isWinner) {
-    await grantWinnerRewards(room.id, session.id, room.prizePool ?? 0);
-    await db.update(rooms).set({ status: "ended", endedAt: new Date() }).where(eq(rooms.id, roomId));
-    // Notify all players that the arena ended
-    const players = await db
-      .select({ userId: roomPlayers.userId })
-      .from(roomPlayers)
-      .where(eq(roomPlayers.roomId, roomId));
-    await Promise.all(
-      players.map((p) =>
-        sendNotificationToUser(p.userId, "Arena ended!", "Check the results.", { url: `/arena/${roomId}` })
-      )
-    );
-  } else {
-    await grantParticipationRewards(session.id);
+  if (!hasMore) {
+    await db
+      .update(roomPlayers)
+      .set({ status: "completed", submittedAt: new Date() })
+      .where(and(eq(roomPlayers.roomId, roomId), eq(roomPlayers.userId, session.id)));
+  }
+
+  let won = false;
+
+  if (!isMulti && isCorrect) {
+    const [existingWinner] = await db
+      .select({ id: submissions.id })
+      .from(submissions)
+      .where(and(eq(submissions.roomId, roomId), eq(submissions.isWinner, true)))
+      .limit(1);
+
+    if (!existingWinner) {
+      won = true;
+      await db.update(submissions).set({ isWinner: true }).where(eq(submissions.id, submission.id));
+      await grantSingleQuestionWinner(room.id, session.id, room.prizePool ?? 0, room.category, room.startedAt);
+      await db.update(rooms).set({ status: "ended", endedAt: new Date() }).where(eq(rooms.id, roomId));
+    }
+  } else if (isMulti) {
+    const finished = await allCompetitorsFinished(roomId, room.adminId, questions.length);
+    if (finished) {
+      await finalizeArena(roomId);
+      const [winnerSub] = await db
+        .select({ isWinner: submissions.isWinner })
+        .from(submissions)
+        .where(and(eq(submissions.roomId, roomId), eq(submissions.userId, session.id), eq(submissions.isWinner, true)))
+        .limit(1);
+      won = Boolean(winnerSub?.isWinner);
+    }
   }
 
   return NextResponse.json({
     submission,
     correct: isCorrect,
-    won: isWinner,
+    won,
+    questionsAnswered: answeredCount,
+    totalQuestions: questions.length,
+    nextQuestionIndex: hasMore ? questionIndex + 1 : null,
   });
 }
 
-async function grantWinnerRewards(
-  roomId: string,
-  userId: string,
-  prizePool: number
+export async function PATCH(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  await db.update(users).set({
-    coinsBalance: sql`${users.coinsBalance} + ${prizePool}`,
-    xp:           sql`${users.xp} + ${XP_WIN}`,
-  }).where(eq(users.id, userId));
+  const session = await getSession();
+  if (!session) return unauthorized();
 
-  await db.insert(coinTransactions).values({
-    id:        randomUUID(),
-    userId,
-    amount:    prizePool,
-    type:      "earned",
-    reference: `room:${roomId}:winner`,
-  });
+  const { id: roomId } = await params;
+  const body = (await req.json().catch(() => ({}))) as { action?: string };
 
-  // Check + award First Blood badge
-  const [existing] = await db
-    .select({ id: achievements.id })
-    .from(achievements)
-    .where(and(eq(achievements.userId, userId), eq(achievements.badgeId, "first_blood")))
-    .limit(1);
-
-  if (!existing) {
-    await db.insert(achievements).values({
-      id:      randomUUID(),
-      userId,
-      badgeId: "first_blood",
-    });
+  if (body.action !== "finalize") {
+    return NextResponse.json({ error: "Unknown action" }, { status: 400 });
   }
 
-  // Update rank
-  await updateRank(userId);
-}
+  const [room] = await db.select().from(rooms).where(eq(rooms.id, roomId)).limit(1);
+  if (!room) return NextResponse.json({ error: "Room not found" }, { status: 404 });
+  if (room.status !== "live") {
+    return NextResponse.json({ ok: true, alreadyEnded: true });
+  }
 
-async function grantParticipationRewards(userId: string) {
-  await db.update(users).set({
-    xp: sql`${users.xp} + ${XP_PARTICIPATION}`,
-  }).where(eq(users.id, userId));
-
-  await updateRank(userId);
-}
-
-async function updateRank(userId: string) {
-  const [user] = await db.select({ xp: users.xp }).from(users).where(eq(users.id, userId)).limit(1);
-  if (!user) return;
-
-  const xp = user.xp;
-  let rank: "recruit" | "challenger" | "elite" | "champion" | "legendary" = "recruit";
-  if (xp >= 20000) rank = "legendary";
-  else if (xp >= 7500) rank = "champion";
-  else if (xp >= 2000) rank = "elite";
-  else if (xp >= 500)  rank = "challenger";
-
-  await db.update(users).set({ rank }).where(eq(users.id, userId));
+  await finalizeArena(roomId);
+  return NextResponse.json({ ok: true });
 }

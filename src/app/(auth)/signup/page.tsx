@@ -222,7 +222,7 @@ export default function SignupPage() {
       <AuthFormShell
         eyebrow="Join the arena"
         title="Create account"
-        subtitle="Start with 500 free coins as a welcome bonus."
+        subtitle="Start with 1,000 free coins as a welcome bonus."
         footer={
           <>
             Already have an account?{" "}

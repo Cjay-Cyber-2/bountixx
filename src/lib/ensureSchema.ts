@@ -15,6 +15,8 @@ async function runSchemaStatements(): Promise<void> {
   await sql`ALTER TABLE rooms ADD COLUMN IF NOT EXISTS prize_pool integer DEFAULT 0`;
   await sql`ALTER TABLE rooms ADD COLUMN IF NOT EXISTS language text`;
   await sql`ALTER TABLE rooms ADD COLUMN IF NOT EXISTS starter_code text`;
+  await sql`ALTER TABLE submissions ADD COLUMN IF NOT EXISTS question_index integer DEFAULT 0`;
+  await sql`UPDATE submissions SET question_index = 0 WHERE question_index IS NULL`;
   await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_seen_at timestamp`;
   await sql`UPDATE rooms SET prize_pool = 0 WHERE prize_pool IS NULL`;
   await sql`ALTER TABLE rooms ALTER COLUMN prize_pool SET DEFAULT 0`;

@@ -2,7 +2,6 @@
 
 import { useRef } from "react";
 import { motion, useInView, useReducedMotion } from "framer-motion";
-import { XPBar } from "@/components/ui/XPBar";
 import { Accent, LandingSection, SectionIntro } from "@/components/landing/_section";
 
 const RANKS = [
@@ -13,7 +12,6 @@ const RANKS = [
   { num: "05", name: "LEGENDARY", xp: "20,000", reward: "+1,500", unlock: "Legendary badge · exclusive sticker", height: 100 },
 ] as const;
 
-/** Purple ramp for ranks — gold reserved for coin payouts only. */
 function rankOpacity(i: number) {
   return 0.35 + i * 0.15;
 }
@@ -24,7 +22,7 @@ export function RankShowcase() {
   const reduce = useReducedMotion();
 
   return (
-    <LandingSection id="ranks" variant="raised">
+    <LandingSection id="ranks" variant="raised" className="pt-28 md:pt-36 lg:pt-40">
       <div ref={ref}>
         <SectionIntro
           eyebrow="5 ranks, 20,000 XP ceiling"
@@ -34,9 +32,10 @@ export function RankShowcase() {
             </>
           }
           description="Win, place, or just finish — XP accrues either way. Each rank unlocks bigger bounty tiers and a one-time coin payout the moment you cross it."
+          align="center"
         />
 
-        <div className="hidden md:grid grid-cols-5 gap-px items-end mb-20 lg:mb-24" style={{ minHeight: 420 }}>
+        <div className="hidden md:grid grid-cols-5 gap-px items-end" style={{ minHeight: 420 }}>
           {RANKS.map((rank, i) => (
             <motion.div
               key={rank.name}
@@ -45,7 +44,7 @@ export function RankShowcase() {
               transition={{ duration: 0.6, delay: i * 0.12, ease: [0.16, 1, 0.3, 1] }}
               className="flex flex-col justify-end"
             >
-              <div className="px-4 lg:px-5 pb-5 md:pb-6">
+              <div className="px-4 lg:px-5 pb-5 md:pb-6 text-center">
                 <p className="font-zen-dots text-base lg:text-lg mb-2 tracking-wide text-void" style={{ opacity: rankOpacity(i) }}>
                   {rank.name}
                 </p>
@@ -83,15 +82,12 @@ export function RankShowcase() {
           ))}
         </div>
 
-        <div
-          className="md:hidden flex flex-col gap-px mb-16"
-          style={{ background: "var(--border-1)", border: "1px solid var(--border-1)" }}
-        >
+        <div className="md:hidden flex flex-col gap-4">
           {[...RANKS].reverse().map((rank) => (
             <div
               key={rank.name}
-              className="p-5 md:p-6"
-              style={{ background: "var(--cosmos-2)", borderLeft: "2px solid rgba(168,85,247,0.45)" }}
+              className="p-5 md:p-6 rounded-xl text-center"
+              style={{ background: "var(--cosmos-2)", border: "1px solid var(--border-1)", borderLeft: "3px solid rgba(168,85,247,0.45)" }}
             >
               <div className="flex items-baseline justify-between mb-1.5 gap-4">
                 <span className="font-zen-dots text-base text-void">{rank.name}</span>
@@ -109,26 +105,6 @@ export function RankShowcase() {
             </div>
           ))}
         </div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ delay: 0.7, duration: 0.55 }}
-          className="max-w-xl mx-auto p-7 md:p-9 text-center"
-          style={{
-            background: "var(--surface-card)",
-            border: "1px solid var(--border-1)",
-          }}
-        >
-          <div className="flex items-center justify-between mb-4">
-            <span className="font-zen-dots text-sm text-haze tracking-wide">CHAMPION</span>
-            <span className="font-space-mono text-[11px] text-haze-3">13,180 / 20,000 XP</span>
-          </div>
-          <XPBar current={13180} max={20000} thick color="void" />
-          <p className="font-space-mono text-[10px] text-haze-3 mt-3 tracking-[1px]">
-            6,820 XP to Legendary — the final rank.
-          </p>
-        </motion.div>
       </div>
     </LandingSection>
   );

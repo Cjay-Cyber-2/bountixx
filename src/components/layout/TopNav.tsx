@@ -4,13 +4,12 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutDashboard, PlusCircle, User, Wallet, Menu, X, Bell, BellOff, LogOut } from "lucide-react";
+import { LayoutDashboard, PlusCircle, User, Wallet, Menu, X, LogOut } from "lucide-react";
 import { useClerk } from "@clerk/nextjs";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { BountixxLogo } from "@/components/BountixxLogo";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
-import { firebaseEnabled } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
 import { APP_GUTTERS } from "@/components/landing/_section";
 
@@ -42,8 +41,6 @@ export function TopNav() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [coinsUnlimited, setCoinsUnlimited] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
-  const [notifEnabled, setNotifEnabled] = useState(false);
-  const [notifLoading, setNotifLoading] = useState(false);
 
   useEffect(() => {
     setProfile(null);
@@ -63,43 +60,6 @@ export function TopNav() {
       cancelled = true;
     };
   }, [user]);
-
-  async function handleNotificationOptIn() {
-    if (notifEnabled || notifLoading) return;
-    if (!firebaseEnabled) return;
-    if (!("Notification" in window) || !("serviceWorker" in navigator)) return;
-
-    setNotifLoading(true);
-    try {
-      const permission = await Notification.requestPermission();
-      if (permission !== "granted") return;
-
-      const { getMessaging, register, onRegistered } = await import("firebase/messaging");
-      const { app } = await import("@/lib/firebase");
-      if (!app) return;
-      const messaging = getMessaging(app);
-
-      const swReg = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
-
-      await register(messaging, {
-        vapidKey: process.env.NEXT_PUBLIC_FCM_VAPID_KEY,
-        serviceWorkerRegistration: swReg,
-      });
-
-      onRegistered(messaging, async (fid: string) => {
-        if (!fid) return;
-        await fetchWithAuth("/api/notifications/subscribe", {
-          method: "POST",
-          body: JSON.stringify({ token: fid }),
-        });
-        setNotifEnabled(true);
-      });
-    } catch (err) {
-      console.error("[FCM] opt-in failed:", err);
-    } finally {
-      setNotifLoading(false);
-    }
-  }
 
   async function handleLogout() {
     setSigningOut(true);
@@ -131,7 +91,7 @@ export function TopNav() {
             </Link>
           </div>
 
-          <nav className="hidden md:flex items-center gap-1 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+          <nav className="hidden md:flex items-center gap-3 lg:gap-4 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
             {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
               const active = pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
               return (
@@ -139,7 +99,7 @@ export function TopNav() {
                   key={href}
                   href={href}
                   className={cn(
-                    "cursor-target relative flex items-center gap-2 px-4 py-2 font-medium text-sm rounded-lg transition-colors",
+                    "cursor-target relative flex items-center gap-2 px-5 py-2.5 font-medium text-sm rounded-lg transition-colors",
                     active ? "text-haze" : "text-haze-2 hover:text-haze hover:bg-[var(--surface-hover)]"
                   )}
                 >
@@ -167,25 +127,6 @@ export function TopNav() {
               </div>
 
               <ThemeToggle />
-
-              <button
-                onClick={handleNotificationOptIn}
-                disabled={notifLoading}
-                className={cn(
-                  "cursor-target relative transition-colors p-2 rounded-lg hover:bg-[var(--surface-hover)] disabled:opacity-40",
-                  notifEnabled ? "text-success" : "text-haze-2 hover:text-haze"
-                )}
-                aria-label={notifEnabled ? "Notifications enabled" : "Enable notifications"}
-                title={notifEnabled ? "Notifications enabled" : "Enable push notifications"}
-              >
-                {notifEnabled ? <Bell size={18} /> : <BellOff size={18} />}
-                {!notifEnabled && (
-                  <span
-                    className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-plum"
-                    aria-hidden
-                  />
-                )}
-              </button>
 
               <Link href="/profile/me" className="cursor-target">
                 {profile?.avatarUrl ? (

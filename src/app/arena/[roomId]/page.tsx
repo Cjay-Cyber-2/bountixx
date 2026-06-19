@@ -59,6 +59,17 @@ interface RoomData {
   room: Room;
   players: Player[];
   testCases: TestCase[];
+  questions?: {
+    index: number;
+    taskNormalised: string;
+    taskRaw: string;
+    category?: string;
+    canonicalAnswer?: string | null;
+    language?: string | null;
+    starterCode?: string | null;
+    title?: string;
+  }[];
+  totalQuestions?: number;
   mySubmission: { id: string; isWinner: boolean; testsPassed: number; testsTotal: number } | null;
   isAdmin: boolean;
 }
@@ -261,7 +272,7 @@ function CodeEditor({ code, setCode, language, onRun, onSubmit, disabled, runnin
           value={code}
           onChange={(e) => setCode(e.target.value)}
           onKeyDown={handleKey}
-          className="flex-1 p-4 bg-transparent text-haze font-space-mono text-sm resize-none focus:outline-none leading-relaxed"
+          className="flex-1 p-4 bg-transparent text-haze font-space-mono text-sm resize-none focus:outline-none leading-relaxed select-text cursor-text"
           style={{ caretColor: "var(--void)" }}
           spellCheck={false}
           aria-label="Code editor"
@@ -493,8 +504,10 @@ export default function ArenaPage() {
   const [testResults, setTestResults] = useState<TestResult[]>([]);
 
   const [activityFeed, setActivityFeed] = useState<ActivityItem[]>([]);
-  const [disqualified, setDisqualified] = useState(false);
+  const [tabDisqualified, setTabDisqualified] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [questionIndex, setQuestionIndex] = useState(0);
+  const [questionsAnswered, setQuestionsAnswered] = useState(0);
 
   const prevPlayersRef = useRef<Player[]>([]);
   const activityIdRef = useRef(0);
@@ -573,7 +586,7 @@ export default function ArenaPage() {
 
   /* ─── Timer countdown — only when timerSeconds was set ─── */
   useEffect(() => {
-    if (!hasTimer || timeUp || submitted || disqualified) return;
+    if (!hasTimer || timeUp || submitted || tabDisqualified) return;
     const id = setInterval(() => {
       setTimeLeft((t) => {
         if (t === null || t <= 1) { clearInterval(id); setTimeUp(true); return 0; }
@@ -581,10 +594,15 @@ export default function ArenaPage() {
       });
     }, 1000);
     return () => clearInterval(id);
-  }, [hasTimer, timeUp, submitted, disqualified]);
+  }, [hasTimer, timeUp, submitted, tabDisqualified]);
 
   useEffect(() => {
     if (!timeUp) return;
+    fetchWithAuth(`/api/rooms/${roomId}/submit`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "finalize" }),
+    }).catch(() => {});
     const t = setTimeout(() => router.replace(`/arena/${roomId}/results`), 3000);
     return () => clearTimeout(t);
   }, [timeUp, router, roomId]);
@@ -603,7 +621,7 @@ export default function ArenaPage() {
   /* ─── Anti-cheat: first tab switch = immediate disqualification ─── */
   const handleStrike = useCallback(
     (_count: number, _reason: string) => {
-      setDisqualified(true);
+      setTabDisqualified(true);
       toast({ type: "error", title: "DISQUALIFIED", message: "Tab switch detected. You have been removed from this arena." });
       fetchWithAuth(`/api/rooms/${roomId}/submit`, {
         method: "POST",
@@ -618,7 +636,9 @@ export default function ArenaPage() {
   useArenaGuard({ onStrike: handleStrike, maxStrikes: 1, enabled: !(data?.isAdmin ?? true) });
 
   /* ─── Derived ─── */
-  const inputDisabled = timeUp || disqualified || submitted || loading;
+  const inputDisabled = timeUp || tabDisqualified || submitted || loading;
+  const totalQuestions = data?.totalQuestions ?? data?.questions?.length ?? 1;
+  const currentQuestion = data?.questions?.[questionIndex];
 
   /* ─── Run tests ─── */
   async function handleRunTests() {
@@ -629,7 +649,7 @@ export default function ArenaPage() {
       const res = await fetchWithAuth(`/api/rooms/${roomId}/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, language, runTestsOnly: true }),
+        body: JSON.stringify({ code, language, runTestsOnly: true, questionIndex }),
       });
       if (!res.ok) { const err = (await res.json()) as { error?: string }; toast({ type: "error", title: "Run failed", message: err.error }); return; }
       const json = (await res.json()) as { testResults: { passed: number; total: number; results: TestResult[] }; runOnly: boolean };
@@ -649,11 +669,11 @@ export default function ArenaPage() {
     if (!data || inputDisabled) return;
     setSubmitting(true);
     try {
-      const isCoding = data.room.category === "coding";
+      const isCoding = (currentQuestion?.category ?? data.room.category) === "coding";
       const res = await fetchWithAuth(`/api/rooms/${roomId}/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(isCoding ? { code, language } : { answer }),
+        body: JSON.stringify(isCoding ? { code, language, questionIndex } : { answer, questionIndex }),
       });
 
       if (!res.ok) {
@@ -666,12 +686,24 @@ export default function ArenaPage() {
         won?: boolean;
         correct?: boolean;
         testResults?: { passed: number; total: number; results: TestResult[] };
+        nextQuestionIndex?: number | null;
+        questionsAnswered?: number;
+        totalQuestions?: number;
       };
 
       if (json.won) {
         setSubmitted(true);
         toast({ type: "coins", title: "YOU WON! 🏆", message: "Redirecting to results...", duration: 2000 });
         setTimeout(() => router.replace(`/arena/${roomId}/results`), 2000);
+      } else if (json.nextQuestionIndex != null) {
+        setQuestionIndex(json.nextQuestionIndex);
+        setAnswer("");
+        setQuestionsAnswered(json.questionsAnswered ?? questionIndex + 1);
+        toast({
+          type: json.correct ? "success" : "error",
+          title: json.correct ? `Question ${json.questionsAnswered} correct!` : "Wrong answer",
+          message: json.correct ? "Moving to the next question..." : "Moving on — answer the next question.",
+        });
       } else if (isCoding && json.testResults) {
         setSubmitted(true);
         const { passed, total } = json.testResults;
@@ -681,9 +713,11 @@ export default function ArenaPage() {
         toast({
           type: passed === 0 ? "error" : "info",
           title: passed === 0 ? "All tests failed" : `${pct}% tests passed`,
-          message: passed === 0 ? "You have been disqualified." : `${passed}/${total} hidden tests passed`,
+          message: passed === 0 ? "Submission recorded." : `${passed}/${total} hidden tests passed`,
         });
-        if (passed === 0) setDisqualified(true);
+      } else if (totalQuestions > 1 && !json.nextQuestionIndex && json.questionsAnswered === totalQuestions) {
+        setSubmitted(true);
+        toast({ type: "info", title: "All questions answered", message: "Waiting for other players..." });
       } else {
         // Non-coding: allow retries on wrong answer
         const correct = json.correct ?? false;
@@ -726,8 +760,8 @@ export default function ArenaPage() {
   const isCoding = room.category === "coding";
 
   return (
-    <div className="min-h-[100dvh] flex flex-col bg-cosmos select-none" onContextMenu={(e) => e.preventDefault()}>
-      <AnimatePresence>{disqualified && <DQBanner />}</AnimatePresence>
+    <div className="min-h-[100dvh] flex flex-col bg-cosmos" onContextMenu={(e) => e.preventDefault()}>
+      <AnimatePresence>{tabDisqualified && <DQBanner />}</AnimatePresence>
       <AnimatePresence>{timeUp && <TimeUpBanner />}</AnimatePresence>
 
       {/* ── Top bar ── */}
@@ -851,8 +885,13 @@ export default function ArenaPage() {
                   {/* The Question Text */}
                   <div className="py-2">
                     <p className="font-rajdhani font-semibold text-lg md:text-xl text-haze leading-relaxed whitespace-pre-wrap">
-                      {room.taskNormalised ?? room.taskRaw}
+                      {currentQuestion?.taskNormalised ?? room.taskNormalised ?? room.taskRaw}
                     </p>
+                    {totalQuestions > 1 && (
+                      <p className="font-space-mono text-xs text-void mt-3 tracking-widest">
+                        QUESTION {questionIndex + 1} OF {totalQuestions}
+                      </p>
+                    )}
                   </div>
 
                   {/* Answer input */}
@@ -932,7 +971,7 @@ export default function ArenaPage() {
 
       {/* Disqualified overlay */}
       <AnimatePresence>
-        {disqualified && !timeUp && (
+        {tabDisqualified && !timeUp && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

@@ -28,7 +28,7 @@ export function OnlinePlayerRow({ player, action }: OnlinePlayerRowProps) {
   const color = RANK_COLORS[player.rank] ?? "var(--haze-3)";
 
   return (
-    <div className="flex items-center gap-3 group">
+    <div className="flex items-center gap-3 group py-2">
       <div
         className="w-9 h-9 rounded-full bg-cosmos-3 border-2 flex items-center justify-center shrink-0 overflow-hidden"
         style={{ borderColor: `${color}44` }}
@@ -40,10 +40,10 @@ export function OnlinePlayerRow({ player, action }: OnlinePlayerRowProps) {
         )}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="font-rajdhani font-semibold text-sm text-haze leading-none truncate">
+        <p className="font-rajdhani font-semibold text-sm text-haze leading-tight truncate">
           @{player.username}
         </p>
-        <p className="font-space-mono text-[9px] mt-1" style={{ color }}>
+        <p className="font-space-mono text-[10px] mt-1" style={{ color }}>
           {player.rank}
         </p>
       </div>

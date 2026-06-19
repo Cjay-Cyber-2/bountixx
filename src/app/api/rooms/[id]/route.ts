@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { rooms, roomPlayers, testCases, users, submissions, coinTransactions } from "@/lib/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { getSession, unauthorized } from "@/lib/getSession";
+import { getRoomQuestions } from "@/lib/roomQuestions";
 import { expireLobbyIfStale } from "@/lib/roomExpiry";
 import { ENTRY_FEE, isEntryFeeExempt, hasAffordableEntry } from "@/lib/coins";
 import { randomUUID } from "crypto";
@@ -101,6 +102,8 @@ export async function GET(
     mySubmission: userSubmission ?? null,
     isAdmin,
     results,
+    questions: getRoomQuestions(room),
+    totalQuestions: getRoomQuestions(room).length,
   });
 }
 
@@ -177,7 +180,7 @@ export async function PATCH(
     if (eligible.length < 2) {
       return NextResponse.json(
         {
-          error: `Not enough players with 50+ coins. ${eligible.length} competitor${eligible.length === 1 ? "" : "s"} can afford the entry fee — need at least 2 (you, the host, don't count).`,
+          error: `Not enough players with ${ENTRY_FEE}+ coins. ${eligible.length} competitor${eligible.length === 1 ? "" : "s"} can afford the entry fee — need at least 2 (you, the host, don't count).`,
           removedPlayers: broke.map((p) => p.username),
         },
         { status: 402 }

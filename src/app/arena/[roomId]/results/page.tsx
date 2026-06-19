@@ -150,13 +150,12 @@ export default function ResultsPage() {
   );
 
   return (
-    <div className="min-h-screen bg-cosmos py-16 px-6 relative overflow-hidden">
+    <div className="min-h-screen bg-cosmos py-16 px-6 relative overflow-hidden flex flex-col items-center">
       {winner && <Confetti />}
 
-      {/* Scan lines */}
       <div className="absolute inset-0 scanline-fx pointer-events-none" aria-hidden="true" />
 
-      <div className="relative z-10 max-w-2xl mx-auto flex flex-col items-center gap-10">
+      <div className="relative z-10 w-full max-w-2xl mx-auto flex flex-col items-center gap-10">
         {/* Logo */}
         <BountixxWordmark size={18} />
 

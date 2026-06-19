@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { Suspense, useState, useRef } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, Mail, Lock, Phone } from "lucide-react";
@@ -21,21 +21,29 @@ import {
   MethodTabs,
   OAuthButton,
 } from "@/components/auth/AuthFormShell";
+import { useSearchParams } from "next/navigation";
 import { slideUp } from "@/lib/animations";
 
 type Method = "email-password" | "email-link" | "phone-otp";
 
-function getNext(): string {
-  if (typeof window === "undefined") return "/dashboard";
-  const n = new URLSearchParams(window.location.search).get("next")
-    ?? new URLSearchParams(window.location.search).get("redirect_url");
+function getNext(searchParams: URLSearchParams | null): string {
+  const n = searchParams?.get("next") ?? searchParams?.get("redirect_url");
   return n && n.startsWith("/") ? n : "/dashboard";
 }
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-cosmos" />}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const { loading, user } = useAuth();
   const { isLoaded, signIn, setActive } = useSignIn();
-  const nextPath = getNext();
+  const searchParams = useSearchParams();
+  const nextPath = getNext(searchParams);
 
   useRedirectIfSignedIn(nextPath);
 
@@ -95,7 +103,7 @@ export default function LoginPage() {
       const res = await signIn.create({ identifier, password });
       if (res.status === "complete") {
         await setActive({ session: res.createdSessionId });
-        window.location.href = getNext();
+        window.location.href = nextPath;
       } else {
         setError("Additional verification is required. Try a magic link or contact support.");
         setPending(false);
@@ -128,7 +136,7 @@ export default function LoginPage() {
       });
       if (res.status === "complete") {
         await setActive({ session: res.createdSessionId });
-        window.location.href = getNext();
+        window.location.href = nextPath;
       }
     } catch (err) {
       setError(clerkError(err));
@@ -169,7 +177,7 @@ export default function LoginPage() {
       const res = await signIn.attemptFirstFactor({ strategy: "phone_code", code: otp });
       if (res.status === "complete") {
         await setActive({ session: res.createdSessionId });
-        window.location.href = getNext();
+        window.location.href = nextPath;
       } else {
         setError("Invalid code. Please try again.");
         setPending(false);
@@ -187,13 +195,12 @@ export default function LoginPage() {
   ];
 
   const { theme } = useTheme();
+  void theme;
   if (loading || user) return null;
 
   return (
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-cosmos">
-      <div data-legacy-aesthetic={theme === "light" ? undefined : ""} className="contents">
-        <AuthBrandPanel />
-      </div>
+      <AuthBrandPanel />
 
       <AuthFormShell
         eyebrow="Welcome back"
@@ -202,7 +209,7 @@ export default function LoginPage() {
         footer={
           <>
             No account yet?{" "}
-            <Link href={`/signup?next=${encodeURIComponent(getNext())}`} className="cursor-target text-plum hover:underline font-medium">
+            <Link href={`/signup?next=${encodeURIComponent(nextPath)}`} className="cursor-target text-plum hover:underline font-medium">
               Create one free
             </Link>
           </>

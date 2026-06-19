@@ -296,7 +296,7 @@ export default function ProfilePage() {
             initial="hidden"
             animate="show"
             variants={{ show: { transition: { staggerChildren: 0.07 } } }}
-            className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4"
+            className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5"
           >
             {[
               { label: "Arenas played", value: stats?.roomsPlayed ?? 0 },
@@ -307,16 +307,16 @@ export default function ProfilePage() {
               <motion.div
                 key={s.label}
                 variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}
-                className="bg-cosmos-2 clip-arena p-5"
+                className="bg-cosmos-2 clip-arena p-5 md:p-6 min-h-[100px]"
                 style={{ border: "1px solid rgba(45,27,105,0.7)" }}
               >
                 <AnimatedNumber
                   value={s.value}
                   suffix={s.suffix}
-                  className="font-orbitron font-black text-2xl md:text-3xl text-haze block mb-1.5 leading-none"
+                  className="font-orbitron font-black text-xl sm:text-2xl md:text-3xl text-haze block mb-2 leading-tight break-words"
                   format={!s.suffix}
                 />
-                <p className="font-space-mono text-[9px] text-haze-3 tracking-[2px] uppercase">{s.label}</p>
+                <p className="font-space-mono text-[10px] text-haze-3 tracking-[1.5px] uppercase leading-snug">{s.label}</p>
               </motion.div>
             ))}
           </motion.div>
@@ -342,7 +342,7 @@ export default function ProfilePage() {
                 return (
                   <div
                     key={badge.id}
-                    className="relative bg-cosmos-2 clip-arena-sm p-4"
+                    className="relative bg-cosmos-2 clip-arena-sm p-5 md:p-6 min-h-[130px]"
                     style={{
                       border: earned
                         ? "1px solid rgba(155,107,255,0.35)"
@@ -362,12 +362,12 @@ export default function ProfilePage() {
                         <Lock size={14} className="text-haze-3" aria-hidden />
                       )}
                     </div>
-                    <p className={`font-rajdhani font-bold text-sm mb-1 ${earned ? "text-haze" : "text-haze-2"}`}>
+                    <p className={`font-rajdhani font-bold text-base mb-2 leading-snug ${earned ? "text-haze" : "text-haze-2"}`}>
                       {badge.name}
                     </p>
-                    <p className="font-rajdhani text-xs text-haze-3 leading-snug">{badge.desc}</p>
+                    <p className="font-rajdhani text-sm text-haze-2 leading-relaxed pr-8">{badge.desc}</p>
                     {!earned && (
-                      <span className="absolute top-3 right-3 font-space-mono text-[8px] text-haze-3 tracking-wider">LOCKED</span>
+                      <span className="absolute top-4 right-4 font-space-mono text-[9px] text-haze-3 tracking-wider px-2 py-0.5 border border-cosmos-4">LOCKED</span>
                     )}
                   </div>
                 );

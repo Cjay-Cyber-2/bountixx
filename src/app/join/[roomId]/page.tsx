@@ -16,6 +16,13 @@ type JoinState =
   | { phase: "error"; message: string; showResults?: boolean }
   | { phase: "success" };
 
+type JoinResponse = {
+  message?: string;
+  error?: string;
+  roomStatus?: string;
+  redirectTo?: string;
+};
+
 export default function JoinPage() {
   const router = useRouter();
   const params = useParams();
@@ -24,16 +31,13 @@ export default function JoinPage() {
   const [state, setState] = useState<JoinState>({ phase: "loading" });
 
   useEffect(() => {
-    // Wait for auth to resolve
     if (authLoading) return;
 
-    // Not authenticated → redirect to login
     if (!user) {
       router.replace(`/login?next=/join/${roomId}`);
       return;
     }
 
-    // Authenticated → attempt to join
     async function tryJoin() {
       setState({ phase: "joining" });
       try {
@@ -41,25 +45,26 @@ export default function JoinPage() {
           method: "POST",
         });
 
-        // Success: player added
-        if (res.status === 201) {
+        const json = (await res.json().catch(() => ({}))) as JoinResponse;
+
+        if (res.status === 201 || (res.ok && json.redirectTo)) {
           setState({ phase: "success" });
-          setTimeout(() => router.replace(`/lobby/${roomId}`), 800);
+          const dest = json.redirectTo ?? `/lobby/${roomId}`;
+          setTimeout(() => router.replace(dest), 600);
           return;
         }
 
-        // Parse response body for all other cases
-        const json = (await res.json().catch(() => ({}))) as { message?: string; error?: string };
-
-        // Already in room
-        if (res.ok && json.message === "Already in this room") {
-          setState({ phase: "success" });
-          setTimeout(() => router.replace(`/lobby/${roomId}`), 800);
+        if (res.status === 409 && json.roomStatus === "live") {
+          setState({
+            phase: "error",
+            message: "This arena is already in progress.",
+            showResults: false,
+          });
+          setTimeout(() => router.replace(`/arena/${roomId}`), 1200);
           return;
         }
 
-        // Room no longer accepting players (live/ended)
-        if (res.status === 409 && json.error === "Room is no longer accepting players") {
+        if (res.status === 409 && (json.roomStatus === "ended" || json.error?.includes("no longer"))) {
           setState({
             phase: "error",
             message: "This arena is already in progress or has ended.",
@@ -68,7 +73,6 @@ export default function JoinPage() {
           return;
         }
 
-        // Room full
         if (res.status === 409 && json.error === "Room is full") {
           setState({ phase: "error", message: "This arena is full. Try another room." });
           return;
@@ -82,7 +86,6 @@ export default function JoinPage() {
           return;
         }
 
-        // Generic error
         setState({
           phase: "error",
           message: json.error ?? json.message ?? "Could not join this room.",
@@ -93,51 +96,29 @@ export default function JoinPage() {
     }
 
     tryJoin();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authLoading, user, roomId]);
+  }, [authLoading, user, roomId, router]);
 
   return (
     <div className="min-h-screen bg-cosmos flex items-center justify-center px-6">
-      {/* Scan lines */}
       <div className="absolute inset-0 scanline-fx pointer-events-none" aria-hidden="true" />
 
       <div className="relative z-10 flex flex-col items-center gap-8 text-center max-w-sm w-full">
-        {/* Logo */}
-        <motion.div
-          variants={scalePop}
-          initial="hidden"
-          animate="show"
-          className="bob"
-        >
+        <motion.div variants={scalePop} initial="hidden" animate="show" className="bob">
           <BountixxLogo size={64} showWordmark />
         </motion.div>
 
         {state.phase === "loading" && (
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col items-center gap-4"
-          >
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center gap-4">
             <div className="spinner scale-125" />
-            <p className="font-space-mono text-xs text-haze-3 tracking-widest">
-              LOADING...
-            </p>
+            <p className="font-space-mono text-xs text-haze-3 tracking-widest">LOADING...</p>
           </motion.div>
         )}
 
         {state.phase === "joining" && (
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col items-center gap-4"
-          >
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center gap-4">
             <div className="spinner scale-125" />
-            <p className="font-space-mono text-xs text-void tracking-widest">
-              ENTERING ARENA...
-            </p>
-            <p className="font-rajdhani text-sm text-haze-2">
-              Connecting you to the room
-            </p>
+            <p className="font-space-mono text-xs text-void tracking-widest">ENTERING ARENA...</p>
+            <p className="font-rajdhani text-sm text-haze-2">Connecting you to the room</p>
           </motion.div>
         )}
 
@@ -152,41 +133,29 @@ export default function JoinPage() {
               <span className="text-success text-2xl font-bold">✓</span>
             </div>
             <p className="font-zen-dots text-xl text-haze">JOINED!</p>
-            <p className="font-space-mono text-xs text-haze-3 tracking-widest">
-              REDIRECTING TO LOBBY...
-            </p>
+            <p className="font-space-mono text-xs text-haze-3 tracking-widest">REDIRECTING...</p>
           </motion.div>
         )}
 
         {state.phase === "error" && (
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col items-center gap-5 w-full"
-          >
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center gap-5 w-full">
             <div className="w-16 h-16 rounded-full bg-danger/10 border border-danger/30 flex items-center justify-center">
               <span className="text-danger text-2xl font-bold">✗</span>
             </div>
 
             <div className="bg-cosmos-2 border border-cosmos-4 p-5 clip-arena-sm w-full">
               <p className="font-zen-dots text-lg text-danger mb-2">UNABLE TO JOIN</p>
-              <p className="font-rajdhani text-sm text-haze-2 leading-relaxed">
-                {state.message}
-              </p>
+              <p className="font-rajdhani text-sm text-haze-2 leading-relaxed">{state.message}</p>
             </div>
 
             <div className="flex flex-col gap-2 w-full">
               {state.showResults && (
                 <Link href={`/arena/${roomId}/results`}>
-                  <Button variant="primary" size="md" fullWidth>
-                    VIEW RESULTS
-                  </Button>
+                  <Button variant="primary" size="md" fullWidth>VIEW RESULTS</Button>
                 </Link>
               )}
               <Link href="/dashboard">
-                <Button variant="secondary" size="md" fullWidth>
-                  BACK TO DASHBOARD
-                </Button>
+                <Button variant="secondary" size="md" fullWidth>BACK TO DASHBOARD</Button>
               </Link>
             </div>
           </motion.div>

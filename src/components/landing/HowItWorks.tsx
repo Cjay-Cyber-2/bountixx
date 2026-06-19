@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { motion, useInView, useScroll, useTransform, useReducedMotion } from "framer-motion";
+import { motion, useInView, useScroll, useTransform, useReducedMotion, type MotionValue } from "framer-motion";
 import { LandingSection, SectionIntro } from "@/components/landing/_section";
 
 const STEPS = [
@@ -33,7 +33,7 @@ export function HowItWorks() {
   const railFill = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
 
   return (
-    <LandingSection id="how-it-works" className="relative">
+    <LandingSection id="how-it-works" className="relative pb-28 md:pb-36 lg:pb-40">
       <div
         className="absolute inset-0 pointer-events-none z-0"
         style={{ background: "radial-gradient(circle 900px at 50% -100px, var(--glow-1), transparent)" }}
@@ -48,22 +48,9 @@ export function HowItWorks() {
       />
 
       <div ref={railRef} className="relative z-[1] max-w-3xl mx-auto">
-        <div
-          className="absolute left-1/2 -translate-x-1/2 top-2 bottom-2 w-px"
-          style={{ background: "var(--border-1)" }}
-          aria-hidden
-        />
-        {!reduce && (
-          <motion.div
-            className="absolute left-1/2 -translate-x-1/2 top-2 w-px origin-top"
-            style={{ height: railFill, background: "var(--brand-primary)" }}
-            aria-hidden
-          />
-        )}
-
-        <div className="flex flex-col gap-20 md:gap-28 lg:gap-32">
-          {STEPS.map((step) => (
-            <Stage key={step.num} step={step} />
+        <div className="flex flex-col gap-24 md:gap-32 lg:gap-36">
+          {STEPS.map((step, i) => (
+            <Stage key={step.num} step={step} isLast={i === STEPS.length - 1} railFill={railFill} reduce={reduce} />
           ))}
         </div>
       </div>
@@ -71,20 +58,44 @@ export function HowItWorks() {
   );
 }
 
-function Stage({ step }: { step: (typeof STEPS)[number] }) {
+function Stage({
+  step,
+  isLast,
+  railFill,
+  reduce,
+}: {
+  step: (typeof STEPS)[number];
+  isLast: boolean;
+  railFill: MotionValue<string>;
+  reduce: boolean | null;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-20% 0px" });
 
   return (
     <div ref={ref} className="relative text-center px-4 md:px-8">
-      <motion.span
-        initial={{ scale: 0 }}
-        animate={inView ? { scale: 1 } : {}}
-        transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.15 }}
-        className="relative z-[1] mx-auto mb-6 flex h-[13px] w-[13px] items-center justify-center rounded-full"
-        style={{ background: "var(--cosmos)", border: "2px solid var(--void)" }}
-        aria-hidden
-      />
+      {/* Dot + vertical rail segment anchored to the dot */}
+      <div className="relative mx-auto mb-8 flex flex-col items-center">
+        <motion.span
+          initial={{ scale: 0 }}
+          animate={inView ? { scale: 1 } : {}}
+          transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.15 }}
+          className="relative z-[2] flex h-4 w-4 items-center justify-center rounded-full"
+          style={{ background: "var(--cosmos)", border: "2px solid var(--void)", boxShadow: "0 0 12px var(--glow-1)" }}
+          aria-hidden
+        />
+        {!isLast && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 w-px h-[calc(100%+6rem)] md:h-[calc(100%+8rem)]" aria-hidden>
+            <div className="absolute inset-0 w-px" style={{ background: "var(--border-1)" }} />
+            {!reduce && (
+              <motion.div
+                className="absolute top-0 left-0 w-px origin-top"
+                style={{ height: railFill, background: "var(--brand-primary)" }}
+              />
+            )}
+          </div>
+        )}
+      </div>
 
       <motion.div
         initial={{ opacity: 0, y: 32 }}
