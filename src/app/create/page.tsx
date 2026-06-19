@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { AlertCircle, Plus, Trash2, Loader2, ChevronRight } from "lucide-react";
@@ -12,7 +12,7 @@ import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { readApiError } from "@/lib/readApiError";
 import { ENTRY_FEE, ENTRY_FEE_SUMMARY, HOSTING_FREE_SUMMARY, maxBountyPool } from "@/lib/coins";
 import { LANGUAGES, LANGUAGE_KEYS, getLanguage, type LanguageKey } from "@/lib/languages";
-import { isBulkQuestionPaste, parseBulkQuestions } from "@/lib/parseBulkQuestions";
+import { isBulkQuestionPaste, looksLikeBulkQuestionInput, parseBulkQuestions, readClipboardQuestions } from "@/lib/parseBulkQuestions";
 import { isAiRateLimitError } from "@/lib/apiErrors";
 
 /* ─── Types ─── */
@@ -104,7 +104,7 @@ function StepIndicator({ step }: { step: Step }) {
   ];
   const activeIdx = ["setup", "questions", "review", "lobby"].indexOf(step);
   return (
-    <div className="mb-10 md:mb-14">
+    <div className="mb-12 md:mb-16">
       <p className="sm:hidden text-sm font-medium text-plum mb-4">
         Step {activeIdx + 1} of {steps.length} · {steps[activeIdx]?.label}
       </p>
@@ -158,11 +158,11 @@ function SetupStep({
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -16 }}
-      className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-10 xl:gap-12 w-full"
+      className="grid grid-cols-1 lg:grid-cols-2 gap-10 md:gap-12 xl:gap-16 w-full"
     >
       {/* Left Column */}
-      <div className="flex flex-col gap-8 min-w-0">
-        <div className="flex flex-col gap-3 rounded-2xl bg-[var(--void-tint)] border border-[var(--border-accent)] px-6 py-5 md:px-8 md:py-6">
+      <div className="flex flex-col gap-10 min-w-0">
+        <div className="flex flex-col gap-4 rounded-2xl bg-[var(--void-tint)] border-2 border-[var(--border-accent)] px-8 py-6 md:px-10 md:py-8">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <span className="text-sm font-semibold text-plum uppercase tracking-wide">Bounty entry fee</span>
             <span className="font-stats font-bold text-lg text-haze">{ENTRY_FEE} coins / player</span>
@@ -172,24 +172,24 @@ function SetupStep({
         </div>
 
         <div>
-          <label className="block text-sm font-semibold uppercase tracking-wide text-haze-2 mb-3">Arena name</label>
+          <label className="block text-sm font-semibold uppercase tracking-wide text-haze-2 mb-4">Arena name</label>
           <input
             type="text"
             maxLength={60}
             placeholder="e.g. Friday Coding Battle"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full h-14 md:h-16 px-5 bg-[var(--surface-inset)] border border-[var(--border-2)] rounded-xl text-haze font-rajdhani text-lg md:text-xl placeholder:text-haze-3 focus:outline-none focus:border-[var(--brand-primary)] focus:shadow-[0_0_0_3px_var(--focus-ring)] transition-all"
+            className="w-full h-14 md:h-16 px-6 bg-[var(--surface-inset)] border-2 border-[var(--border-2)] rounded-xl text-haze font-rajdhani text-lg md:text-xl placeholder:text-haze-3 focus:outline-none focus:border-[var(--brand-primary)] focus:shadow-[0_0_0_3px_var(--focus-ring)] transition-all"
           />
         </div>
       </div>
 
       {/* Right Column */}
-      <div className="flex flex-col gap-8 min-w-0">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-6">
+      <div className="flex flex-col gap-10 min-w-0">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-8">
           <div>
-            <label className="block text-sm font-semibold uppercase tracking-wide text-haze-2 mb-3">Players (2–20)</label>
-            <div className="flex items-center border border-[var(--border-2)] bg-[var(--surface-inset)] h-14 md:h-16 rounded-xl overflow-hidden">
+            <label className="block text-sm font-semibold uppercase tracking-wide text-haze-2 mb-4">Players (2–20)</label>
+            <div className="flex items-center border-2 border-[var(--border-2)] bg-[var(--surface-inset)] h-14 md:h-16 rounded-xl overflow-hidden">
               <button type="button" onClick={() => setPlayers((n) => Math.max(2, n - 1))} className="cursor-target w-14 h-full text-haze-2 hover:text-plum hover:bg-[var(--surface-hover)] transition-colors font-semibold text-2xl">−</button>
               <span className="flex-1 text-center font-stats font-bold text-2xl md:text-3xl text-haze tabular-nums">{players}</span>
               <button type="button" onClick={() => setPlayers((n) => Math.min(20, n + 1))} className="cursor-target w-14 h-full text-haze-2 hover:text-plum hover:bg-[var(--surface-hover)] transition-colors font-semibold text-2xl">+</button>
@@ -197,9 +197,9 @@ function SetupStep({
             <p className="text-sm text-haze-3 mt-3">Max bounty pool: {maxBountyPool(players)} coins ({ENTRY_FEE} × competing players)</p>
           </div>
           <div>
-            <label className="block text-sm font-semibold uppercase tracking-wide text-haze-2 mb-3">Timer</label>
+            <label className="block text-sm font-semibold uppercase tracking-wide text-haze-2 mb-4">Timer</label>
             <button type="button" onClick={() => setTimer(!timer)} role="switch" aria-checked={timer}
-              className={`cursor-target w-full h-14 md:h-16 flex items-center justify-center gap-3 border rounded-xl text-base md:text-lg font-semibold transition-all ${timer ? "border-plum text-plum bg-[var(--void-tint)]" : "border-[var(--border-2)] text-haze-3"}`}>
+              className={`cursor-target w-full h-14 md:h-16 flex items-center justify-center gap-3 border-2 rounded-xl text-base md:text-lg font-semibold transition-all ${timer ? "border-plum text-plum bg-[var(--void-tint)]" : "border-[var(--border-2)] text-haze-3"}`}>
               <span className={`w-3 h-3 rounded-full transition-colors ${timer ? "bg-plum" : "bg-[var(--border-2)]"}`} aria-hidden />
               {timer ? "On" : "Off"}
             </button>
@@ -251,11 +251,23 @@ function QuestionCard({
   const catColor = q.analysis ? (CAT_COLORS[q.analysis.category] ?? "#9B8FC0") : "#4A3F70";
   void arenaName;
   const [pickLang, setPickLang] = useState<LanguageKey>("python");
+  const skipChangeRef = useRef(false);
+  const prevTaskRef = useRef(q.taskRaw);
+
+  useEffect(() => {
+    prevTaskRef.current = q.taskRaw;
+  }, [q.taskRaw]);
+
+  function applyBulkPaste(lines: string[]) {
+    skipChangeRef.current = true;
+    onBulkPaste(lines, index);
+    prevTaskRef.current = lines[0] ?? "";
+  }
 
   return (
     <motion.div layout initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }}
-      className="rounded-2xl border border-[var(--border-1)] bg-[var(--surface-inset)] p-7 md:p-10">
-      <div className="flex items-center justify-between mb-5">
+      className="rounded-2xl border-2 border-[var(--border-1)] bg-[var(--surface-inset)] p-8 md:p-12 lg:p-14">
+      <div className="flex items-center justify-between mb-6 md:mb-8">
         <span className="font-space-mono text-sm text-void tracking-widest uppercase">Question {index + 1}</span>
         <div className="flex items-center gap-3">
           {q.status === "done" && q.analysis?.valid && (
@@ -276,19 +288,39 @@ function QuestionCard({
       </div>
 
       <textarea
-        rows={5}
+        rows={6}
         placeholder="Type your question here"
         value={q.taskRaw}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => {
+          if (skipChangeRef.current) {
+            skipChangeRef.current = false;
+            return;
+          }
+          const next = e.target.value;
+          if (looksLikeBulkQuestionInput(prevTaskRef.current, next)) {
+            applyBulkPaste(parseBulkQuestions(next));
+            return;
+          }
+          prevTaskRef.current = next;
+          onChange(next);
+        }}
         onPaste={(e) => {
+          const lines = readClipboardQuestions(e.clipboardData);
+          if (lines && lines.length >= 2) {
+            e.preventDefault();
+            e.stopPropagation();
+            applyBulkPaste(lines);
+            return;
+          }
           const text = e.clipboardData.getData("text/plain");
           if (isBulkQuestionPaste(text)) {
             e.preventDefault();
-            onBulkPaste(parseBulkQuestions(text), index);
+            e.stopPropagation();
+            applyBulkPaste(parseBulkQuestions(text));
           }
         }}
         disabled={q.status === "analyzing"}
-        className="w-full min-h-[160px] px-5 py-4 bg-cosmos border border-cosmos-4 text-haze font-rajdhani text-lg md:text-xl placeholder:text-haze-3 focus:outline-none focus:border-void focus:shadow-[0_0_0_3px_rgba(168,85,247,0.2)] transition-all resize-y disabled:opacity-50 rounded-xl"
+        className="w-full min-h-[180px] px-6 py-5 bg-cosmos border-2 border-cosmos-4 text-haze font-rajdhani text-lg md:text-xl placeholder:text-haze-3 focus:outline-none focus:border-void focus:shadow-[0_0_0_3px_rgba(168,85,247,0.2)] transition-all resize-y disabled:opacity-50 rounded-xl"
       />
 
       {/* Error */}
@@ -481,7 +513,7 @@ function QuestionsStep({
   const hasContent = filledQuestions.length > 0;
 
   return (
-    <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} className="flex flex-col gap-8 md:gap-10">
+    <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} className="flex flex-col gap-10 md:gap-12 lg:gap-14">
       <AnimatePresence mode="popLayout">
         {questions.map((q, i) => (
           <QuestionCard
@@ -566,7 +598,7 @@ function ReviewStep({
   const maxPrizePool = maxBountyPool(playerCap);
 
   return (
-    <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} className="flex flex-col gap-8 md:gap-10">
+    <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} className="flex flex-col gap-10 md:gap-12 lg:gap-14">
       <div className="bg-cosmos-2 border border-cosmos-4 p-6 md:p-8 rounded-2xl">
         <p className="font-space-mono text-sm text-void tracking-widest mb-4 uppercase">Arena summary</p>
         <div className="flex flex-col gap-3 font-rajdhani text-base md:text-lg">
@@ -845,9 +877,9 @@ export default function CreatePage() {
   return (
     <AppLayout>
       <AppPage className="max-w-none">
-        <p className="text-sm font-semibold uppercase tracking-wide text-plum mb-3">New arena</p>
-        <h1 className="font-display text-4xl md:text-5xl lg:text-6xl text-haze mb-4 md:mb-6 text-balance leading-[1.05]">Create your arena</h1>
-        <p className="text-lg md:text-xl lg:text-2xl text-haze-2 mb-10 md:mb-14 max-w-4xl leading-relaxed">
+        <p className="text-sm font-semibold uppercase tracking-wide text-plum mb-4">New arena</p>
+        <h1 className="font-display text-4xl md:text-5xl lg:text-6xl text-haze mb-5 md:mb-8 text-balance leading-[1.05]">Create your arena</h1>
+        <p className="text-lg md:text-xl lg:text-2xl text-haze-2 mb-12 md:mb-16 max-w-4xl leading-relaxed">
           Set up your challenge. The AI validates and builds the rest.
         </p>
 

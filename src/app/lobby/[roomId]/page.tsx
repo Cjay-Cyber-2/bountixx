@@ -296,7 +296,7 @@ export default function LobbyPage() {
         variants={staggerContainer}
         initial="hidden"
         animate="show"
-        className={`${APP_GUTTERS} py-10`}
+        className={`${APP_GUTTERS} py-10 md:py-14 lg:py-16`}
       >
         {/* Header */}
         <motion.div variants={slideUp} className="mb-8">

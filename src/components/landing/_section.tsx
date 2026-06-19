@@ -7,7 +7,7 @@
 import type { ReactNode, CSSProperties } from "react";
 
 export const LANDING_GUTTERS =
-  "w-full mx-auto px-5 sm:px-8 md:px-10 lg:px-12 xl:px-16 2xl:px-20";
+  "w-full mx-auto px-6 sm:px-10 md:px-14 lg:px-16 xl:px-20 2xl:px-24";
 
 export const APP_GUTTERS = LANDING_GUTTERS;
 
@@ -183,7 +183,7 @@ export function AppPage({
 }) {
   return (
     <div
-      className={`flex-1 w-full min-h-0 ${APP_GUTTERS} py-8 md:py-12 lg:py-14`}
+      className={`flex-1 w-full min-h-0 ${APP_GUTTERS} py-10 md:py-14 lg:py-16`}
     >
       <div className={`w-full flex flex-col ${className}`}>{children}</div>
     </div>

@@ -150,7 +150,7 @@ export default function ProfilePage() {
 
   return (
     <AppLayout>
-      <div className={`${APP_GUTTERS} pb-12 md:pb-16`}>
+      <div className={`${APP_GUTTERS} pt-10 md:pt-14 lg:pt-16 pb-12 md:pb-16`}>
         {/* Banner */}
         <div
           className="relative border-b border-cosmos-4"
