@@ -34,7 +34,7 @@ export function AIEngine() {
 
   return (
     <LandingSection className="pt-20 md:pt-28">
-      <div ref={ref} className="relative">
+      <div ref={ref} className="relative w-full flex flex-col items-center">
         <div
           className="absolute inset-0 pointer-events-none"
           style={{ background: "radial-gradient(ellipse 55% 55% at 50% 20%, var(--glow-1), transparent)" }}

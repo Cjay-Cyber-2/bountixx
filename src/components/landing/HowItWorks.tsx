@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { motion, useInView, useScroll, useTransform, useReducedMotion, type MotionValue } from "framer-motion";
+import { motion, useInView, useScroll, useTransform, useReducedMotion } from "framer-motion";
 import { LandingSection, SectionIntro } from "@/components/landing/_section";
 
 const STEPS = [
@@ -22,18 +22,21 @@ const STEPS = [
   },
 ] as const;
 
+/** Left-rail x offset — dots and line share this anchor */
+const RAIL_LEFT = "clamp(1.25rem, 6vw, 4.5rem)";
+
 export function HowItWorks() {
   const railRef = useRef<HTMLDivElement>(null);
   const reduce = useReducedMotion();
 
   const { scrollYProgress } = useScroll({
     target: railRef,
-    offset: ["start 70%", "end 55%"],
+    offset: ["start 75%", "end 45%"],
   });
   const railFill = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
 
   return (
-    <LandingSection id="how-it-works" className="relative pb-28 md:pb-36 lg:pb-40">
+    <LandingSection id="how-it-works" className="relative pb-32 md:pb-40 lg:pb-48">
       <div
         className="absolute inset-0 pointer-events-none z-0"
         style={{ background: "radial-gradient(circle 900px at 50% -100px, var(--glow-1), transparent)" }}
@@ -47,10 +50,25 @@ export function HowItWorks() {
         className="relative z-[1]"
       />
 
-      <div ref={railRef} className="relative z-[1] max-w-3xl mx-auto">
-        <div className="flex flex-col gap-24 md:gap-32 lg:gap-36">
-          {STEPS.map((step, i) => (
-            <Stage key={step.num} step={step} isLast={i === STEPS.length - 1} railFill={railFill} reduce={reduce} />
+      <div ref={railRef} className="relative z-[1] w-full">
+        {/* Single continuous vertical rail on the left */}
+        <div
+          className="absolute top-0 bottom-0 w-px pointer-events-none"
+          style={{ left: RAIL_LEFT }}
+          aria-hidden
+        >
+          <div className="absolute inset-0 w-px" style={{ background: "var(--border-1)" }} />
+          {!reduce && (
+            <motion.div
+              className="absolute top-0 left-0 w-px origin-top"
+              style={{ height: railFill, background: "var(--brand-primary)" }}
+            />
+          )}
+        </div>
+
+        <div className="flex flex-col gap-28 md:gap-36 lg:gap-44">
+          {STEPS.map((step) => (
+            <Stage key={step.num} step={step} />
           ))}
         </div>
       </div>
@@ -58,50 +76,34 @@ export function HowItWorks() {
   );
 }
 
-function Stage({
-  step,
-  isLast,
-  railFill,
-  reduce,
-}: {
-  step: (typeof STEPS)[number];
-  isLast: boolean;
-  railFill: MotionValue<string>;
-  reduce: boolean | null;
-}) {
+function Stage({ step }: { step: (typeof STEPS)[number] }) {
   const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-20% 0px" });
+  const inView = useInView(ref, { once: true, margin: "-18% 0px" });
 
   return (
-    <div ref={ref} className="relative text-center px-4 md:px-8">
-      {/* Dot + vertical rail segment anchored to the dot */}
-      <div className="relative mx-auto mb-8 flex flex-col items-center">
-        <motion.span
-          initial={{ scale: 0 }}
-          animate={inView ? { scale: 1 } : {}}
-          transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.15 }}
-          className="relative z-[2] flex h-4 w-4 items-center justify-center rounded-full"
-          style={{ background: "var(--cosmos)", border: "2px solid var(--void)", boxShadow: "0 0 12px var(--glow-1)" }}
-          aria-hidden
-        />
-        {!isLast && (
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 w-px h-[calc(100%+6rem)] md:h-[calc(100%+8rem)]" aria-hidden>
-            <div className="absolute inset-0 w-px" style={{ background: "var(--border-1)" }} />
-            {!reduce && (
-              <motion.div
-                className="absolute top-0 left-0 w-px origin-top"
-                style={{ height: railFill, background: "var(--brand-primary)" }}
-              />
-            )}
-          </div>
-        )}
-      </div>
+    <div ref={ref} className="relative w-full">
+      {/* Dot anchored to the left rail */}
+      <motion.span
+        initial={{ scale: 0 }}
+        animate={inView ? { scale: 1 } : {}}
+        transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.1 }}
+        className="absolute z-[2] flex h-4 w-4 -translate-x-1/2 items-center justify-center rounded-full"
+        style={{
+          left: RAIL_LEFT,
+          top: "0.35rem",
+          background: "var(--cosmos)",
+          border: "2px solid var(--void)",
+          boxShadow: "0 0 12px var(--glow-1)",
+        }}
+        aria-hidden
+      />
 
+      {/* Text centered in the viewport — independent of the rail */}
       <motion.div
         initial={{ opacity: 0, y: 32 }}
         animate={inView ? { opacity: 1, y: 0 } : {}}
         transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
-        className="flex flex-col items-center gap-5 md:gap-6"
+        className="flex w-full flex-col items-center text-center px-5 sm:px-8"
       >
         <span
           className="font-orbitron font-black leading-none select-none tabular-nums"
@@ -115,7 +117,7 @@ function Stage({
           {step.num}
         </span>
 
-        <div className="max-w-[52ch]">
+        <div className="mt-5 md:mt-6 max-w-[52ch]">
           <h3 className="font-zen-dots text-xl md:text-2xl text-haze mb-4 md:mb-5">
             {step.title}
           </h3>

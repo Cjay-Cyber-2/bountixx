@@ -34,8 +34,8 @@ export function FinalCTA() {
         }}
       />
 
-      <div className={`${LANDING_GUTTERS} relative`}>
-        <div className="w-full max-w-3xl mx-auto text-center">
+      <div className={`${LANDING_GUTTERS} relative flex w-full flex-col items-center`}>
+        <div className="w-full max-w-3xl mx-auto flex flex-col items-center text-center">
         <motion.h2
           initial={{ opacity: 0, y: 36 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}

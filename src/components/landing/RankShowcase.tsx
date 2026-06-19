@@ -23,7 +23,7 @@ export function RankShowcase() {
 
   return (
     <LandingSection id="ranks" variant="raised" className="pt-28 md:pt-36 lg:pt-40">
-      <div ref={ref}>
+      <div ref={ref} className="w-full">
         <SectionIntro
           eyebrow="5 ranks, 20,000 XP ceiling"
           title={

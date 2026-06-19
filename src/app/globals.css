@@ -290,20 +290,12 @@ footer,
   backdrop-filter: blur(12px);
 }
 
-/* Auth pages — elevated card on light mode for readable contrast */
+/* Auth pages — both panels share the same theme surface */
 .auth-form-panel {
   background: transparent;
 }
 
-[data-theme="light"] .auth-form-panel {
-  background: var(--surface-card);
-  border: 1px solid var(--border-2);
-  border-radius: var(--radius-xl);
-  padding: 2rem 1.75rem;
-  box-shadow: 0 8px 32px rgba(78, 39, 37, 0.1);
-}
-
-[data-theme="light"] .auth-form-shell {
+.auth-form-shell {
   background: var(--cosmos);
 }
 
