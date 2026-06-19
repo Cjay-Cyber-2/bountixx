@@ -1,12 +1,12 @@
 "use client";
 
-import { LANDING_GUTTERS } from "@/components/landing/_section";
+import { LANDING_FOOTER_PAD, LANDING_GUTTERS } from "@/components/landing/_section";
 
 export function Footer() {
   return (
     <footer className="relative bg-cosmos overflow-hidden" style={{ borderTop: "1px solid var(--border-1)" }}>
-      <div className={`${LANDING_GUTTERS} py-28 md:py-36 lg:py-44 relative`}>
-        <div className="flex justify-center gap-5 mb-20 md:mb-24">
+      <div className={`${LANDING_GUTTERS} ${LANDING_FOOTER_PAD} relative`}>
+        <div className="flex justify-center gap-4 sm:gap-5 mb-[clamp(2.5rem,5vw,4rem)]">
           <SocialIcon label="Twitter / X" href="#">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
               <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
@@ -25,7 +25,7 @@ export function Footer() {
         </div>
 
         <div
-          className="flex flex-col items-center justify-center gap-5 pt-12 md:pt-16 text-center"
+          className="flex flex-col items-center justify-center gap-4 sm:gap-5 pt-[clamp(2rem,4vw,3rem)] text-center"
           style={{ borderTop: "1px solid var(--border-1)" }}
         >
           <p className="font-mono text-[10px] text-haze-3">© 2026 Bountixx. All rights reserved.</p>

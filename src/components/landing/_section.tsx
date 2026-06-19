@@ -19,6 +19,33 @@ export const LANDING_SUBSTACK = "landing-subsection-stack";
 
 /** Bordered card padding — matches create arena question cards. */
 export const LANDING_SURFACE = "landing-surface";
+
+/** Fluid section vertical padding. */
+export const LANDING_SECTION = "landing-section";
+
+/** Space below section intros. */
+export const LANDING_INTRO_SPACING = "landing-intro-spacing";
+
+/** Divider + top padding between subsections. */
+export const LANDING_DIVIDER_TOP = "landing-divider-top";
+
+/** Step timeline vertical rhythm. */
+export const LANDING_STEP_STACK = "landing-step-stack";
+
+/** Responsive 2-column card grid. */
+export const LANDING_CARD_GRID_2 = "landing-card-grid landing-card-grid--2";
+
+/** Responsive up-to-3-column card grid. */
+export const LANDING_CARD_GRID_3 = "landing-card-grid landing-card-grid--3";
+
+/** Responsive bundle pricing grid. */
+export const LANDING_BUNDLE_GRID = "landing-bundle-grid";
+
+/** Fluid vertical copy spacing inside cards. */
+export const LANDING_COPY_STACK = "landing-copy-stack";
+
+/** Fluid footer vertical padding. */
+export const LANDING_FOOTER_PAD = "landing-footer-pad";
 /** @deprecated Use APP_GUTTERS only */
 export const APP_CONTENT = "w-full";
 
@@ -40,7 +67,7 @@ export function LandingSection({
   return (
     <section
       id={id}
-      className={`relative py-40 md:py-56 lg:py-72 xl:py-80 overflow-hidden ${className}`}
+      className={`relative landing-section overflow-hidden ${className}`}
       style={{
         background: variant === "raised" ? "var(--cosmos-2)" : "var(--cosmos)",
         borderTop: variant === "raised" ? "1px solid var(--border-1)" : undefined,
@@ -117,7 +144,7 @@ export function CenteredSectionIntro({
   className?: string;
 }) {
   return (
-    <div className={`mb-28 md:mb-36 lg:mb-44 flex w-full justify-center ${className}`}>
+    <div className={`landing-intro-spacing flex w-full justify-center ${className}`}>
       <SectionIntro
         eyebrow={eyebrow}
         title={title}
@@ -153,24 +180,24 @@ export function SectionIntro({
 
   return (
     <div
-      className={`mb-28 md:mb-36 lg:mb-44 w-full max-w-3xl ${
+      className={`landing-intro-spacing w-full max-w-3xl ${
         centered ? "mx-auto flex flex-col items-center text-center" : ""
       } ${className}`}
     >
       <SpecLine className={`w-full ${centered ? "justify-center" : ""}`} centered={centered}>
         {eyebrow}
       </SpecLine>
-      <SectionHeading className={`mt-8 md:mt-10 ${centered ? "w-full text-center" : ""}`}>{title}</SectionHeading>
+      <SectionHeading className={`mt-[clamp(1.5rem,3vw,2.5rem)] ${centered ? "w-full text-center" : ""}`}>{title}</SectionHeading>
       {description && (
         <p
-          className={`font-body text-lg md:text-xl text-haze-2 mt-10 md:mt-12 leading-[1.85] max-w-[54ch] ${centered ? "mx-auto text-center" : ""}`}
+          className={`font-body text-base sm:text-lg md:text-xl text-haze-2 mt-[clamp(1.5rem,3vw,2.5rem)] leading-[1.85] max-w-[54ch] ${centered ? "mx-auto text-center" : ""}`}
         >
           {description}
         </p>
       )}
       {extra && (
         <p
-          className={`font-body text-base md:text-lg text-haze-3 mt-6 md:mt-8 leading-[1.85] max-w-[54ch] ${centered ? "mx-auto text-center" : ""}`}
+          className={`font-body text-sm sm:text-base md:text-lg text-haze-3 mt-[clamp(1rem,2vw,1.5rem)] leading-[1.85] max-w-[54ch] ${centered ? "mx-auto text-center" : ""}`}
         >
           {extra}
         </p>

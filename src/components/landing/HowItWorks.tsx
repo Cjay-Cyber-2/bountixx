@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import { motion, useInView, useScroll, useTransform, useReducedMotion } from "framer-motion";
-import { LandingSection, LANDING_SURFACE, SectionIntro } from "@/components/landing/_section";
+import { LandingSection, LANDING_STEP_STACK, LANDING_SURFACE, SectionIntro } from "@/components/landing/_section";
 
 const STEPS = [
   {
@@ -65,7 +65,7 @@ export function HowItWorks() {
           )}
         </div>
 
-        <div className="flex flex-col gap-40 md:gap-52 lg:gap-64 pb-20 md:pb-28 lg:pb-36">
+        <div className={LANDING_STEP_STACK}>
           {STEPS.map((step, i) => (
             <Stage key={step.num} step={step} isLast={i === STEPS.length - 1} />
           ))}
@@ -103,7 +103,7 @@ function Stage({ step, isLast = false }: { step: (typeof STEPS)[number]; isLast?
         className="flex w-full flex-col items-center text-center"
       >
         <div
-          className={`${LANDING_SURFACE} w-full max-w-2xl rounded-2xl border-2 border-[var(--border-1)] bg-[var(--cosmos-2)]`}
+          className={`${LANDING_SURFACE} landing-copy-stack w-full max-w-2xl rounded-2xl border-2 border-[var(--border-1)] bg-[var(--cosmos-2)]`}
         >
           <span
             className="font-orbitron font-black leading-none select-none tabular-nums block"
@@ -117,11 +117,11 @@ function Stage({ step, isLast = false }: { step: (typeof STEPS)[number]; isLast?
             {step.num}
           </span>
 
-          <div className="mt-8 md:mt-10 max-w-[48ch] mx-auto">
-            <h3 className="font-zen-dots text-xl md:text-2xl text-haze mb-6 md:mb-8">
+          <div className="landing-copy-stack max-w-[48ch] mx-auto w-full">
+            <h3 className="font-zen-dots text-lg sm:text-xl md:text-2xl text-haze">
               {step.title}
             </h3>
-            <p className="font-rajdhani text-base md:text-lg text-haze-2 leading-[1.9]">
+            <p className="font-rajdhani text-base md:text-lg text-haze-2 leading-[1.85]">
               {step.body}
             </p>
           </div>

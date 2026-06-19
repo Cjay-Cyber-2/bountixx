@@ -34,7 +34,7 @@ export function RankShowcase() {
           description="Win, place, or just finish — XP accrues either way. Each rank unlocks bigger bounty tiers and a one-time coin payout the moment you cross it."
         />
 
-        <div className="hidden md:grid grid-cols-5 gap-6 lg:gap-8 items-end" style={{ minHeight: 460 }}>
+        <div className="hidden md:grid grid-cols-5 gap-[clamp(1rem,2vw,2rem)] items-end" style={{ minHeight: "clamp(22rem, 35vw, 28rem)" }}>
           {RANKS.map((rank, i) => (
             <motion.div
               key={rank.name}
@@ -81,11 +81,11 @@ export function RankShowcase() {
           ))}
         </div>
 
-        <div className="md:hidden flex flex-col gap-8">
+        <div className="md:hidden flex flex-col gap-[clamp(1.25rem,3vw,2rem)]">
           {[...RANKS].reverse().map((rank) => (
             <div
               key={rank.name}
-              className={`${LANDING_SURFACE} rounded-2xl border-2 text-center`}
+              className={`${LANDING_SURFACE} landing-copy-stack rounded-2xl border-2 text-center`}
               style={{
                 background: "var(--cosmos-2)",
                 borderColor: "var(--border-1)",

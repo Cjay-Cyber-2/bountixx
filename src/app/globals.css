@@ -257,105 +257,131 @@ footer,
   width: 100%;
   max-width: 1680px;
   margin-inline: auto;
-  padding-left: max(2.25rem, env(safe-area-inset-left, 0px));
-  padding-right: max(2.25rem, env(safe-area-inset-right, 0px));
+  padding-left: max(clamp(1.125rem, 4.5vw, 7.5rem), env(safe-area-inset-left, 0px));
+  padding-right: max(clamp(1.125rem, 4.5vw, 7.5rem), env(safe-area-inset-right, 0px));
 }
 
-@media (min-width: 640px) {
-  .page-gutters {
-    padding-left: max(2.75rem, env(safe-area-inset-left, 0px));
-    padding-right: max(2.75rem, env(safe-area-inset-right, 0px));
-  }
+/* ─── Landing fluid spacing — scales on every viewport ─── */
+:root {
+  --landing-section-py: clamp(3.25rem, 8vw, 7.5rem);
+  --landing-block-gap: clamp(2.75rem, 5.5vw, 6.5rem);
+  --landing-subsection-gap: clamp(2rem, 3.5vw, 4.5rem);
+  --landing-intro-mb: clamp(3rem, 6vw, 8rem);
+  --landing-divider-pt: clamp(2.5rem, 5vw, 5.5rem);
+  --landing-step-gap: clamp(2.5rem, 7vw, 5.5rem);
+  --landing-card-gap: clamp(1.75rem, 3.5vw, 4rem);
+  --landing-surface-py: clamp(1.5rem, 3.2vw, 3.25rem);
+  --landing-surface-px: clamp(1.25rem, 2.8vw, 2.75rem);
+  --landing-copy-gap: clamp(1.25rem, 2.5vw, 2.5rem);
+  --landing-footer-py: clamp(3.5rem, 7vw, 7rem);
 }
 
-@media (min-width: 768px) {
-  .page-gutters {
-    padding-left: max(3.5rem, env(safe-area-inset-left, 0px));
-    padding-right: max(3.5rem, env(safe-area-inset-right, 0px));
-  }
+.landing-section {
+  padding-block: var(--landing-section-py);
 }
 
-@media (min-width: 1024px) {
-  .page-gutters {
-    padding-left: max(4.5rem, env(safe-area-inset-left, 0px));
-    padding-right: max(4.5rem, env(safe-area-inset-right, 0px));
-  }
-}
-
-@media (min-width: 1280px) {
-  .page-gutters {
-    padding-left: max(5.5rem, env(safe-area-inset-left, 0px));
-    padding-right: max(5.5rem, env(safe-area-inset-right, 0px));
-  }
-}
-
-@media (min-width: 1536px) {
-  .page-gutters {
-    padding-left: max(7.5rem, env(safe-area-inset-left, 0px));
-    padding-right: max(7.5rem, env(safe-area-inset-right, 0px));
-  }
-}
-
-/* ─── Landing layout rhythm (matches create arena spacing) ─── */
 .landing-block-stack {
   display: flex;
   flex-direction: column;
-  gap: 5rem;
+  gap: var(--landing-block-gap);
   width: 100%;
-}
-
-@media (min-width: 768px) {
-  .landing-block-stack {
-    gap: 6.5rem;
-  }
-}
-
-@media (min-width: 1024px) {
-  .landing-block-stack {
-    gap: 8rem;
-  }
+  min-width: 0;
 }
 
 .landing-subsection-stack {
   display: flex;
   flex-direction: column;
-  gap: 3rem;
+  gap: var(--landing-subsection-gap);
   width: 100%;
+  min-width: 0;
 }
 
-@media (min-width: 768px) {
-  .landing-subsection-stack {
-    gap: 4rem;
+.landing-intro-spacing {
+  margin-bottom: var(--landing-intro-mb);
+}
+
+.landing-divider-top {
+  padding-top: var(--landing-divider-pt);
+  border-top: 1px solid var(--border-1);
+}
+
+.landing-step-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--landing-step-gap);
+  width: 100%;
+  min-width: 0;
+  padding-bottom: clamp(2rem, 4vw, 4rem);
+}
+
+.landing-card-grid {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  gap: var(--landing-card-gap);
+}
+
+.landing-card-grid--2 {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .landing-card-grid--2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.landing-card-grid--3 {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .landing-card-grid--3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (min-width: 1024px) {
-  .landing-subsection-stack {
-    gap: 5rem;
+  .landing-card-grid--3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.landing-bundle-grid {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  gap: var(--landing-card-gap);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 480px) {
+  .landing-bundle-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .landing-bundle-grid {
+    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+    justify-items: center;
   }
 }
 
 .landing-surface {
-  border-radius: 1rem;
-  padding: 2rem 1.75rem;
+  border-radius: clamp(0.75rem, 1.5vw, 1rem);
+  padding: var(--landing-surface-py) var(--landing-surface-px);
+  min-width: 0;
 }
 
-@media (min-width: 640px) {
-  .landing-surface {
-    padding: 2.25rem 2rem;
-  }
+.landing-copy-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--landing-copy-gap);
 }
 
-@media (min-width: 768px) {
-  .landing-surface {
-    padding: 3rem 2.5rem;
-  }
-}
-
-@media (min-width: 1024px) {
-  .landing-surface {
-    padding: 3.5rem 3rem;
-  }
+.landing-footer-pad {
+  padding-block: var(--landing-footer-py);
 }
 
 /* ─── Form primitives ─── */
