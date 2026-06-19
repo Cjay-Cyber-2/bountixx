@@ -347,7 +347,7 @@ function QuestionCard({
                 className="w-full h-11 px-4 bg-cosmos border border-cosmos-4 text-haze font-rajdhani text-base focus:outline-none focus:border-crown transition-colors rounded-lg"
               />
                     <p className="font-rajdhani text-sm text-haze-2 mt-2 leading-relaxed">
-                      AI grades answers — exact matches and close paraphrases both pass. Edit the reference if the AI got it wrong.
+                      The AI fact-checks this answer. It must be one specific name, number, or fact — edit it if the AI got it wrong.
                     </p>
             </div>
           )}
@@ -431,9 +431,14 @@ function QuestionsStep({
   onBack: () => void;
   batchAnalyzing: boolean;
 }) {
-  const allValid = questions.every(
-    (q) => q.status === "done" && q.analysis?.valid && !q.analysis?.needsClarification
-  );
+  const allValid = questions.every((q) => {
+    if (q.status !== "done" || !q.analysis?.valid || q.analysis.needsClarification) return false;
+    const category = q.analysis.category;
+    if (["trivia", "logic", "math"].includes(category)) {
+      return Boolean(q.analysis.canonicalAnswer?.trim());
+    }
+    return true;
+  });
   const anyAnalyzing = questions.some((q) => q.status === "analyzing") || batchAnalyzing;
   const multi = questions.length > 1;
   const hasContent = questions.some((q) => q.taskRaw.trim());
@@ -484,7 +489,7 @@ function QuestionsStep({
 
       {!allValid && questions.length > 0 && (
         <p className="font-space-mono text-[10px] text-haze-3 text-center">
-          Analyze all questions before continuing
+          Analyze all questions and confirm each has a specific correct answer before continuing
         </p>
       )}
 

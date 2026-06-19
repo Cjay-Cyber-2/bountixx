@@ -53,10 +53,13 @@ CODING TASKS (category="coding" ONLY, when language is known):
 - Leave "canonicalAnswer" empty for coding.
 
 NON-CODING TASKS (trivia, logic, math):
-- "canonicalAnswer" is REQUIRED: the ideal reference answer the AI grader uses (not rigid exact-match — close/synonymous answers also pass).
-- For math: numeric result (e.g. "42").
-- For trivia: the core fact (e.g. "Paris").
-- For logic: the solution in concise form.
+- "canonicalAnswer" is REQUIRED: one specific, verifiable fact the grader treats as ground truth.
+- For math: the exact numeric result only (e.g. "42", "847.5") — no units or explanation.
+- For trivia: the accepted proper name, place, date, or yes/no (e.g. "Paris", "William Shakespeare", "1945", "No").
+- For logic: the single objective solution in ≤12 words (e.g. "3", "The man is lying").
+- NEVER use vague answers: no "depends", "various", "unknown", "probably", full sentences, or hedging.
+- If you cannot name ONE definitive answer, set needsClarification=true instead of guessing.
+- "taskNormalised" must be a clear, self-contained question players can answer without extra context.
 - Do NOT include language, starterCode, ioFormat, publicTests, or hiddenTests.
 - For writing/design/meme leave canonicalAnswer empty — AI judges open-ended answers from the question alone.
 
@@ -70,13 +73,114 @@ Coding example:
 
 If invalid: {"valid": false, "invalidReason": "short reason"}`;
 
-const ANSWER_PROMPT = `You are a precise fact-checker for a multiplayer trivia arena. Given a challenge, return ONLY JSON: {"canonicalAnswer":"<single definitive answer>"}.
+const ANSWER_PROMPT = `You are a strict fact-checker for a competitive multiplayer arena. Given a challenge, return ONLY JSON:
+{"canonicalAnswer":"<answer>","confident":true|false,"issue":"<short reason if not confident>"}
+
 Rules:
-- One short, exact answer — no explanation, no punctuation fluff.
-- Trivia: the factual answer (e.g. "Paris", "William Shakespeare").
-- Math: numeric result only (e.g. "847").
-- Logic: the single objective solution.
-- Verify correctness before responding.`;
+- canonicalAnswer must be ONE specific, verifiable fact — a name, place, date, number, or yes/no.
+- BANNED: explanations, full sentences, hedging ("probably", "around", "depends"), or multi-part answers.
+- Trivia: use the standard accepted form (e.g. "Paris", not "the capital of France"; "William Shakespeare", not "Shakespeare").
+- Math: solve step-by-step internally, return the exact numeric result only (e.g. "847", "-12.5").
+- Logic: the single objective solution in ≤12 words.
+- If the challenge is ambiguous, subjective, or you are not highly confident, set confident:false, canonicalAnswer:"", and explain in issue.
+- Do not guess. Wrong answers disqualify players unfairly.`;
+
+type TaskCategory = AnalysisResult["category"];
+type Provider = "gemini" | "groq";
+
+const VAGUE_ANSWER_PATTERNS =
+  /^(it depends|depends|various|several|many|some|unknown|not sure|maybe|probably|approximately|around|roughly|about|unclear|n\/a|none|nothing|anything|something|someone|anyone|a lot|lots of|multiple|different|could be|might be|i think|i believe|possibly)\b/i;
+
+const EXPLANATORY_ANSWER_PATTERNS =
+  /\b(because|which is|that is|this is|due to|in order to|as well as|such as|for example|meaning that)\b/i;
+
+type ResolvedAnswer = {
+  answer: string;
+  confident: boolean;
+  issue?: string;
+};
+
+/** Returns true when an answer is specific enough to grade fairly. */
+export function isConcreteAnswer(answer: string, category: TaskCategory): boolean {
+  const trimmed = answer.trim();
+  if (!trimmed) return false;
+  if (trimmed.length > 120) return false;
+  if (VAGUE_ANSWER_PATTERNS.test(trimmed)) return false;
+  if (EXPLANATORY_ANSWER_PATTERNS.test(trimmed)) return false;
+  if ((trimmed.match(/[.!?]/g) ?? []).length > 1) return false;
+
+  if (category === "math") {
+    return extractMathNumber(trimmed) !== null;
+  }
+
+  if (category === "trivia" || category === "logic") {
+    const wordCount = trimmed.split(/\s+/).filter(Boolean).length;
+    if (wordCount > 16) return false;
+  }
+
+  return true;
+}
+
+function extractMathNumber(s: string): number | null {
+  const cleaned = s.replace(/,/g, "").trim();
+  const match = cleaned.match(/-?\d+(?:\.\d+)?/);
+  if (!match) return null;
+  const n = Number(match[0]);
+  return Number.isFinite(n) ? n : null;
+}
+
+function answerResolverProvider(): { provider: Provider; apiKey: string } | null {
+  const gemini = process.env.GEMINI_API_KEY?.trim();
+  if (gemini) return { provider: "gemini", apiKey: gemini };
+
+  const groq = process.env.GROQ_API_KEY?.trim();
+  if (groq) return { provider: "groq", apiKey: groq };
+
+  return null;
+}
+
+function markAnswerClarification(analysis: AnalysisResult, reason: string): void {
+  analysis.needsClarification = true;
+  analysis.clarificationReason =
+    analysis.clarificationReason ||
+    reason ||
+    "The AI could not determine one definitive answer. Make the question more specific, then re-analyze.";
+  if (!analysis.suggestions?.length) {
+    analysis.suggestions = [
+      "Add the exact year, name, or number you expect",
+      "Rephrase as a single clear question with one factual answer",
+    ];
+  }
+}
+
+function applyResolvedAnswer(
+  analysis: AnalysisResult,
+  resolved: ResolvedAnswer,
+  taskText: string,
+): void {
+  const candidate = resolved.answer.trim();
+  const category = analysis.category;
+
+  if (resolved.confident && candidate && isConcreteAnswer(candidate, category)) {
+    analysis.canonicalAnswer = candidate;
+    analysis.needsClarification = false;
+    return;
+  }
+
+  const fallback = analysis.canonicalAnswer?.trim() ?? "";
+  if (fallback && isConcreteAnswer(fallback, category)) {
+    if (!resolved.confident && resolved.issue) {
+      console.warn("[analyse] Kept first-pass answer after low-confidence fact-check:", taskText.slice(0, 80));
+    }
+    return;
+  }
+
+  markAnswerClarification(
+    analysis,
+    resolved.issue ||
+      "The AI could not produce one specific, verifiable answer. Edit the question or type the correct answer yourself.",
+  );
+}
 
 const CODING_SIGNALS =
   /\b(implement|write\s+(a\s+)?(program|function|code|script|algorithm)|leetcode|hackerrank|stdin|stdout|compile|binary\s+search|sort\s+an?\s+array|reverse\s+a\s+string|data\s+structure|time\s+complexity|o\s*\(\s*n|class\s+\w+|def\s+\w+\s*\(|function\s+\w+\s*\()/i;
@@ -89,8 +193,6 @@ const MATH_SIGNALS =
 
 const LOGIC_SIGNALS =
   /^(if\s+you|suppose|puzzle|riddle|logic|brain\s*teaser|there\s+are\s+\d+\s+(people|boxes|balls))/i;
-
-type TaskCategory = AnalysisResult["category"];
 
 function extractTaskText(userMessage: string): string {
   const match = userMessage.match(/Challenge:\n([\s\S]*)$/);
@@ -122,8 +224,6 @@ const GEMINI_API_URL =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 const GROQ_MODEL = "llama-3.3-70b-versatile";
-
-type Provider = "gemini" | "groq";
 
 export class AiConfigError extends Error {
   constructor(message: string) {
@@ -204,7 +304,7 @@ async function analyseWithGemini(apiKey: string, userMessage: string): Promise<A
         },
       ],
       generationConfig: {
-        temperature: 0.2,
+        temperature: 0.1,
         maxOutputTokens: 6000,
         responseMimeType: "application/json",
       },
@@ -237,7 +337,7 @@ async function analyseWithGroq(apiKey: string, userMessage: string): Promise<Ana
         { role: "system", content: SYSTEM_PROMPT },
         { role: "user", content: userMessage },
       ],
-      temperature: 0.2,
+      temperature: 0.1,
       max_tokens: 6000,
       response_format: { type: "json_object" },
     }),
@@ -296,23 +396,28 @@ function normaliseAnalysis(
     }
   } else {
     stripCodingArtifacts(analysis);
-    analysis.needsClarification = false;
+    if (!["writing", "design", "meme"].includes(analysis.category) && reclassified) {
+      analysis.needsClarification = false;
+    }
   }
 
   return { analysis, reclassified };
 }
 
 async function resolveCanonicalAnswer(
-  provider: Provider,
-  apiKey: string,
   category: TaskCategory,
-  taskText: string
-): Promise<string> {
+  taskText: string,
+): Promise<ResolvedAnswer> {
+  const resolved = answerResolverProvider();
+  if (!resolved) {
+    return { answer: "", confident: false, issue: missingAiKeyMessage() };
+  }
+
   const userMessage = `Category: ${category}\nChallenge:\n${taskText}`;
 
   try {
-    if (provider === "gemini") {
-      const geminiRes = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+    if (resolved.provider === "gemini") {
+      const geminiRes = await fetch(`${GEMINI_API_URL}?key=${resolved.apiKey}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -325,20 +430,30 @@ async function resolveCanonicalAnswer(
           },
         }),
       });
-      if (!geminiRes.ok) return "";
+      if (!geminiRes.ok) {
+        return { answer: "", confident: false, issue: "Fact-check service unavailable" };
+      }
       const data = (await geminiRes.json()) as {
         candidates?: { content?: { parts?: { text?: string }[] } }[];
       };
       const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}";
-      const parsed = JSON.parse(raw) as { canonicalAnswer?: string };
-      return parsed.canonicalAnswer?.trim() ?? "";
+      const parsed = JSON.parse(raw) as {
+        canonicalAnswer?: string;
+        confident?: boolean;
+        issue?: string;
+      };
+      return {
+        answer: parsed.canonicalAnswer?.trim() ?? "",
+        confident: parsed.confident !== false,
+        issue: parsed.issue?.trim(),
+      };
     }
 
     const groqRes = await fetch(GROQ_API_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${resolved.apiKey}`,
       },
       body: JSON.stringify({
         model: GROQ_MODEL,
@@ -351,15 +466,25 @@ async function resolveCanonicalAnswer(
         response_format: { type: "json_object" },
       }),
     });
-    if (!groqRes.ok) return "";
+    if (!groqRes.ok) {
+      return { answer: "", confident: false, issue: "Fact-check service unavailable" };
+    }
     const data = (await groqRes.json()) as {
       choices?: { message?: { content?: string } }[];
     };
     const raw = data?.choices?.[0]?.message?.content ?? "{}";
-    const parsed = JSON.parse(raw) as { canonicalAnswer?: string };
-    return parsed.canonicalAnswer?.trim() ?? "";
+    const parsed = JSON.parse(raw) as {
+      canonicalAnswer?: string;
+      confident?: boolean;
+      issue?: string;
+    };
+    return {
+      answer: parsed.canonicalAnswer?.trim() ?? "",
+      confident: parsed.confident !== false,
+      issue: parsed.issue?.trim(),
+    };
   } catch {
-    return "";
+    return { answer: "", confident: false, issue: "Could not verify the answer" };
   }
 }
 
@@ -386,14 +511,18 @@ export async function analyseChallenge(
     analysis.valid &&
     !analysis.needsClarification;
 
-  if (needsAnswer && (!analysis.canonicalAnswer?.trim() || reclassified)) {
-    const answer = await resolveCanonicalAnswer(
-      resolved.provider,
-      resolved.apiKey,
-      analysis.category,
-      taskText
-    );
-    if (answer) analysis.canonicalAnswer = answer;
+  if (needsAnswer) {
+    const resolved = await resolveCanonicalAnswer(analysis.category, taskText);
+    applyResolvedAnswer(analysis, resolved, taskText);
+
+    const finalAnswer = analysis.canonicalAnswer?.trim() ?? "";
+    if (finalAnswer && !isConcreteAnswer(finalAnswer, analysis.category)) {
+      analysis.canonicalAnswer = "";
+      markAnswerClarification(
+        analysis,
+        "The AI answer was too vague. Add a specific expected answer or make the question clearer.",
+      );
+    }
   }
 
   return analysis;
