@@ -8,6 +8,7 @@ import { eq, desc, sql } from "drizzle-orm";
 import { getSession, unauthorized, sessionUnavailable } from "@/lib/getSession";
 import { requireClerkAuth } from "@/lib/requireAuth";
 import { ensureDatabaseSchema } from "@/lib/ensureSchema";
+import { isConcreteAnswer } from "@/lib/aiAnalyse";
 import { randomUUID } from "crypto";
 
 type Category = "coding" | "trivia" | "logic" | "math" | "writing" | "design" | "meme";
@@ -113,6 +114,28 @@ export async function POST(req: Request) {
 
     if (questions.length === 0) {
       return NextResponse.json({ error: "At least one question is required" }, { status: 400 });
+    }
+
+    for (const [index, question] of questions.entries()) {
+      const category = question.category;
+      if (!category) {
+        return NextResponse.json({ error: `Question ${index + 1} is missing a category` }, { status: 400 });
+      }
+      if (["trivia", "logic", "math"].includes(category)) {
+        const answer = question.canonicalAnswer?.trim() ?? "";
+        if (!answer) {
+          return NextResponse.json(
+            { error: `Question ${index + 1} needs a specific correct answer before launch` },
+            { status: 400 },
+          );
+        }
+        if (!isConcreteAnswer(answer, category)) {
+          return NextResponse.json(
+            { error: `Question ${index + 1} has a vague correct answer — use one specific name, number, or fact` },
+            { status: 400 },
+          );
+        }
+      }
     }
 
     // Room creation is FREE — entry fee (100 coins/player) funds the bounty at game start
