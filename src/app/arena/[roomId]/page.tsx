@@ -714,6 +714,9 @@ export default function ArenaPage() {
       const json = (await res.json()) as {
         won?: boolean;
         correct?: boolean;
+        accepted?: boolean;
+        verdict?: "correct" | "close_enough" | "incorrect";
+        feedback?: string;
         testResults?: { passed: number; total: number; results: TestResult[] };
         nextQuestionIndex?: number | null;
         questionsAnswered?: number;
@@ -728,10 +731,11 @@ export default function ArenaPage() {
         setQuestionIndex(json.nextQuestionIndex);
         setAnswer("");
         setQuestionsAnswered(json.questionsAnswered ?? questionIndex + 1);
+        const closeEnough = json.verdict === "close_enough";
         toast({
-          type: json.correct ? "success" : "error",
-          title: json.correct ? `Question ${json.questionsAnswered} correct!` : "Wrong answer",
-          message: json.correct ? "Moving to the next question..." : "Moving on — answer the next question.",
+          type: "success",
+          title: closeEnough ? "Close enough!" : `Question ${json.questionsAnswered} correct!`,
+          message: json.feedback ?? (closeEnough ? "Moving to the next question..." : "Moving to the next question..."),
         });
       } else if (isCodingSubmit && json.testResults) {
         setSubmitted(true);
@@ -748,13 +752,21 @@ export default function ArenaPage() {
         setSubmitted(true);
         toast({ type: "info", title: "All questions answered", message: "Waiting for other players..." });
       } else {
-        // Non-coding: allow retries on wrong answer
         const correct = json.correct ?? false;
+        const closeEnough = json.verdict === "close_enough";
         if (correct) {
           setSubmitted(true);
-          toast({ type: "success", title: "Correct! But someone was faster." });
+          toast({
+            type: "success",
+            title: closeEnough ? "Close enough — you got it!" : "Correct!",
+            message: json.feedback ?? (json.won ? "You won the bounty!" : "But someone was faster."),
+          });
         } else {
-          toast({ type: "error", title: "Wrong answer — try again." });
+          toast({
+            type: "error",
+            title: "Not quite — try again",
+            message: json.feedback ?? "Your answer wasn't close enough. Give it another shot.",
+          });
         }
       }
     } catch {
@@ -943,7 +955,7 @@ export default function ArenaPage() {
                       rows={3}
                     />
                     <p className="font-space-mono text-[9px] text-haze-3 text-right">
-                      Case-insensitive · Ctrl+Enter to submit
+                      AI-graded · close answers count · Ctrl+Enter to submit
                     </p>
                   </div>
 

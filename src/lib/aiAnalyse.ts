@@ -53,11 +53,12 @@ CODING TASKS (category="coding" ONLY, when language is known):
 - Leave "canonicalAnswer" empty for coding.
 
 NON-CODING TASKS (trivia, logic, math):
-- "canonicalAnswer" is REQUIRED: the single definitive correct answer (verified, concise, unambiguous). Players match this exactly (case-insensitive).
-- For math: numeric result only (e.g. "42" not "The answer is 42").
-- For trivia: the exact fact (e.g. "Paris" not "The capital is Paris").
+- "canonicalAnswer" is REQUIRED: the ideal reference answer the AI grader uses (not rigid exact-match — close/synonymous answers also pass).
+- For math: numeric result (e.g. "42").
+- For trivia: the core fact (e.g. "Paris").
+- For logic: the solution in concise form.
 - Do NOT include language, starterCode, ioFormat, publicTests, or hiddenTests.
-- For writing/design/meme leave canonicalAnswer empty (host judged).
+- For writing/design/meme leave canonicalAnswer empty — AI judges open-ended answers from the question alone.
 
 Always provide: punchy 3-5 word "title", "difficulty" (rookie|challenger|elite|legendary), and "taskNormalised" (clean restatement for players).
 

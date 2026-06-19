@@ -345,9 +345,9 @@ function QuestionCard({
                 placeholder="The answer players must match"
                 className="w-full h-11 px-4 bg-cosmos border border-cosmos-4 text-haze font-rajdhani text-base focus:outline-none focus:border-crown transition-colors rounded-lg"
               />
-              <p className="font-rajdhani text-sm text-haze-2 mt-2 leading-relaxed">
-                Players win by matching this exactly (case-insensitive). Fix it now if the AI got it wrong.
-              </p>
+                    <p className="font-rajdhani text-sm text-haze-2 mt-2 leading-relaxed">
+                      AI grades answers — exact matches and close paraphrases both pass. Edit the reference if the AI got it wrong.
+                    </p>
             </div>
           )}
 

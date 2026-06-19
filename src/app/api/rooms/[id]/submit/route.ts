@@ -8,6 +8,7 @@ import { getSession, unauthorized } from "@/lib/getSession";
 import { randomUUID } from "crypto";
 import { runCode, codeExecutionEnabled } from "@/lib/codeRunner";
 import { getRoomQuestions } from "@/lib/roomQuestions";
+import { gradePlayerAnswer } from "@/lib/gradeAnswer";
 import { allCompetitorsFinished, finalizeArena } from "@/lib/arenaResolver";
 import { checkAndAwardAchievements, updateConsecutiveWins } from "@/lib/achievements";
 
@@ -316,8 +317,28 @@ export async function POST(
       ? room.taskNormalised.split("ANSWER:")[1]?.split("\n")[0]?.trim()
       : null);
 
-  const normalise = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
-  const isCorrect = canonicalAnswer ? normalise(body.answer) === normalise(canonicalAnswer) : false;
+  const questionText = currentQuestion.taskNormalised ?? currentQuestion.taskRaw ?? room.taskNormalised ?? room.taskRaw;
+
+  const grade = await gradePlayerAnswer({
+    question: questionText,
+    category: category ?? "trivia",
+    playerAnswer: body.answer,
+    canonicalAnswer,
+  });
+
+  if (!grade.accepted) {
+    return NextResponse.json({
+      correct: false,
+      accepted: false,
+      verdict: grade.verdict,
+      feedback: grade.feedback,
+      questionsAnswered: questionIndex,
+      totalQuestions: questions.length,
+      nextQuestionIndex: null,
+    });
+  }
+
+  const isCorrect = true;
 
   const [submission] = await db
     .insert(submissions)
@@ -374,6 +395,9 @@ export async function POST(
   return NextResponse.json({
     submission,
     correct: isCorrect,
+    accepted: true,
+    verdict: grade.verdict,
+    feedback: grade.feedback,
     won,
     questionsAnswered: answeredCount,
     totalQuestions: questions.length,
