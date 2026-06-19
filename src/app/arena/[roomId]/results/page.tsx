@@ -40,6 +40,7 @@ interface RoomData {
   players: Player[];
   results: ResultRow[];
   isAdmin: boolean;
+  totalQuestions?: number;
 }
 
 function Confetti() {
@@ -140,11 +141,47 @@ export default function ResultsPage() {
   }
 
   const { room, players, results, isAdmin } = data;
-  const winner = results.find((r) => r.isWinner) ?? null;
+  const totalQuestions = data.totalQuestions ?? 1;
+
+  const standings = (() => {
+    const byUser = new Map<string, {
+      userId: string;
+      username: string | null;
+      isWinner: boolean;
+      correctCount: number;
+      totalAnswered: number;
+      finishedAt: string | null;
+    }>();
+
+    for (const r of results) {
+      const existing = byUser.get(r.userId) ?? {
+        userId: r.userId,
+        username: r.username,
+        isWinner: false,
+        correctCount: 0,
+        totalAnswered: 0,
+        finishedAt: null,
+      };
+      existing.isWinner = existing.isWinner || r.isWinner;
+      existing.correctCount += r.testsPassed > 0 && r.testsPassed === r.testsTotal ? 1 : 0;
+      existing.totalAnswered += 1;
+      if (r.submittedAt && (!existing.finishedAt || r.submittedAt > existing.finishedAt)) {
+        existing.finishedAt = r.submittedAt;
+      }
+      byUser.set(r.userId, existing);
+    }
+
+    return [...byUser.values()].sort((a, b) => {
+      if (a.isWinner !== b.isWinner) return a.isWinner ? -1 : 1;
+      if (b.correctCount !== a.correctCount) return b.correctCount - a.correctCount;
+      return new Date(a.finishedAt ?? 0).getTime() - new Date(b.finishedAt ?? 0).getTime();
+    });
+  })();
+
+  const winner = standings.find((s) => s.isWinner) ?? null;
   const isCoding = room.category === "coding";
 
-  // Standings: everyone who submitted (winner first), then competitors who never submitted
-  const submittedIds = new Set(results.map((r) => r.userId));
+  const submittedIds = new Set(standings.map((s) => s.userId));
   const nonSubmitters = players.filter(
     (p) => p.userId !== room.adminId && !submittedIds.has(p.userId)
   );
@@ -191,7 +228,7 @@ export default function ResultsPage() {
               </motion.h1>
 
               <p className="font-space-mono text-xs text-haze-2">
-                Solved in {solveTime(room.startedAt, winner.submittedAt)}
+                Solved in {solveTime(room.startedAt, winner.finishedAt)}
               </p>
 
               {room.prizePool > 0 && (
@@ -223,7 +260,7 @@ export default function ResultsPage() {
         </motion.div>
 
         {/* Final standings — real submissions only */}
-        {(results.length > 0 || nonSubmitters.length > 0) && (
+        {(standings.length > 0 || nonSubmitters.length > 0) && (
           <motion.div
             variants={staggerContainer}
             initial="hidden"
@@ -232,7 +269,7 @@ export default function ResultsPage() {
           >
             <p className="font-space-mono text-[10px] text-haze-3 tracking-widest mb-2">FINAL STANDINGS</p>
 
-            {results.map((r, i) => (
+            {standings.map((r, i) => (
               <motion.div
                 key={r.userId}
                 variants={slideUp}
@@ -252,12 +289,14 @@ export default function ResultsPage() {
                   <p className="font-rajdhani font-bold text-sm text-haze truncate">@{r.username ?? "player"}</p>
                   <p className="font-space-mono text-[9px] text-haze-3">
                     {isCoding
-                      ? `Passed ${r.testsPassed}/${r.testsTotal} tests`
-                      : r.isWinner ? "Correct answer" : "Submitted"}
+                      ? `${r.correctCount}/${totalQuestions} questions passed`
+                      : r.isWinner
+                        ? `All ${totalQuestions} correct`
+                        : `${r.correctCount}/${totalQuestions} correct`}
                   </p>
                 </div>
                 <span className="font-space-mono text-xs text-haze-3">
-                  {solveTime(room.startedAt, r.submittedAt)}
+                  {solveTime(room.startedAt, r.finishedAt)}
                 </span>
                 <span className="font-orbitron font-bold text-sm text-crown shrink-0">
                   {r.isWinner && room.prizePool > 0 ? `+${room.prizePool}` : "—"}

@@ -247,11 +247,11 @@ export class AiParseError extends Error {
 }
 
 function resolveProvider(): { provider: Provider; apiKey: string } | null {
-  const groq = process.env.GROQ_API_KEY?.trim();
-  if (groq) return { provider: "groq", apiKey: groq };
-
   const gemini = process.env.GEMINI_API_KEY?.trim();
   if (gemini) return { provider: "gemini", apiKey: gemini };
+
+  const groq = process.env.GROQ_API_KEY?.trim();
+  if (groq) return { provider: "groq", apiKey: groq };
 
   return null;
 }

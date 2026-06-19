@@ -9,7 +9,7 @@ import { randomUUID } from "crypto";
 import { runCode, codeExecutionEnabled } from "@/lib/codeRunner";
 import { getRoomQuestions } from "@/lib/roomQuestions";
 import { gradePlayerAnswer } from "@/lib/gradeAnswer";
-import { allCompetitorsFinished, finalizeArena } from "@/lib/arenaResolver";
+import { allCompetitorsFinished, finalizeArena, tryCrownFirstPerfectScorer } from "@/lib/arenaResolver";
 import { checkAndAwardAchievements, updateConsecutiveWins } from "@/lib/achievements";
 
 const XP_WIN = 200;
@@ -288,15 +288,20 @@ export async function POST(
         await grantParticipationRewards(session.id);
       }
     } else if (isMulti) {
-      const finished = await allCompetitorsFinished(roomId, room.adminId, questions.length);
-      if (finished) {
-        await finalizeArena(roomId);
-        const [winnerSub] = await db
-          .select({ isWinner: submissions.isWinner })
-          .from(submissions)
-          .where(and(eq(submissions.roomId, roomId), eq(submissions.userId, session.id), eq(submissions.isWinner, true)))
-          .limit(1);
-        won = Boolean(winnerSub?.isWinner);
+      const crowned = await tryCrownFirstPerfectScorer(roomId, session.id, questions.length);
+      if (crowned === session.id) {
+        won = true;
+      } else {
+        const finished = await allCompetitorsFinished(roomId, room.adminId, questions.length);
+        if (finished) {
+          await finalizeArena(roomId);
+          const [winnerSub] = await db
+            .select({ isWinner: submissions.isWinner })
+            .from(submissions)
+            .where(and(eq(submissions.roomId, roomId), eq(submissions.userId, session.id), eq(submissions.isWinner, true)))
+            .limit(1);
+          won = Boolean(winnerSub?.isWinner);
+        }
       }
     } else {
       await grantParticipationRewards(session.id);
@@ -389,15 +394,20 @@ export async function POST(
       await db.update(rooms).set({ status: "ended", endedAt: new Date() }).where(eq(rooms.id, roomId));
     }
   } else if (isMulti) {
-    const finished = await allCompetitorsFinished(roomId, room.adminId, questions.length);
-    if (finished) {
-      await finalizeArena(roomId);
-      const [winnerSub] = await db
-        .select({ isWinner: submissions.isWinner })
-        .from(submissions)
-        .where(and(eq(submissions.roomId, roomId), eq(submissions.userId, session.id), eq(submissions.isWinner, true)))
-        .limit(1);
-      won = Boolean(winnerSub?.isWinner);
+    const crowned = await tryCrownFirstPerfectScorer(roomId, session.id, questions.length);
+    if (crowned === session.id) {
+      won = true;
+    } else {
+      const finished = await allCompetitorsFinished(roomId, room.adminId, questions.length);
+      if (finished) {
+        await finalizeArena(roomId);
+        const [winnerSub] = await db
+          .select({ isWinner: submissions.isWinner })
+          .from(submissions)
+          .where(and(eq(submissions.roomId, roomId), eq(submissions.userId, session.id), eq(submissions.isWinner, true)))
+          .limit(1);
+        won = Boolean(winnerSub?.isWinner);
+      }
     }
   }
 

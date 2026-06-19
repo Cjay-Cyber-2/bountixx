@@ -67,6 +67,17 @@ const DIFF_COLORS: Record<Difficulty, string> = {
   rookie: "#DDEAE1", challenger: "#F92313", elite: "#4E2725", legendary: "#F92313",
 };
 
+function parseBulkQuestions(text: string): string[] {
+  return text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 /* ─── Step indicator ─── */
 function StepIndicator({ step }: { step: Step }) {
   const steps = [
@@ -209,7 +220,7 @@ function SetupStep({
 /* ─── Question card ─── */
 function QuestionCard({
   q, index, total, arenaName,
-  onChange, onAnswerChange, onDelete, onAnalyze, showAnalyzeButton,
+  onChange, onAnswerChange, onDelete, onAnalyze, onBulkPaste, showAnalyzeButton,
 }: {
   q: Question;
   index: number;
@@ -219,6 +230,7 @@ function QuestionCard({
   onAnswerChange: (answer: string) => void;
   onDelete: () => void;
   onAnalyze: (languageHint?: string) => void;
+  onBulkPaste: (lines: string[], startIndex: number) => void;
   showAnalyzeButton: boolean;
 }) {
   const catColor = q.analysis ? (CAT_COLORS[q.analysis.category] ?? "#9B8FC0") : "#4A3F70";
@@ -250,9 +262,17 @@ function QuestionCard({
 
       <textarea
         rows={4}
-        placeholder={`Paste question ${index + 1} here. Can be any challenge:\n→ Build a function that reverses a string\n→ What is the capital of France?\n→ Calculate 847 × 23`}
+        placeholder={`Paste question ${index + 1} here — or paste multiple lines to fill every question slot at once.`}
         value={q.taskRaw}
         onChange={(e) => onChange(e.target.value)}
+        onPaste={(e) => {
+          const text = e.clipboardData.getData("text");
+          const lines = parseBulkQuestions(text);
+          if (lines.length > 1) {
+            e.preventDefault();
+            onBulkPaste(lines, index);
+          }
+        }}
         disabled={q.status === "analyzing"}
         className="w-full px-4 py-3 bg-cosmos border border-cosmos-4 text-haze font-rajdhani text-base placeholder:text-haze-3 focus:outline-none focus:border-void focus:shadow-[0_0_0_2px_rgba(168,85,247,0.2)] transition-all resize-none disabled:opacity-50"
         style={{ borderRadius: 0 }}
@@ -415,9 +435,11 @@ function QuestionsStep({
   onDelete,
   onChange,
   onAnswerChange,
+  onBulkPaste,
   onNext,
   onBack,
   batchAnalyzing,
+  analyzeProgress,
 }: {
   arenaName: string;
   questions: Question[];
@@ -427,9 +449,11 @@ function QuestionsStep({
   onDelete: (localId: string) => void;
   onChange: (localId: string, taskRaw: string) => void;
   onAnswerChange: (localId: string, answer: string) => void;
+  onBulkPaste: (lines: string[], startIndex: number) => void;
   onNext: () => void;
   onBack: () => void;
   batchAnalyzing: boolean;
+  analyzeProgress: { current: number; total: number } | null;
 }) {
   const allValid = questions.every((q) => {
     if (q.status !== "done" || !q.analysis?.valid || q.analysis.needsClarification) return false;
@@ -455,6 +479,7 @@ function QuestionsStep({
             arenaName={arenaName}
             onChange={(taskRaw) => onChange(q.localId, taskRaw)}
             onAnswerChange={(answer) => onAnswerChange(q.localId, answer)}
+            onBulkPaste={onBulkPaste}
             onDelete={() => onDelete(q.localId)}
             onAnalyze={(hint) => onAnalyzeOne(q.localId, hint)}
             showAnalyzeButton={!multi}
@@ -463,17 +488,26 @@ function QuestionsStep({
       </AnimatePresence>
 
       {multi && (
-        <Button
-          variant="primary"
-          size="lg"
-          fullWidth
-          onClick={onAnalyzeAll}
-          disabled={anyAnalyzing || !hasContent}
-          loading={batchAnalyzing}
-          className="gap-2"
-        >
-          {batchAnalyzing ? "ANALYZING ALL QUESTIONS…" : "ANALYZE ALL WITH AI"}
-        </Button>
+        <>
+          <p className="font-rajdhani text-sm text-haze-3 text-center">
+            Tip: paste multiple questions at once (one per line) into any question box — like Render env import.
+          </p>
+          <Button
+            variant="primary"
+            size="lg"
+            fullWidth
+            onClick={onAnalyzeAll}
+            disabled={anyAnalyzing || !hasContent}
+            loading={batchAnalyzing}
+            className="gap-2"
+          >
+            {batchAnalyzing && analyzeProgress
+              ? `ANALYZING ${analyzeProgress.current} OF ${analyzeProgress.total}…`
+              : batchAnalyzing
+                ? "ANALYZING ALL QUESTIONS…"
+                : "ANALYZE ALL WITH AI"}
+          </Button>
+        </>
       )}
 
       {!multi && questions.length === 1 && questions[0].status !== "done" && (
@@ -631,105 +665,108 @@ export default function CreatePage() {
 
   /* ─── Analyze a single question (optionally forcing a coding language) ─── */
   const [batchAnalyzing, setBatchAnalyzing] = useState(false);
+  const [analyzeProgress, setAnalyzeProgress] = useState<{ current: number; total: number } | null>(null);
 
-  const handleAnalyzeOne = useCallback(async (localId: string, languageHint?: string) => {
-    const q = questions.find((x) => x.localId === localId);
-    if (!q || !q.taskRaw.trim()) return;
+  const applyAnalysisResult = useCallback((localId: string, analysis: AIAnalysis) => {
+    if (!analysis.valid) {
+      setQuestions((prev) => prev.map((x) => (x.localId === localId ? { ...x, status: "invalid", analysis } : x)));
+      return;
+    }
+    if (analysis.needsClarification) {
+      setQuestions((prev) => prev.map((x) => (x.localId === localId ? { ...x, status: "clarify", analysis } : x)));
+      return;
+    }
+    setQuestions((prev) => prev.map((x) => (x.localId === localId ? { ...x, status: "done", analysis } : x)));
+  }, []);
 
-    setQuestions((prev) => prev.map((x) => x.localId === localId ? { ...x, status: "analyzing", error: undefined } : x));
+  const runAnalyzeRequest = useCallback(async (
+    localId: string,
+    taskRaw: string,
+    languageHint?: string,
+  ): Promise<boolean> => {
+    setQuestions((prev) => prev.map((x) => (x.localId === localId ? { ...x, status: "analyzing", error: undefined } : x)));
 
     try {
       const res = await fetchWithAuth("/api/rooms/analyse", {
         method: "POST",
-        body: JSON.stringify({ taskRaw: q.taskRaw, arenaName: setupData?.name ?? "", languageHint }),
+        body: JSON.stringify({
+          taskRaw,
+          arenaName: setupData?.name ?? "",
+          languageHint,
+        }),
       });
 
       if (!res.ok) {
         const error = await readApiError(res);
-        setQuestions((prev) => prev.map((x) => x.localId === localId ? { ...x, status: "error", error } : x));
-        return;
+        setQuestions((prev) => prev.map((x) => (x.localId === localId ? { ...x, status: "error", error } : x)));
+        return false;
       }
 
-      let analysis: AIAnalysis;
-      try {
-        const data = await res.json() as { analysis?: AIAnalysis };
-        if (!data.analysis) throw new Error("Missing analysis");
-        analysis = data.analysis;
-      } catch {
-        setQuestions((prev) => prev.map((x) => x.localId === localId ? { ...x, status: "error", error: "Invalid response from server" } : x));
-        return;
+      const data = (await res.json()) as { analysis?: AIAnalysis };
+      if (!data.analysis) {
+        setQuestions((prev) => prev.map((x) => (x.localId === localId ? { ...x, status: "error", error: "Invalid response from server" } : x)));
+        return false;
       }
 
-      if (!analysis.valid) {
-        setQuestions((prev) => prev.map((x) => x.localId === localId ? { ...x, status: "invalid", analysis } : x));
-        return;
-      }
-
-      if (analysis.needsClarification) {
-        setQuestions((prev) => prev.map((x) => x.localId === localId ? { ...x, status: "clarify", analysis } : x));
-        return;
-      }
-
-      setQuestions((prev) => prev.map((x) => x.localId === localId ? { ...x, status: "done", analysis } : x));
+      applyAnalysisResult(localId, data.analysis);
+      return true;
     } catch (err) {
       const message =
         err instanceof TypeError
           ? "Network error — check your connection and try again"
           : "Could not reach AI service";
-      setQuestions((prev) => prev.map((x) => x.localId === localId ? { ...x, status: "error", error: message } : x));
+      setQuestions((prev) => prev.map((x) => (x.localId === localId ? { ...x, status: "error", error: message } : x)));
+      return false;
     }
-  }, [questions, setupData]);
+  }, [applyAnalysisResult, setupData?.name]);
+
+  const handleAnalyzeOne = useCallback(async (localId: string, languageHint?: string) => {
+    const q = questions.find((x) => x.localId === localId);
+    if (!q || !q.taskRaw.trim()) return;
+    await runAnalyzeRequest(localId, q.taskRaw, languageHint);
+  }, [questions, runAnalyzeRequest]);
+
+  const handleBulkPaste = useCallback((lines: string[], startIndex: number) => {
+    setQuestions((prev) => {
+      const next = [...prev];
+      for (let i = 0; i < lines.length && startIndex + i < 10; i++) {
+        const idx = startIndex + i;
+        if (idx < next.length) {
+          next[idx] = {
+            ...next[idx],
+            taskRaw: lines[i],
+            status: "idle",
+            analysis: undefined,
+            error: undefined,
+          };
+        } else {
+          next.push({ localId: crypto.randomUUID(), taskRaw: lines[i], status: "idle" });
+        }
+      }
+      return next.slice(0, 10);
+    });
+  }, []);
 
   const handleAnalyzeAll = useCallback(async () => {
     const pending = questions.filter((q) => q.taskRaw.trim());
     if (pending.length === 0) return;
 
     setBatchAnalyzing(true);
-    setQuestions((prev) =>
-      prev.map((q) => (q.taskRaw.trim() ? { ...q, status: "analyzing" as const, error: undefined } : q)),
-    );
+    setAnalyzeProgress({ current: 0, total: pending.length });
 
-    try {
-      const res = await fetchWithAuth("/api/rooms/analyse/batch", {
-        method: "POST",
-        body: JSON.stringify({
-          arenaName: setupData?.name ?? "",
-          tasks: pending.map((q) => ({ id: q.localId, taskRaw: q.taskRaw })),
-        }),
-      });
+    for (let i = 0; i < pending.length; i++) {
+      const q = pending[i];
+      setAnalyzeProgress({ current: i + 1, total: pending.length });
+      await runAnalyzeRequest(q.localId, q.taskRaw);
 
-      if (!res.ok) {
-        const error = await readApiError(res);
-        setQuestions((prev) =>
-          prev.map((q) => (q.taskRaw.trim() ? { ...q, status: "error", error } : q)),
-        );
-        return;
+      if (i < pending.length - 1) {
+        await sleep(3500);
       }
-
-      const data = (await res.json()) as {
-        results: Record<string, AIAnalysis | { error: string }>;
-      };
-
-      setQuestions((prev) =>
-        prev.map((q) => {
-          const result = data.results[q.localId];
-          if (!result) return q;
-          if ("error" in result) return { ...q, status: "error", error: result.error };
-          if (!result.valid) return { ...q, status: "invalid", analysis: result };
-          if (result.needsClarification) return { ...q, status: "clarify", analysis: result };
-          return { ...q, status: "done", analysis: result };
-        }),
-      );
-    } catch {
-      setQuestions((prev) =>
-        prev.map((q) =>
-          q.taskRaw.trim() ? { ...q, status: "error", error: "Could not reach AI service" } : q,
-        ),
-      );
-    } finally {
-      setBatchAnalyzing(false);
     }
-  }, [questions, setupData]);
+
+    setBatchAnalyzing(false);
+    setAnalyzeProgress(null);
+  }, [questions, runAnalyzeRequest]);
 
   /* ─── Launch room ─── */
   const handleLaunch = useCallback(async () => {
@@ -830,6 +867,8 @@ export default function CreatePage() {
               onAnalyzeOne={handleAnalyzeOne}
               onAnalyzeAll={handleAnalyzeAll}
               batchAnalyzing={batchAnalyzing}
+              analyzeProgress={analyzeProgress}
+              onBulkPaste={handleBulkPaste}
               onAdd={() => setQuestions((prev) => [...prev, { localId: crypto.randomUUID(), taskRaw: "", status: "idle" }])}
               onDelete={(id) => setQuestions((prev) => prev.filter((q) => q.localId !== id))}
               onChange={(id, taskRaw) => setQuestions((prev) => prev.map((q) => q.localId === id ? { ...q, taskRaw, status: q.status === "done" || q.status === "invalid" || q.status === "clarify" ? "idle" : q.status } : q))}

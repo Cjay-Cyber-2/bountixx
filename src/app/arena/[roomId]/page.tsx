@@ -964,6 +964,11 @@ export default function ArenaPage() {
                       value={answer}
                       onChange={(e) => setAnswer(e.target.value)}
                       onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSubmit();
+                          return;
+                        }
                         if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
                           e.preventDefault();
                           handleSubmit();
@@ -977,7 +982,7 @@ export default function ArenaPage() {
                       rows={3}
                     />
                     <p className="font-space-mono text-[9px] text-haze-3 text-right">
-                      AI-graded · close answers count · Ctrl+Enter to submit
+                      AI-graded · close answers count · Enter to submit
                     </p>
                   </div>
 

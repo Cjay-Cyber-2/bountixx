@@ -56,6 +56,208 @@ export async function scoreRoom(roomId: string): Promise<ScoreRow[]> {
   });
 }
 
+/** True when a user has a correct submission for every question index. */
+export async function userHasPerfectScore(
+  roomId: string,
+  userId: string,
+  questionCount: number,
+): Promise<boolean> {
+  const subs = await db
+    .select({
+      questionIndex: submissions.questionIndex,
+      testsPassed: submissions.testsPassed,
+      testsTotal: submissions.testsTotal,
+    })
+    .from(submissions)
+    .where(and(eq(submissions.roomId, roomId), eq(submissions.userId, userId)));
+
+  const correctIndices = new Set<number>();
+  for (const sub of subs) {
+    if (sub.testsPassed > 0 && sub.testsPassed === sub.testsTotal) {
+      correctIndices.add(sub.questionIndex ?? 0);
+    }
+  }
+
+  return correctIndices.size >= questionCount;
+}
+
+/** First competitor to answer every question correctly — wins by speed. */
+export async function findFirstPerfectScorer(
+  roomId: string,
+  questionCount: number,
+): Promise<{ userId: string; completedAt: Date } | null> {
+  const allSubs = await db
+    .select({
+      userId: submissions.userId,
+      questionIndex: submissions.questionIndex,
+      testsPassed: submissions.testsPassed,
+      testsTotal: submissions.testsTotal,
+      submittedAt: submissions.submittedAt,
+    })
+    .from(submissions)
+    .where(eq(submissions.roomId, roomId));
+
+  const byUser = new Map<string, { indices: Set<number>; completionAt: Date | null }>();
+
+  for (const sub of allSubs) {
+    if (sub.testsPassed <= 0 || sub.testsPassed !== sub.testsTotal) continue;
+
+    const idx = sub.questionIndex ?? 0;
+    const existing = byUser.get(sub.userId) ?? { indices: new Set<number>(), completionAt: null };
+    existing.indices.add(idx);
+
+    if (existing.indices.size === questionCount) {
+      const at = sub.submittedAt ?? new Date();
+      if (!existing.completionAt || at > existing.completionAt) {
+        existing.completionAt = at;
+      }
+    }
+
+    byUser.set(sub.userId, existing);
+  }
+
+  let best: { userId: string; completedAt: Date } | null = null;
+  for (const [userId, row] of byUser) {
+    if (row.indices.size < questionCount || !row.completionAt) continue;
+    if (!best || row.completionAt < best.completedAt) {
+      best = { userId, completedAt: row.completionAt };
+    }
+  }
+
+  return best;
+}
+
+async function hasArenaWinner(roomId: string): Promise<boolean> {
+  const [winnerSub] = await db
+    .select({ id: submissions.id })
+    .from(submissions)
+    .where(and(eq(submissions.roomId, roomId), eq(submissions.isWinner, true)))
+    .limit(1);
+  if (winnerSub) return true;
+
+  const [winnerTx] = await db
+    .select({ id: coinTransactions.id })
+    .from(coinTransactions)
+    .where(eq(coinTransactions.reference, `room:${roomId}:winner`))
+    .limit(1);
+
+  return Boolean(winnerTx);
+}
+
+/** Crown a single winner, end the room, and pay the prize pool. Idempotent if already ended. */
+export async function crownArenaWinner(roomId: string, winnerId: string): Promise<boolean> {
+  const [room] = await db.select().from(rooms).where(eq(rooms.id, roomId)).limit(1);
+  if (!room) return false;
+  if (await hasArenaWinner(roomId)) return true;
+  if (room.status !== "live" && room.status !== "ended") return false;
+
+  const competitors = await db
+    .select({ userId: roomPlayers.userId })
+    .from(roomPlayers)
+    .where(and(eq(roomPlayers.roomId, roomId), sql`${roomPlayers.userId} != ${room.adminId}`));
+
+  if (room.status === "live") {
+    await db.update(rooms).set({ status: "ended", endedAt: new Date() }).where(eq(rooms.id, roomId));
+  }
+
+  await db
+    .update(submissions)
+    .set({ isWinner: true })
+    .where(and(eq(submissions.roomId, roomId), eq(submissions.userId, winnerId)));
+
+  const prize = room.prizePool ?? 0;
+  await db
+    .update(users)
+    .set({
+      coinsBalance: sql`${users.coinsBalance} + ${prize}`,
+      xp: sql`${users.xp} + ${XP_WIN}`,
+    })
+    .where(eq(users.id, winnerId));
+
+  await db.insert(coinTransactions).values({
+    id: randomUUID(),
+    userId: winnerId,
+    amount: prize,
+    type: "earned",
+    reference: `room:${roomId}:winner`,
+  });
+
+  const streak = await updateConsecutiveWins(winnerId, true);
+  await updateRank(winnerId);
+
+  const [winnerSub] = await db
+    .select({ submittedAt: submissions.submittedAt })
+    .from(submissions)
+    .where(and(eq(submissions.roomId, roomId), eq(submissions.userId, winnerId)))
+    .orderBy(submissions.submittedAt)
+    .limit(1);
+
+  const solveSeconds =
+    room.startedAt && winnerSub?.submittedAt
+      ? Math.round(
+          (new Date(winnerSub.submittedAt).getTime() - new Date(room.startedAt).getTime()) / 1000,
+        )
+      : null;
+
+  const [winnerUser] = await db
+    .select({ coinsBalance: users.coinsBalance, rank: users.rank, roomsCreatedCount: users.roomsCreatedCount })
+    .from(users)
+    .where(eq(users.id, winnerId))
+    .limit(1);
+
+  await checkAndAwardAchievements(winnerId, {
+    won: true,
+    roomCategory: room.category,
+    solveSeconds,
+    coinsBalance: winnerUser?.coinsBalance,
+    rank: winnerUser?.rank,
+    roomsCreatedCount: winnerUser?.roomsCreatedCount,
+    consecutiveWins: streak,
+  });
+
+  for (const c of competitors) {
+    if (c.userId !== winnerId) {
+      await updateConsecutiveWins(c.userId, false);
+      await grantParticipation(c.userId);
+    }
+  }
+
+  const players = await db
+    .select({ userId: roomPlayers.userId })
+    .from(roomPlayers)
+    .where(eq(roomPlayers.roomId, roomId));
+
+  await Promise.all(
+    players.map((p) =>
+      sendNotificationToUser(p.userId, "Arena ended!", "Check the results.", {
+        url: `/arena/${roomId}/results`,
+      }),
+    ),
+  );
+
+  return true;
+}
+
+/** If this player just completed a perfect run first, crown them immediately. */
+export async function tryCrownFirstPerfectScorer(
+  roomId: string,
+  userId: string,
+  questionCount: number,
+): Promise<string | null> {
+  const [room] = await db.select({ status: rooms.status }).from(rooms).where(eq(rooms.id, roomId)).limit(1);
+  if (!room || room.status !== "live") return null;
+  if (await hasArenaWinner(roomId)) return null;
+
+  const hasPerfect = await userHasPerfectScore(roomId, userId, questionCount);
+  if (!hasPerfect) return null;
+
+  const first = await findFirstPerfectScorer(roomId, questionCount);
+  if (!first || first.userId !== userId) return null;
+
+  await crownArenaWinner(roomId, userId);
+  return userId;
+}
+
 /** Backfill refunds for ended/cancelled rooms that were closed before refund logic shipped. */
 export async function repairMissingEntryRefunds(
   roomId: string,
@@ -67,16 +269,19 @@ export async function repairMissingEntryRefunds(
   }
 
   if (roomStatus !== "ended") return;
+  if (await hasArenaWinner(roomId)) return;
 
-  const [winner] = await db
-    .select({ id: submissions.id })
-    .from(submissions)
-    .where(and(eq(submissions.roomId, roomId), eq(submissions.isWinner, true)))
-    .limit(1);
+  const [room] = await db.select().from(rooms).where(eq(rooms.id, roomId)).limit(1);
+  if (!room) return;
 
-  if (!winner) {
-    await refundEntryFeesForRoom(roomId, "no_winner_refund");
+  const questions = getRoomQuestions(room);
+  const firstPerfect = await findFirstPerfectScorer(roomId, questions.length);
+  if (firstPerfect) {
+    await crownArenaWinner(roomId, firstPerfect.userId);
+    return;
   }
+
+  await refundEntryFeesForRoom(roomId, "no_winner_refund");
 }
 
 /** Refund entry fees to everyone who paid when no winner is crowned. Idempotent per refund type. */
@@ -143,6 +348,8 @@ export async function finalizeArena(roomId: string): Promise<void> {
     .from(roomPlayers)
     .where(and(eq(roomPlayers.roomId, roomId), sql`${roomPlayers.userId} != ${room.adminId}`));
 
+  if (await hasArenaWinner(roomId)) return;
+
   const scores = await scoreRoom(roomId);
   const topScore = scores[0]?.correct ?? 0;
   const leaders = scores.filter((s) => s.correct === topScore && topScore > 0);
@@ -150,7 +357,11 @@ export async function finalizeArena(roomId: string): Promise<void> {
   let winnerIds: string[] = [];
   let tieRefund = false;
 
-  if (isMulti) {
+  const firstPerfect = await findFirstPerfectScorer(roomId, questions.length);
+
+  if (firstPerfect) {
+    winnerIds = [firstPerfect.userId];
+  } else if (isMulti) {
     if (leaders.length === 1) {
       winnerIds = [leaders[0].userId];
     } else if (leaders.length > 1) {
@@ -168,6 +379,11 @@ export async function finalizeArena(roomId: string): Promise<void> {
     } else if (leaders.length === 1) {
       winnerIds = [leaders[0].userId];
     }
+  }
+
+  if (winnerIds.length === 1 && !tieRefund) {
+    await crownArenaWinner(roomId, winnerIds[0]);
+    return;
   }
 
   await db.update(rooms).set({ status: "ended", endedAt: new Date() }).where(eq(rooms.id, roomId));
@@ -192,62 +408,6 @@ export async function finalizeArena(roomId: string): Promise<void> {
       await updateConsecutiveWins(userId, false);
       await grantParticipation(userId);
     }
-  } else if (winnerIds.length === 1) {
-    const winnerId = winnerIds[0];
-    await db
-      .update(submissions)
-      .set({ isWinner: true })
-      .where(and(eq(submissions.roomId, roomId), eq(submissions.userId, winnerId)));
-
-    const prize = room.prizePool ?? 0;
-    await db
-      .update(users)
-      .set({
-        coinsBalance: sql`${users.coinsBalance} + ${prize}`,
-        xp: sql`${users.xp} + ${XP_WIN}`,
-      })
-      .where(eq(users.id, winnerId));
-
-    await db.insert(coinTransactions).values({
-      id: randomUUID(),
-      userId: winnerId,
-      amount: prize,
-      type: "earned",
-      reference: `room:${roomId}:winner`,
-    });
-
-    const streak = await updateConsecutiveWins(winnerId, true);
-    await updateRank(winnerId);
-
-    const [winnerSub] = await db
-      .select({ submittedAt: submissions.submittedAt })
-      .from(submissions)
-      .where(and(eq(submissions.roomId, roomId), eq(submissions.userId, winnerId)))
-      .orderBy(submissions.submittedAt)
-      .limit(1);
-
-    const solveSeconds =
-      room.startedAt && winnerSub?.submittedAt
-        ? Math.round(
-            (new Date(winnerSub.submittedAt).getTime() - new Date(room.startedAt).getTime()) / 1000,
-          )
-        : null;
-
-    const [winnerUser] = await db
-      .select({ coinsBalance: users.coinsBalance, rank: users.rank, roomsCreatedCount: users.roomsCreatedCount })
-      .from(users)
-      .where(eq(users.id, winnerId))
-      .limit(1);
-
-    await checkAndAwardAchievements(winnerId, {
-      won: true,
-      roomCategory: room.category,
-      solveSeconds,
-      coinsBalance: winnerUser?.coinsBalance,
-      rank: winnerUser?.rank,
-      roomsCreatedCount: winnerUser?.roomsCreatedCount,
-      consecutiveWins: streak,
-    });
   } else {
     await refundEntryFeesForRoom(roomId, "no_winner_refund");
     await db.update(rooms).set({ prizePool: 0 }).where(eq(rooms.id, roomId));
