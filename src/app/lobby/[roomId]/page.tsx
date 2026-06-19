@@ -14,6 +14,7 @@ import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { staggerContainer, slideUp } from "@/lib/animations";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
+import { bountyPoolFromPlayers, ENTRY_FEE, ENTRY_FEE_SUMMARY, maxBountyPool } from "@/lib/coins";
 
 /* ─── Types ─── */
 type RoomCategory = "coding" | "trivia" | "logic" | "math" | "writing" | "design" | "meme";
@@ -341,7 +342,7 @@ export default function LobbyPage() {
           {[
             { label: "Timer", value: formatTimer(room.timerSeconds) },
             { label: "Player Cap", value: `${room.playerCap} players` },
-            { label: "Entry Fee", value: "100 coins" },
+            { label: "Entry Fee", value: `${ENTRY_FEE} coins → bounty` },
           ].map(({ label, value }) => (
             <div key={label} className="bg-cosmos-2 border border-cosmos-4 p-3 text-center">
               <p className="font-space-mono text-[9px] text-haze-3 tracking-widest uppercase mb-1">{label}</p>
@@ -353,12 +354,12 @@ export default function LobbyPage() {
         {/* Prize pool banner */}
         <motion.div variants={slideUp} className="flex items-center justify-between bg-coin-gold/5 border border-coin-gold/25 px-4 py-3 mb-6">
           <div>
-            <p className="font-space-mono text-[9px] text-haze-3 tracking-widest uppercase">Current Prize Pool</p>
-            <p className="font-orbitron font-black text-xl text-coin-gold mt-0.5">{competitors.length * 50} coins</p>
+            <p className="font-space-mono text-[9px] text-haze-3 tracking-widest uppercase">Current Bounty Pool</p>
+            <p className="font-orbitron font-black text-xl text-coin-gold mt-0.5">{bountyPoolFromPlayers(competitors.length)} coins</p>
           </div>
-          <div className="text-right">
-            <p className="font-space-mono text-[9px] text-haze-3">Max: {room.playerCap * 50} coins</p>
-            <p className="font-space-mono text-[9px] text-haze-3 mt-0.5">Winner takes all</p>
+          <div className="text-right max-w-[200px]">
+            <p className="font-space-mono text-[9px] text-haze-3">Max: {maxBountyPool(room.playerCap)} coins</p>
+            <p className="font-space-mono text-[9px] text-haze-3 mt-0.5 leading-relaxed">{ENTRY_FEE} coins/player funds bounty</p>
           </div>
         </motion.div>
 

@@ -115,7 +115,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "At least one question is required" }, { status: 400 });
     }
 
-    // Room creation is FREE — entry fee (50 coins/player) is collected at game start
+    // Room creation is FREE — entry fee (100 coins/player) funds the bounty at game start
     const roomId = randomUUID();
 
     // First question fields go into top-level columns for backward compat

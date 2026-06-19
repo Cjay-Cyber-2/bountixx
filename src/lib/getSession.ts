@@ -2,7 +2,7 @@ import { auth, currentUser, getAuth } from "@clerk/nextjs/server";
 import { createClerkClient } from "@clerk/backend";
 import type { NextRequest } from "next/server";
 import { randomUUID } from "crypto";
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { db } from "./db";
 import { coinTransactions, users } from "./schema";
 import {
@@ -63,22 +63,8 @@ async function readClerkProfile() {
   return { email, avatarUrl, rawUsername };
 }
 
-async function hasWelcomeBonus(userId: string): Promise<boolean> {
-  const [tx] = await db
-    .select({ id: coinTransactions.id })
-    .from(coinTransactions)
-    .where(
-      and(
-        eq(coinTransactions.userId, userId),
-        eq(coinTransactions.reference, "welcome_bonus"),
-      ),
-    )
-    .limit(1);
-  return Boolean(tx);
-}
-
-/** Idempotent welcome bonus — only grants once per account. */
-async function ensureWelcomeBonus(
+/** Main event: every login gives a fresh starter stack (even if coins were spent before). */
+async function ensureMainEventStarter(
   user: SessionUser,
   clerkEmail: string | null,
 ): Promise<SessionUser> {
@@ -102,38 +88,39 @@ async function ensureWelcomeBonus(
     return updated ?? { ...user, ...updates };
   }
 
-  const alreadyGranted = await hasWelcomeBonus(user.id);
-  if (alreadyGranted) {
-    if (Object.keys(updates).length === 0) return user;
+  if (user.coinsBalance !== STARTER_COINS) {
+    const previous = user.coinsBalance ?? 0;
+    updates.coinsBalance = STARTER_COINS;
+
     const [updated] = await db
       .update(users)
-      .set(updates)
+      .set({ ...updates, email: updates.email ?? user.email })
       .where(eq(users.id, user.id))
       .returning();
-    return updated ?? { ...user, ...updates };
+
+    const delta = STARTER_COINS - previous;
+    try {
+      await db.insert(coinTransactions).values({
+        id: randomUUID(),
+        userId: user.id,
+        amount: delta,
+        type: delta >= 0 ? "gifted" : "spent",
+        reference: "main_event_starter",
+      });
+    } catch (err) {
+      console.error("[getSession] main event starter tx failed:", err);
+    }
+
+    return updated ?? { ...user, coinsBalance: STARTER_COINS };
   }
 
-  const targetBalance = Math.max(user.coinsBalance ?? 0, STARTER_COINS);
-  updates.coinsBalance = targetBalance;
+  if (Object.keys(updates).length === 0) return user;
 
   const [updated] = await db
     .update(users)
     .set(updates)
     .where(eq(users.id, user.id))
     .returning();
-
-  try {
-    await db.insert(coinTransactions).values({
-      id: randomUUID(),
-      userId: user.id,
-      amount: STARTER_COINS,
-      type: "gifted",
-      reference: "welcome_bonus",
-    });
-  } catch (err) {
-    console.error("[getSession] welcome bonus tx failed:", err);
-  }
-
   return updated ?? { ...user, ...updates };
 }
 
@@ -199,7 +186,7 @@ async function finalizeSession(
   user: SessionUser,
   clerkEmail: string | null,
 ): Promise<SessionUser> {
-  const withCoins = await ensureWelcomeBonus(user, clerkEmail);
+  const withCoins = await ensureMainEventStarter(user, clerkEmail);
   await touchPresence(withCoins.id, true);
   return withCoins;
 }
@@ -247,7 +234,7 @@ export async function getClerkUserId(req?: Request): Promise<string | null> {
 /**
  * Resolves the authenticated user via Clerk and maps them to the Neon `users`
  * row. On the very first authenticated request after sign-up, the row is
- * created with the starter coin welcome bonus.
+ * created with the main-event starter coin balance.
  *
  * Never throws — returns null when auth or the database is unavailable.
  */

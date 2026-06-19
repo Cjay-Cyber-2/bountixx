@@ -1,8 +1,29 @@
-/** Welcome bonus for new accounts and anyone still at 0 balance. */
+/** Welcome / main-event starter balance on every login. */
 export const STARTER_COINS = 1000;
 
-/** Entry fee per competing player when an arena goes live. */
+/** Entry fee per competing player when an arena goes live — funds the bounty pool. */
 export const ENTRY_FEE = 100;
+
+export const ENTRY_FEE_LABEL = `${ENTRY_FEE} coins per player`;
+
+export const ENTRY_FEE_SUMMARY =
+  `Each competing player pays ${ENTRY_FEE} coins when the arena goes live. That entry fee funds the bounty — the winner takes the full pool.`;
+
+export const HOSTING_FREE_SUMMARY =
+  "Hosting is free. You never pay to create an arena — only competitors pay the entry fee at start.";
+
+export const MAIN_EVENT_STARTER_SUMMARY =
+  `Main event: every login starts you with ${STARTER_COINS.toLocaleString()} coins to enter arenas.`;
+
+/** Prize pool from competitor count (host does not pay entry). */
+export function bountyPoolFromPlayers(competitorCount: number): number {
+  return ENTRY_FEE * competitorCount;
+}
+
+/** Max bounty if the room fills (playerCap includes host slot). */
+export function maxBountyPool(playerCap: number): number {
+  return ENTRY_FEE * Math.max(0, playerCap - 1);
+}
 
 /** Stored balance for the unlimited-coins owner account. */
 export const UNLIMITED_COINS_BALANCE = 9_999_999;

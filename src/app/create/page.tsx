@@ -10,7 +10,7 @@ import { AppPage } from "@/components/landing/_section";
 import { Button } from "@/components/ui/Button";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { readApiError } from "@/lib/readApiError";
-import { ENTRY_FEE } from "@/lib/coins";
+import { ENTRY_FEE, ENTRY_FEE_SUMMARY, HOSTING_FREE_SUMMARY, MAIN_EVENT_STARTER_SUMMARY, maxBountyPool } from "@/lib/coins";
 import { LANGUAGES, LANGUAGE_KEYS, getLanguage, type LanguageKey } from "@/lib/languages";
 
 /* ─── Types ─── */
@@ -138,10 +138,11 @@ function SetupStep({
         {/* Entry fee banner */}
         <div className="flex flex-col gap-2 rounded-xl bg-[var(--void-tint)] border border-[var(--border-accent)] px-5 py-4">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <span className="text-xs font-medium text-plum">Entry fee</span>
+            <span className="text-xs font-medium text-plum">Bounty entry fee</span>
             <span className="font-stats font-semibold text-sm text-haze">{ENTRY_FEE} coins / player</span>
           </div>
-          <span className="text-xs text-haze-3">Hosting is free. Players pay when the arena starts.</span>
+          <span className="text-xs text-haze-2 leading-relaxed">{ENTRY_FEE_SUMMARY}</span>
+          <span className="text-xs text-haze-3">{HOSTING_FREE_SUMMARY}</span>
         </div>
 
         <div>
@@ -167,7 +168,7 @@ function SetupStep({
               <span className="flex-1 text-center font-stats font-semibold text-lg text-haze tabular-nums">{players}</span>
               <button type="button" onClick={() => setPlayers((n) => Math.min(20, n + 1))} className="cursor-target w-12 h-full text-haze-2 hover:text-plum hover:bg-[var(--surface-hover)] transition-colors font-semibold text-lg">+</button>
             </div>
-            <p className="text-xs text-haze-3 mt-2">Max prize pool: {players * ENTRY_FEE} coins</p>
+            <p className="text-xs text-haze-3 mt-2">Max bounty pool: {maxBountyPool(players)} coins ({ENTRY_FEE} × competing players)</p>
           </div>
           <div>
             <label className="bx-label">Timer</label>
@@ -515,7 +516,7 @@ function ReviewStep({
   createError: string;
   onBack: () => void;
 }) {
-  const maxPrizePool = ENTRY_FEE * playerCap;
+  const maxPrizePool = maxBountyPool(playerCap);
 
   return (
     <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} className="flex flex-col gap-6">
@@ -524,10 +525,10 @@ function ReviewStep({
         <div className="flex flex-col gap-2 font-space-mono text-xs">
           <div className="flex justify-between"><span className="text-haze-3">Name</span><span className="text-haze">{arenaName}</span></div>
           <div className="flex justify-between"><span className="text-haze-3">Questions</span><span className="text-haze">{questions.length}</span></div>
-          <div className="flex justify-between"><span className="text-haze-3">Entry fee</span><span className="text-coin-gold">{ENTRY_FEE} coins per player</span></div>
-          <div className="flex justify-between"><span className="text-haze-3">Max prize pool</span><span className="text-coin-gold font-bold">{maxPrizePool} coins</span></div>
-          <p className="text-haze-3 text-[9px] pt-2 border-t border-cosmos-4 mt-2">
-            Hosting is free. Each competing player pays {ENTRY_FEE} coins when the arena starts — winner takes the pool.
+          <div className="flex justify-between"><span className="text-haze-3">Entry fee</span><span className="text-coin-gold">{ENTRY_FEE} coins / player → bounty</span></div>
+          <div className="flex justify-between"><span className="text-haze-3">Max bounty pool</span><span className="text-coin-gold font-bold">{maxPrizePool} coins</span></div>
+          <p className="text-haze-3 text-[9px] pt-2 border-t border-cosmos-4 mt-2 leading-relaxed">
+            {HOSTING_FREE_SUMMARY} {ENTRY_FEE_SUMMARY}
           </p>
         </div>
       </div>

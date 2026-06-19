@@ -187,7 +187,7 @@ export async function PATCH(
       );
     }
 
-    // 4. Deduct 50 coins from every paying competitor
+    // 4. Deduct entry fee from every paying competitor — fees fund the bounty pool
     for (const p of eligible) {
       if (isExempt(p)) continue;
 

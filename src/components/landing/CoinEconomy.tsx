@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import { Accent, LandingSection, SectionIntro } from "@/components/landing/_section";
-import { ENTRY_FEE } from "@/lib/coins";
+import { ENTRY_FEE, ENTRY_FEE_SUMMARY, HOSTING_FREE_SUMMARY } from "@/lib/coins";
 import { Trophy, Medal, CheckCircle, Flame, UserPlus, Star } from "lucide-react";
 
 const EARN = [
@@ -43,7 +43,7 @@ export function CoinEconomy() {
               The Bountixx <Accent>economy.</Accent>
             </>
           }
-          description={`Hosting an arena is free. Each competing player pays ${ENTRY_FEE} coins when the match starts — that pool goes to the winner.`}
+          description={`${HOSTING_FREE_SUMMARY} ${ENTRY_FEE_SUMMARY}`}
           extra="Coins are non-transferable values inside Bountixx. They drive progression and competitive stake, not cash transactions."
           align="center"
         />
