@@ -4,10 +4,12 @@ import { getLanguage } from "./languages";
 /**
  * Code execution layer.
  *
- * Priority:
- *   1. Judge0 — set JUDGE0_URL (+ JUDGE0_KEY)
- *   2. Piston — set PISTON_URL to your self-hosted execute endpoint (see user_task.md)
- *   3. Built-in JavaScript VM — always available for javascript on Node runtime
+ * Priority (highest to lowest):
+ *   1. JDoodle  — set JDOODLE_CLIENT_ID + JDOODLE_CLIENT_SECRET
+ *                  (default — supports every language Bountixx ships)
+ *   2. Judge0   — set JUDGE0_URL (+ JUDGE0_KEY for RapidAPI)
+ *   3. Piston   — set PISTON_URL to your self-hosted execute endpoint
+ *   4. Built-in JavaScript VM — always available, JS/TS only
  */
 
 export interface RunResult {
@@ -18,6 +20,7 @@ export interface RunResult {
 }
 
 export function codeExecutionEnabled(language?: string): boolean {
+  if (process.env.JDOODLE_CLIENT_ID && process.env.JDOODLE_CLIENT_SECRET) return true;
   if (process.env.JUDGE0_URL || process.env.PISTON_URL) return true;
   return language === "javascript" || language === "typescript" || !language;
 }
@@ -79,6 +82,88 @@ async function runJavaScriptLocally(source: string, stdin: string): Promise<RunR
     const timedOut = msg.toLowerCase().includes("timeout");
     return { ok: false, stdout: logs.join("\n").trim(), stderr: msg, timedOut };
   }
+}
+
+/** Detect compile / runtime failure heuristically from JDoodle's combined output. */
+function isJDoodleError(output: string): boolean {
+  const lower = output.toLowerCase();
+  return (
+    lower.includes("error:") ||
+    lower.includes("traceback") ||
+    lower.includes("exception in thread") ||
+    lower.includes("segmentation fault") ||
+    lower.includes("compilation failed") ||
+    lower.includes("syntaxerror") ||
+    lower.includes("panic:") ||
+    lower.includes("undefined reference") ||
+    lower.includes("cannot find symbol")
+  );
+}
+
+async function runWithJDoodle(
+  langKey: string,
+  source: string,
+  stdin: string,
+): Promise<RunResult> {
+  const clientId = process.env.JDOODLE_CLIENT_ID!;
+  const clientSecret = process.env.JDOODLE_CLIENT_SECRET!;
+  const endpoint =
+    process.env.JDOODLE_URL?.replace(/\/$/, "") ||
+    "https://api.jdoodle.com/v1/execute";
+  const spec = getLanguage(langKey);
+
+  const res = await fetch(endpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      clientId,
+      clientSecret,
+      script: source,
+      stdin,
+      language: spec.jdoodle.language,
+      versionIndex: spec.jdoodle.versionIndex,
+      compileOnly: false,
+    }),
+    signal: AbortSignal.timeout(20_000),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    // Surface common auth issues with a friendlier message
+    if (res.status === 401 || res.status === 403) {
+      throw new Error(
+        `JDoodle auth failed (HTTP ${res.status}). Check JDOODLE_CLIENT_ID and JDOODLE_CLIENT_SECRET.`,
+      );
+    }
+    throw new Error(`JDoodle HTTP ${res.status}: ${text.slice(0, 200)}`);
+  }
+
+  const data = (await res.json()) as {
+    output?: string;
+    statusCode?: number;
+    memory?: string | number;
+    cpuTime?: string | number;
+    error?: string;
+  };
+
+  if (data.error) {
+    return {
+      ok: false,
+      stdout: "",
+      stderr: data.error,
+      timedOut: data.error.toLowerCase().includes("timeout"),
+    };
+  }
+
+  const output = (data.output ?? "").replace(/\r\n/g, "\n");
+  const failed = isJDoodleError(output);
+
+  return {
+    ok: !failed,
+    stdout: failed ? "" : output,
+    stderr: failed ? output : "",
+    timedOut: output.toLowerCase().includes("time limit exceeded"),
+  };
 }
 
 async function runWithJudge0(
@@ -187,6 +272,9 @@ export async function runCode(opts: {
 }): Promise<RunResult> {
   const lang = opts.language;
 
+  if (process.env.JDOODLE_CLIENT_ID && process.env.JDOODLE_CLIENT_SECRET) {
+    return runWithJDoodle(lang, opts.source, opts.stdin);
+  }
   if (process.env.JUDGE0_URL) {
     return runWithJudge0(lang, opts.source, opts.stdin);
   }
@@ -198,6 +286,6 @@ export async function runCode(opts: {
   }
 
   throw new Error(
-    `Code execution for ${lang} requires PISTON_URL or JUDGE0_URL. JavaScript works without configuration.`,
+    `Code execution for ${lang} requires JDOODLE_CLIENT_ID + JDOODLE_CLIENT_SECRET (preferred), or JUDGE0_URL / PISTON_URL. JavaScript works without configuration.`,
   );
 }

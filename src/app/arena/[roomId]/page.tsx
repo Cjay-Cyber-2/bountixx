@@ -82,13 +82,13 @@ interface TestResult {
 
 /* ─── Constants ─── */
 const CAT_COLORS: Record<string, string> = {
-  coding:  "#FF6B1A",
-  trivia:  "#9B6BFF",
-  logic:   "#00D68F",
+  coding:  "#7C5CFF",
+  trivia:  "#A78BFA",
+  logic:   "#22D3EE",
   math:    "#F0A500",
-  writing: "#9B8FC0",
-  design:  "#C084FC",
-  meme:    "#F472B6",
+  writing: "#F472B6",
+  design:  "#34D399",
+  meme:    "#FB7185",
 };
 
 const DIFF_CHIP_COLOR: Record<RoomDifficulty, "ignite" | "crown" | "void" | "success" | "danger" | "haze"> = {
@@ -135,13 +135,13 @@ interface ActivityItem {
 
 function ActivityFeed({ items }: { items: ActivityItem[] }) {
   return (
-    <div className="bg-cosmos-2 border border-cosmos-4 p-4 h-full">
-      <p className="font-space-mono text-[10px] text-void tracking-widest mb-4 uppercase">
+    <div className="rounded-xl bg-[var(--surface-inset)] border border-[var(--border-1)] p-4 h-full">
+      <p className="font-mono text-[10px] text-[var(--brand-primary)] tracking-widest mb-4 uppercase">
         Arena Activity
       </p>
       <AnimatePresence initial={false}>
         {items.length === 0 && (
-          <p className="font-space-mono text-[10px] text-haze-3">Waiting for activity...</p>
+          <p className="font-mono text-[10px] text-haze-3">Waiting for activity...</p>
         )}
         {items.map((item) => (
           <motion.div
@@ -151,13 +151,13 @@ function ActivityFeed({ items }: { items: ActivityItem[] }) {
             className="flex items-start gap-2 mb-3"
           >
             <span
-              className={`font-space-mono text-[10px] shrink-0 ${
+              className={`font-mono text-[10px] shrink-0 ${
                 item.type === "completed" ? "text-success" : item.type === "forfeited" ? "text-danger" : "text-haze-3"
               }`}
             >
               {item.type === "completed" ? "✓" : item.type === "forfeited" ? "✗" : "●"}
             </span>
-            <p className="font-space-mono text-[10px] text-haze-2 leading-relaxed">
+            <p className="font-mono text-[10px] text-haze-2 leading-relaxed">
               <span className="text-haze">@{item.player}</span> {item.text}
             </p>
           </motion.div>
@@ -176,29 +176,29 @@ interface TestResultsProps {
 
 function TestResults({ testCases, results, ran }: TestResultsProps) {
   return (
-    <div className="bg-cosmos-2 border border-cosmos-4 p-4">
-      <p className="font-space-mono text-[10px] text-void tracking-widest mb-4 uppercase">
+    <div className="rounded-xl bg-[var(--surface-inset)] border border-[var(--border-1)] p-4">
+      <p className="font-mono text-[10px] text-[var(--brand-primary)] tracking-widest mb-4 uppercase">
         Test Results
       </p>
       {!ran && testCases.length === 0 && (
-        <p className="font-space-mono text-[10px] text-haze-3">Run tests to see results</p>
+        <p className="font-mono text-[10px] text-haze-3">Run tests to see results</p>
       )}
       {testCases.map((tc, i) => {
         const result = results[i];
         const status = !ran ? "pending" : result?.pass ? "pass" : "fail";
         return (
-          <div key={tc.id} className={`py-2 border-b border-cosmos-4/50 last:border-0 ${i % 2 === 0 ? "bg-cosmos/30" : ""}`}>
+          <div key={tc.id} className="py-2 border-b border-[var(--border-1)] last:border-0">
             <div className="flex items-center gap-3 mb-1">
-              <span className={`font-space-mono text-xs w-4 text-center ${status === "pass" ? "text-success" : status === "fail" ? "text-danger" : "text-haze-3"}`} aria-label={status}>
+              <span className={`font-mono text-xs w-4 text-center ${status === "pass" ? "text-success" : status === "fail" ? "text-danger" : "text-haze-3"}`} aria-label={status}>
                 {status === "pass" ? "✓" : status === "fail" ? "✗" : "○"}
               </span>
-              <div className="flex-1 font-space-mono text-[10px] text-haze-2 min-w-0">
+              <div className="flex-1 font-mono text-[10px] text-haze-2 min-w-0">
                 <span className="text-haze-3">in:</span>{" "}
                 <span className="text-haze truncate">{tc.input}</span>
               </div>
             </div>
             {ran && result && (
-              <div className="pl-7 font-space-mono text-[9px] text-haze-3 space-y-0.5">
+              <div className="pl-7 font-mono text-[9px] text-haze-3 space-y-0.5">
                 <div><span className="text-haze-3">expected:</span> <span className="text-success">{tc.expectedOutput}</span></div>
                 <div><span className="text-haze-3">got:</span> <span className={result.pass ? "text-success" : "text-danger"}>{result.output || "(empty)"}</span></div>
               </div>
@@ -206,7 +206,7 @@ function TestResults({ testCases, results, ran }: TestResultsProps) {
           </div>
         );
       })}
-      {ran && <p className="font-space-mono text-[10px] text-haze-3 mt-3">Submit to run against hidden tests</p>}
+      {ran && <p className="font-mono text-[10px] text-haze-3 mt-3">Submit to run against hidden tests</p>}
     </div>
   );
 }
@@ -263,14 +263,14 @@ function CodeEditor({
   return (
     <div className="flex flex-col h-full">
       {/* IDE-style tab bar with the locked, AI-analysed language */}
-      <div className="flex items-center justify-between border-b border-cosmos-4 bg-cosmos-3 px-4">
-        <div className="flex items-center gap-2 py-2">
-          <span className="w-2 h-2 rounded-full bg-ignite" aria-hidden />
-          <span className="font-space-mono text-xs text-haze">solution.{spec.ext}</span>
+      <div className="flex items-center justify-between border-b border-[var(--terminal-border)] bg-[var(--surface-raised)] px-4">
+        <div className="flex items-center gap-2 py-2.5">
+          <span className="w-2 h-2 rounded-full" style={{ background: "var(--brand-primary)" }} aria-hidden />
+          <span className="font-mono text-xs text-haze">solution.{spec.ext}</span>
         </div>
         <span
-          className="font-space-mono text-[10px] px-2 py-1 my-1.5 border text-ignite"
-          style={{ borderColor: "rgba(255,107,26,0.35)", background: "rgba(255,107,26,0.08)" }}
+          className="font-mono text-[10px] px-2 py-1 my-1.5 border rounded text-[var(--brand-primary)]"
+          style={{ borderColor: "var(--border-accent)", background: "var(--void-tint)" }}
           title="Language set by the AI from the challenge"
         >
           {spec.label}
@@ -278,10 +278,11 @@ function CodeEditor({
       </div>
 
       {/* Gutter + textarea */}
-      <div className="flex-1 flex overflow-hidden bg-[#080612] min-h-[280px]">
+      <div className="flex-1 flex overflow-hidden min-h-[280px]" style={{ background: "var(--terminal-bg)" }}>
         <div
           aria-hidden
-          className="select-none py-4 pl-3 pr-2 text-right font-space-mono text-xs leading-relaxed text-haze-3/50 bg-[#0b0817] border-r border-cosmos-4/60"
+          className="select-none py-4 pl-3 pr-2 text-right font-mono text-xs leading-relaxed text-haze-3/50 border-r"
+          style={{ background: "var(--surface-inset)", borderColor: "var(--terminal-border)" }}
         >
           {Array.from({ length: lineCount }).map((_, i) => (
             <div key={i}>{i + 1}</div>
@@ -291,8 +292,8 @@ function CodeEditor({
           value={code}
           onChange={(e) => setCode(e.target.value)}
           onKeyDown={handleKey}
-          className="flex-1 p-4 bg-transparent text-haze font-space-mono text-sm resize-none focus:outline-none leading-relaxed select-text cursor-text"
-          style={{ caretColor: "var(--void)" }}
+          className="flex-1 p-4 bg-transparent text-haze font-mono text-sm resize-none focus:outline-none leading-relaxed select-text cursor-text"
+          style={{ caretColor: "var(--brand-primary)" }}
           spellCheck={false}
           aria-label="Code editor"
           disabled={disabled}
@@ -304,8 +305,8 @@ function CodeEditor({
         />
       </div>
 
-      <div className="flex items-center justify-between gap-2 px-4 py-3 bg-cosmos-3 border-t border-cosmos-4">
-        <p className="hidden sm:block font-space-mono text-[10px] text-haze-3">Ctrl+Enter run · Ctrl+Shift+Enter submit</p>
+      <div className="flex items-center justify-between gap-2 px-4 py-3 bg-[var(--surface-raised)] border-t border-[var(--terminal-border)]">
+        <p className="hidden sm:block font-mono text-[10px] text-haze-3">Ctrl+Enter run · Ctrl+Shift+Enter submit</p>
         <div className="flex items-center gap-2 ml-auto">
           <Button variant="ghost" size="sm" onClick={onRun} disabled={disabled || running || submitting} loading={running} className="gap-1.5">
             <Play size={12} aria-hidden="true" /> RUN
@@ -331,9 +332,9 @@ interface AnswerInputProps {
 function AnswerInput({ answer, setAnswer, onSubmit, disabled, submitting, onPaste }: AnswerInputProps & { onPaste: (e: React.ClipboardEvent) => void }) {
   return (
     <div className="flex flex-col h-full">
-      <div className="px-5 pt-4 pb-3 border-b border-cosmos-4 bg-cosmos-3 shrink-0">
-        <p className="font-space-mono text-[11px] text-void tracking-[3px] uppercase">Your Answer</p>
-        <p className="font-rajdhani text-xs text-haze-3 mt-0.5">Stay on this page · paste is disabled · Ctrl+Enter to submit</p>
+      <div className="px-5 pt-4 pb-3 border-b border-[var(--border-1)] bg-[var(--surface-raised)] shrink-0">
+        <p className="font-mono text-[11px] text-[var(--brand-primary)] tracking-[3px] uppercase">Your Answer</p>
+        <p className="font-body text-xs text-haze-3 mt-1">Stay on this page · paste is disabled · Ctrl+Enter to submit</p>
       </div>
       <textarea
         value={answer}
@@ -346,14 +347,13 @@ function AnswerInput({ answer, setAnswer, onSubmit, disabled, submitting, onPast
         }}
         onPaste={onPaste}
         onCopy={(e) => e.preventDefault()}
-        className="flex-1 p-5 bg-[#080612] text-haze font-rajdhani text-lg
-                   placeholder:text-haze-3/40 focus:outline-none resize-none"
-        style={{ caretColor: "var(--void)" }}
+        className="flex-1 p-5 text-haze font-body text-lg placeholder:text-haze-3/60 focus:outline-none resize-none"
+        style={{ background: "var(--terminal-bg)", caretColor: "var(--brand-primary)" }}
         placeholder="Type your answer here..."
         disabled={disabled}
         aria-label="Answer input"
       />
-      <div className="flex items-center justify-end px-5 py-3 bg-cosmos-3 border-t border-cosmos-4 shrink-0">
+      <div className="flex items-center justify-end px-5 py-3 bg-[var(--surface-raised)] border-t border-[var(--border-1)] shrink-0">
         <Button
           variant="primary"
           size="md"
@@ -399,54 +399,68 @@ function HostPanel({ players, adminId, roomId, onEnded }: HostPanelProps) {
   const total = competitors.length;
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-[var(--surface-raised)]">
       {/* Host badge */}
-      <div className="px-5 pt-4 pb-3 border-b border-cosmos-4 bg-cosmos-3 shrink-0 flex items-center gap-3">
-        <div className="w-8 h-8 flex items-center justify-center shrink-0" style={{ background: "rgba(240,165,0,0.12)", border: "1px solid rgba(240,165,0,0.3)" }}>
-          <Crown size={14} className="text-crown" aria-hidden="true" />
+      <div
+        className="px-6 pt-5 pb-4 border-b shrink-0 flex items-center gap-4"
+        style={{ background: "var(--surface-inset)", borderColor: "var(--border-1)" }}
+      >
+        <div
+          className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+          style={{ background: "rgba(240,165,0,0.14)", border: "1px solid rgba(240,165,0,0.35)" }}
+        >
+          <Crown size={16} className="text-crown" aria-hidden="true" />
         </div>
         <div>
-          <p className="font-space-mono text-[11px] text-crown tracking-[2px] uppercase">Host View</p>
-          <p className="font-rajdhani text-xs text-haze-3">You created this arena — you cannot compete</p>
+          <p className="font-mono text-[11px] text-crown tracking-[2px] uppercase">Host View</p>
+          <p className="font-body text-sm text-haze-2">You created this arena — you cannot compete</p>
         </div>
       </div>
 
       {/* Progress bar */}
-      <div className="px-5 py-3 border-b border-cosmos-4 bg-cosmos-2 shrink-0">
-        <div className="flex justify-between items-center mb-1.5">
-          <p className="font-space-mono text-[9px] text-haze-3 uppercase tracking-widest">Competitors finished</p>
-          <p className="font-orbitron font-bold text-sm text-haze">{done}/{total}</p>
+      <div
+        className="px-6 py-4 border-b shrink-0"
+        style={{ background: "var(--surface-inset)", borderColor: "var(--border-1)" }}
+      >
+        <div className="flex justify-between items-center mb-2">
+          <p className="font-mono text-[10px] text-haze-3 uppercase tracking-widest">Competitors finished</p>
+          <p className="font-stats font-bold text-base text-haze tabular-nums">{done}/{total}</p>
         </div>
-        <div className="h-1 bg-cosmos-4 w-full">
+        <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--border-1)" }}>
           <div
-            className="h-1 bg-void transition-all duration-500"
-            style={{ width: total > 0 ? `${(done / total) * 100}%` : "0%" }}
+            className="h-full rounded-full transition-all duration-500"
+            style={{
+              width: total > 0 ? `${(done / total) * 100}%` : "0%",
+              background: "var(--brand-primary)",
+              boxShadow: "0 0 12px var(--glow-1)",
+            }}
           />
         </div>
       </div>
 
       {/* Competitors list */}
-      <div className="flex-1 overflow-y-auto px-5 py-4">
-        <p className="font-space-mono text-[9px] text-haze-3 tracking-widest mb-3 uppercase">Live standings</p>
+      <div className="flex-1 overflow-y-auto px-6 py-5">
+        <p className="font-mono text-[10px] text-haze-3 tracking-widest mb-4 uppercase">Live standings</p>
         {competitors.length === 0 && (
-          <p className="font-space-mono text-[10px] text-haze-3">No competitors yet.</p>
+          <p className="font-body text-sm text-haze-3">No competitors have joined yet.</p>
         )}
         {competitors.map((p, i) => (
           <div
             key={p.id}
-            className="flex items-center gap-3 py-2.5 border-b border-cosmos-4/40 last:border-0"
+            className="flex items-center gap-3 py-3 border-b last:border-0"
+            style={{ borderColor: "var(--border-1)" }}
           >
-            <span className="font-orbitron text-[10px] text-haze-3 w-4 shrink-0">{i + 1}</span>
+            <span className="font-stats text-xs text-haze-3 w-5 shrink-0">{i + 1}</span>
             <span
               className={`w-2 h-2 rounded-full shrink-0 ${
                 p.status === "completed" ? "bg-success" : p.status === "forfeited" ? "bg-danger" : "bg-haze-3"
               }`}
             />
-            <span className="font-rajdhani font-semibold text-sm text-haze truncate flex-1">
+            <span className="font-body font-semibold text-sm text-haze truncate flex-1">
               @{p.username ?? "player"}
             </span>
             <span
-              className={`font-space-mono text-[9px] shrink-0 ${
+              className={`font-mono text-[10px] shrink-0 tracking-wider ${
                 p.status === "completed" ? "text-success" : p.status === "forfeited" ? "text-danger" : "text-haze-3"
               }`}
             >
@@ -457,7 +471,7 @@ function HostPanel({ players, adminId, roomId, onEnded }: HostPanelProps) {
       </div>
 
       {/* End arena */}
-      <div className="px-5 py-4 border-t border-cosmos-4 shrink-0">
+      <div className="px-6 py-5 border-t shrink-0" style={{ borderColor: "var(--border-1)" }}>
         <Button
           variant="ghost"
           size="md"
@@ -476,24 +490,26 @@ function HostPanel({ players, adminId, roomId, onEnded }: HostPanelProps) {
 
 /* ─── Disqualified Banner ─── */
 function DQBanner({ reason }: { reason: ArenaCheatReason }) {
-  const label =
-    reason === "tab-switch"
-      ? "LEFT ARENA TAB · DISQUALIFIED"
-      : reason === "split-view"
-        ? "SPLIT VIEW DETECTED · DISQUALIFIED"
-        : reason === "external-input"
-          ? "EXTERNAL TEXT BLOCKED · DISQUALIFIED"
-          : "EXTERNAL PANEL DETECTED · DISQUALIFIED";
+  const labelMap: Record<ArenaCheatReason, string> = {
+    "tab-switch": "LEFT ARENA TAB · DISQUALIFIED",
+    "split-view": "SPLIT VIEW DETECTED · DISQUALIFIED",
+    "external-input": "EXTERNAL TEXT BLOCKED · DISQUALIFIED",
+    "side-panel": "EXTERNAL PANEL DETECTED · DISQUALIFIED",
+    "window-blur": "FOCUS LEFT ARENA · DISQUALIFIED",
+    "devtools": "DEVTOOLS OPENED · DISQUALIFIED",
+    "new-window": "SECOND ARENA WINDOW · DISQUALIFIED",
+  };
 
   return (
     <motion.div
       initial={{ opacity: 0, y: -40 }}
       animate={{ opacity: 1, y: 0 }}
-      className="fixed top-14 inset-x-0 z-40 flex items-center justify-center gap-2 px-4 py-2 bg-danger/90"
+      className="fixed top-14 inset-x-0 z-40 flex items-center justify-center gap-2 px-4 py-2"
+      style={{ background: "var(--danger)" }}
     >
       <AlertTriangle size={14} className="text-white" aria-hidden="true" />
-      <p className="font-space-mono text-[11px] text-white tracking-widest">
-        ANTI-CHEAT · {label}
+      <p className="font-mono text-[11px] text-white tracking-widest">
+        ANTI-CHEAT · {labelMap[reason]}
       </p>
     </motion.div>
   );
@@ -691,9 +707,15 @@ export default function ArenaPage() {
     [toast, roomId]
   );
 
-  const handleIntegrityWarning = useCallback((kind: "split-view" | "side-panel" | null, message: string | null) => {
-    setIntegrityWarning(message);
-  }, []);
+  const handleIntegrityWarning = useCallback(
+    (
+      _kind: "split-view" | "side-panel" | "window-blur" | "devtools" | null,
+      message: string | null,
+    ) => {
+      setIntegrityWarning(message);
+    },
+    [],
+  );
 
   const { blockPaste, blockBeforeInput, blockContextMenu, blockDrop, blockCopy } = useArenaGuard({
     onStrike: handleStrike,
@@ -847,7 +869,7 @@ export default function ArenaPage() {
       <div className="min-h-screen bg-cosmos flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="spinner" />
-          <p className="font-space-mono text-xs text-haze-3 tracking-widest">LOADING ARENA...</p>
+          <p className="font-mono text-xs text-haze-3 tracking-widest">LOADING ARENA…</p>
         </div>
       </div>
     );
@@ -856,13 +878,13 @@ export default function ArenaPage() {
   if (!data) {
     return (
       <div className="min-h-screen bg-cosmos flex items-center justify-center">
-        <p className="font-rajdhani text-danger">Room not found or access denied.</p>
+        <p className="font-body text-base text-danger">Room not found or access denied.</p>
       </div>
     );
   }
 
   const { room, players, testCases } = data;
-  const catColor = CAT_COLORS[questionCategory] ?? "#FF6B1A";
+  const catColor = CAT_COLORS[questionCategory] ?? "#7C5CFF";
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-cosmos" onContextMenu={blockContextMenu}>
@@ -875,11 +897,17 @@ export default function ArenaPage() {
       <AnimatePresence>{timeUp && <TimeUpBanner />}</AnimatePresence>
 
       {/* ── Top bar ── */}
-      <div className="fixed top-0 inset-x-0 z-30 flex items-center justify-between gap-2 px-4 md:px-6 h-14 bg-cosmos-2 border-b border-cosmos-4">
+      <div
+        className="fixed top-0 inset-x-0 z-30 flex items-center justify-between gap-3 px-4 md:px-6 h-14 border-b"
+        style={{ background: "var(--surface-raised)", borderColor: "var(--border-1)" }}
+      >
         <div className="flex items-center gap-2 md:gap-3 min-w-0">
-          <span className="font-rajdhani font-bold text-sm text-haze truncate max-w-[120px] sm:max-w-[180px]">{room.name}</span>
+          <span className="font-display text-sm md:text-base text-haze truncate max-w-[140px] sm:max-w-[220px]">{room.name}</span>
           {questionCategory && (
-            <span className="hidden sm:inline-block font-space-mono text-[10px] px-2 py-0.5 border shrink-0" style={{ color: catColor, borderColor: `${catColor}40`, backgroundColor: `${catColor}15` }}>
+            <span
+              className="hidden sm:inline-block font-mono text-[10px] px-2 py-0.5 border rounded shrink-0 tracking-wider"
+              style={{ color: catColor, borderColor: `${catColor}55`, backgroundColor: `${catColor}14` }}
+            >
               {questionCategory.toUpperCase()}
             </span>
           )}
@@ -890,15 +918,16 @@ export default function ArenaPage() {
           )}
         </div>
 
-        {/* Timer — only shown when the room was created with a timer */}
         {hasTimer && timeLeft !== null
           ? <Timer seconds={timeLeft} />
-          : <span className="font-space-mono text-[10px] text-haze-3 tracking-widest shrink-0">NO TIMER</span>
+          : <span className="font-mono text-[10px] text-haze-3 tracking-widest shrink-0">NO TIMER</span>
         }
 
         <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
           <Users size={14} className="text-haze-3" aria-hidden="true" />
-          <span className="font-space-mono text-xs text-haze-3">{players.filter(p => p.userId !== room.adminId).length}/{room.playerCap}</span>
+          <span className="font-mono text-xs text-haze-3 tabular-nums">
+            {players.filter(p => p.userId !== room.adminId).length}/{room.playerCap}
+          </span>
         </div>
       </div>
 
@@ -907,25 +936,34 @@ export default function ArenaPage() {
 
         {/* Challenge panel */}
         {(isCoding || data.isAdmin) && (
-          <div className="w-full lg:w-[28%] lg:max-w-[300px] border-b lg:border-b-0 lg:border-r border-cosmos-4 flex flex-col bg-cosmos-2 overflow-y-auto shrink-0">
-            {/* Header */}
-            <div className="px-5 pt-4 pb-3 border-b border-cosmos-4 bg-cosmos-3 shrink-0">
-              <p className="font-space-mono text-[9px] text-void tracking-[3px] uppercase mb-1">Challenge Brief</p>
-              <p className="font-zen-dots text-sm text-haze leading-snug truncate">{room.name}</p>
+          <div
+            className="w-full lg:w-[28%] lg:max-w-[320px] border-b lg:border-b-0 lg:border-r flex flex-col overflow-y-auto shrink-0"
+            style={{ background: "var(--surface-raised)", borderColor: "var(--border-1)" }}
+          >
+            <div
+              className="px-6 pt-5 pb-4 border-b shrink-0"
+              style={{ background: "var(--surface-inset)", borderColor: "var(--border-1)" }}
+            >
+              <p className="font-mono text-[10px] text-[var(--brand-primary)] tracking-[3px] uppercase mb-1.5">Challenge Brief</p>
+              <p className="font-display text-base md:text-lg text-haze leading-snug">{room.name}</p>
             </div>
 
-            {/* Task */}
-            <div className="px-5 py-4 flex-1 overflow-y-auto">
-              <div className="p-4 mb-4 border-l-2 bg-cosmos" style={{ borderLeftColor: catColor }}>
-                <p className="font-rajdhani text-sm text-haze leading-relaxed whitespace-pre-wrap">
+            <div className="px-6 py-5 flex-1 overflow-y-auto">
+              <div
+                className="p-4 mb-5 border-l-2 rounded-r-md"
+                style={{ borderLeftColor: catColor, background: "var(--surface-inset)" }}
+              >
+                <p className="font-body text-sm md:text-base text-haze leading-relaxed whitespace-pre-wrap">
                   {currentQuestion?.taskNormalised ?? room.taskNormalised ?? room.taskRaw}
                 </p>
               </div>
 
-              {/* Tags */}
-              <div className="flex flex-wrap gap-2 mb-5">
+              <div className="flex flex-wrap gap-2 mb-6">
                 {questionCategory && (
-                  <span className="font-space-mono text-[9px] px-2 py-0.5 border" style={{ color: catColor, borderColor: `${catColor}40`, backgroundColor: `${catColor}15` }}>
+                  <span
+                    className="font-mono text-[10px] px-2.5 py-1 border rounded tracking-wider"
+                    style={{ color: catColor, borderColor: `${catColor}55`, backgroundColor: `${catColor}14` }}
+                  >
                     {questionCategory.toUpperCase()}
                   </span>
                 )}
@@ -935,14 +973,13 @@ export default function ArenaPage() {
                 <Chip color="crown" size="xs">{room.bountyTier.toUpperCase()}</Chip>
               </div>
 
-              {/* Players */}
-              <div className="border border-cosmos-4 bg-cosmos-3 p-3">
-                <p className="font-space-mono text-[9px] text-haze-3 tracking-widest mb-2 uppercase">Players</p>
+              <div className="rounded-xl border border-[var(--border-1)] bg-[var(--surface-inset)] p-4">
+                <p className="font-mono text-[10px] text-haze-3 tracking-widest mb-3 uppercase">Players</p>
                 {players.map((p) => (
-                  <div key={p.id} className="flex items-center gap-2 py-1 border-b border-cosmos-4/40 last:border-0">
+                  <div key={p.id} className="flex items-center gap-2 py-1.5 border-b border-[var(--border-1)] last:border-0">
                     <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${p.status === "completed" ? "bg-success" : p.status === "forfeited" ? "bg-danger" : "bg-haze-3"}`} />
-                    <span className="font-space-mono text-[9px] text-haze-2 truncate flex-1">@{p.username ?? "player"}</span>
-                    <span className={`font-space-mono text-[9px] shrink-0 ${p.status === "completed" ? "text-success" : p.status === "forfeited" ? "text-danger" : "text-haze-3"}`}>
+                    <span className="font-mono text-[10px] text-haze-2 truncate flex-1">@{p.username ?? "player"}</span>
+                    <span className={`font-mono text-[9px] shrink-0 tracking-wider ${p.status === "completed" ? "text-success" : p.status === "forfeited" ? "text-danger" : "text-haze-3"}`}>
                       {p.status}
                     </span>
                   </div>
@@ -954,7 +991,10 @@ export default function ArenaPage() {
 
         {/* Editor + results (or host panel) */}
         <div className="flex-1 flex flex-col lg:flex-row min-w-0 overflow-hidden">
-          <div className="flex-1 flex flex-col border-b lg:border-b-0 lg:border-r border-cosmos-4 min-h-[400px] lg:min-h-0 bg-[#06040c]">
+          <div
+            className="flex-1 flex flex-col border-b lg:border-b-0 lg:border-r min-h-[400px] lg:min-h-0"
+            style={{ background: "var(--terminal-bg)", borderColor: "var(--border-1)" }}
+          >
             {data.isAdmin ? (
               <HostPanel
                 players={players}
@@ -974,21 +1014,26 @@ export default function ArenaPage() {
                 onDrop={blockDrop}
               />
             ) : (
-              /* Beautiful centered non-coding Question & Answer layout */
-              <div className="flex-1 flex flex-col justify-center items-center p-6 md:p-8 overflow-y-auto w-full">
-                <div className="w-full max-w-xl bg-cosmos-2 border border-cosmos-4 p-6 md:p-8 rounded-xl shadow-xl flex flex-col gap-6">
-                  {/* Question header */}
-                  <div className="flex items-center justify-between border-b border-cosmos-4 pb-4">
-                    <span className="font-space-mono text-[10px] text-void uppercase tracking-widest">
+              /* Centered non-coding Q&A card */
+              <div className="flex-1 flex flex-col justify-center items-center p-5 md:p-10 overflow-y-auto w-full">
+                <div
+                  className="w-full max-w-2xl rounded-2xl p-6 md:p-9 shadow-lg flex flex-col gap-7"
+                  style={{
+                    background: "var(--surface-raised)",
+                    border: "1px solid var(--border-1)",
+                  }}
+                >
+                  <div className="flex items-center justify-between border-b border-[var(--border-1)] pb-4">
+                    <span className="font-mono text-[11px] text-[var(--brand-primary)] uppercase tracking-widest">
                       Question
                     </span>
                     {questionCategory && (
                       <span
-                        className="font-space-mono text-[9px] px-2 py-0.5 border"
+                        className="font-mono text-[10px] px-2 py-0.5 border rounded tracking-wider"
                         style={{
                           color: catColor,
-                          borderColor: `${catColor}40`,
-                          backgroundColor: `${catColor}15`,
+                          borderColor: `${catColor}55`,
+                          backgroundColor: `${catColor}14`,
                         }}
                       >
                         {questionCategory.toUpperCase()}
@@ -996,21 +1041,19 @@ export default function ArenaPage() {
                     )}
                   </div>
 
-                  {/* The Question Text */}
-                  <div className="py-2">
-                    <p className="font-rajdhani font-semibold text-lg md:text-xl text-haze leading-relaxed whitespace-pre-wrap">
+                  <div>
+                    <p className="font-body font-semibold text-lg md:text-xl lg:text-2xl text-haze leading-relaxed whitespace-pre-wrap">
                       {currentQuestion?.taskNormalised ?? room.taskNormalised ?? room.taskRaw}
                     </p>
                     {totalQuestions > 1 && (
-                      <p className="font-space-mono text-xs text-void mt-3 tracking-widest">
+                      <p className="font-mono text-xs text-[var(--brand-primary)] mt-4 tracking-widest">
                         QUESTION {questionIndex + 1} OF {totalQuestions}
                       </p>
                     )}
                   </div>
 
-                  {/* Answer input */}
-                  <div className="flex flex-col gap-2">
-                    <label htmlFor="user-answer" className="font-space-mono text-[9px] text-haze-3 uppercase tracking-widest">
+                  <div className="flex flex-col gap-2.5">
+                    <label htmlFor="user-answer" className="font-mono text-[10px] text-haze-3 uppercase tracking-widest">
                       Your Answer
                     </label>
                     <textarea
@@ -1033,27 +1076,26 @@ export default function ArenaPage() {
                       onBeforeInput={blockBeforeInput}
                       onDrop={blockDrop}
                       onContextMenu={blockContextMenu}
-                      className="w-full p-4 bg-cosmos border border-cosmos-4 text-haze font-rajdhani text-base focus:outline-none focus:border-void resize-none rounded-lg"
+                      className="w-full p-4 md:p-5 bg-[var(--surface-inset)] border border-[var(--border-2)] text-haze font-body text-base md:text-lg focus:outline-none focus:border-[var(--brand-primary)] focus:shadow-[0_0_0_3px_var(--focus-ring)] resize-none rounded-xl transition-all"
                       placeholder="Type your answer here..."
                       disabled={inputDisabled}
-                      rows={3}
+                      rows={4}
                     />
-                    <p className="font-space-mono text-[9px] text-haze-3 text-right">
+                    <p className="font-mono text-[10px] text-haze-3 text-right">
                       Full-width tab only · no split view · Enter to submit
                     </p>
                   </div>
 
-                  {/* Submit button */}
-                  <div className="flex justify-end pt-4 border-t border-cosmos-4">
+                  <div className="flex justify-end pt-4 border-t border-[var(--border-1)]">
                     <Button
                       variant="primary"
-                      size="md"
+                      size="lg"
                       onClick={handleSubmit}
                       disabled={inputDisabled || submitting}
                       loading={submitting}
-                      className="gap-2"
+                      className="gap-2 min-w-[180px]"
                     >
-                      <Upload size={14} aria-hidden="true" /> SUBMIT ANSWER
+                      <Upload size={16} aria-hidden="true" /> SUBMIT ANSWER
                     </Button>
                   </div>
                 </div>
@@ -1062,17 +1104,20 @@ export default function ArenaPage() {
           </div>
 
           {/* Right panel */}
-          <div className="w-full lg:w-64 xl:w-80 flex flex-col shrink-0 bg-cosmos-2">
+          <div
+            className="w-full lg:w-72 xl:w-80 flex flex-col shrink-0"
+            style={{ background: "var(--surface-raised)" }}
+          >
             {!isCoding && (
-              <div className="p-4 border-b border-cosmos-4">
-                <div className="bg-cosmos-3 border border-cosmos-4 p-4">
-                  <p className="font-space-mono text-[9px] text-void tracking-widest mb-3 uppercase">Players</p>
+              <div className="p-4 border-b" style={{ borderColor: "var(--border-1)" }}>
+                <div className="rounded-xl bg-[var(--surface-inset)] border border-[var(--border-1)] p-4">
+                  <p className="font-mono text-[10px] text-[var(--brand-primary)] tracking-widest mb-3 uppercase">Players</p>
                   <div className="space-y-2 max-h-48 overflow-y-auto">
                     {players.map((p) => (
-                      <div key={p.id} className="flex items-center gap-2 py-1.5 border-b border-cosmos-4/30 last:border-0">
+                      <div key={p.id} className="flex items-center gap-2 py-1.5 border-b border-[var(--border-1)] last:border-0">
                         <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${p.status === "completed" ? "bg-success" : p.status === "forfeited" ? "bg-danger" : "bg-haze-3"}`} />
-                        <span className="font-space-mono text-[10px] text-haze-2 truncate flex-1">@{p.username ?? "player"}</span>
-                        <span className={`font-space-mono text-[9px] uppercase tracking-wider shrink-0 ${p.status === "completed" ? "text-success" : p.status === "forfeited" ? "text-danger" : "text-haze-3"}`}>
+                        <span className="font-mono text-[10px] text-haze-2 truncate flex-1">@{p.username ?? "player"}</span>
+                        <span className={`font-mono text-[9px] uppercase tracking-wider shrink-0 ${p.status === "completed" ? "text-success" : p.status === "forfeited" ? "text-danger" : "text-haze-3"}`}>
                           {p.status}
                         </span>
                       </div>
@@ -1082,7 +1127,7 @@ export default function ArenaPage() {
               </div>
             )}
             {isCoding && (
-              <div className="flex-1 p-4 overflow-y-auto border-b border-cosmos-4">
+              <div className="flex-1 p-4 overflow-y-auto border-b" style={{ borderColor: "var(--border-1)" }}>
                 <TestResults testCases={testCases} results={testResults} ran={testRan} />
               </div>
             )}
@@ -1101,9 +1146,9 @@ export default function ArenaPage() {
             animate={{ opacity: 1 }}
             className="fixed bottom-6 inset-x-6 z-40 flex items-center justify-center pointer-events-none"
           >
-            <div className="bg-danger/10 border border-danger/50 px-6 py-4 text-center clip-arena-sm">
-              <p className="font-zen-dots text-danger text-sm">DISQUALIFIED</p>
-              <p className="font-space-mono text-[10px] text-haze-3 mt-1 max-w-md">
+            <div className="bg-danger/10 border border-danger/50 px-7 py-5 text-center rounded-xl backdrop-blur-md">
+              <p className="font-display text-danger text-base md:text-lg tracking-wide">DISQUALIFIED</p>
+              <p className="font-mono text-[10px] md:text-xs text-haze-2 mt-2 max-w-md">
                 {arenaCheatMessage(cheatReason)}
               </p>
             </div>

@@ -56,13 +56,13 @@ interface RoomData {
 
 /* ─── Constants ─── */
 const CAT_COLORS: Record<string, string> = {
-  coding: "#FF6B1A",
-  trivia: "#9B6BFF",
-  logic: "#00D68F",
-  math: "#F0A500",
-  writing: "#9B8FC0",
-  design: "#C084FC",
-  meme: "#F472B6",
+  coding:  "#7C5CFF",
+  trivia:  "#A78BFA",
+  logic:   "#22D3EE",
+  math:    "#F0A500",
+  writing: "#F472B6",
+  design:  "#34D399",
+  meme:    "#FB7185",
 };
 
 const DIFF_CHIP_COLOR: Record<RoomDifficulty, "ignite" | "crown" | "void" | "success" | "danger" | "haze"> = {
@@ -277,7 +277,7 @@ export default function LobbyPage() {
   }
 
   const { room, players, isAdmin } = data;
-  const catColor = CAT_COLORS[room.category ?? "coding"] ?? "#FF6B1A";
+  const catColor = CAT_COLORS[room.category ?? "coding"] ?? "#7C5CFF";
   // The host referees — they don't count as a player anywhere
   const host = players.find((p) => p.userId === room.adminId);
   const competitors = players.filter((p) => p.userId !== room.adminId);

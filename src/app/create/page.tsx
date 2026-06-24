@@ -62,11 +62,19 @@ function StepActions({
 
 /* ─── Constants ─── */
 const CAT_COLORS: Record<string, string> = {
-  coding: "#F92313", trivia: "#4E2725", logic: "#F92313", math: "#4E2725",
-  writing: "#F92313", design: "#4E2725", meme: "#F92313",
+  coding:  "#7C5CFF",
+  trivia:  "#A78BFA",
+  logic:   "#22D3EE",
+  math:    "#F0A500",
+  writing: "#F472B6",
+  design:  "#34D399",
+  meme:    "#FB7185",
 };
 const DIFF_COLORS: Record<Difficulty, string> = {
-  rookie: "#DDEAE1", challenger: "#F92313", elite: "#4E2725", legendary: "#F92313",
+  rookie:     "#6EE7B7",
+  challenger: "#A78BFA",
+  elite:      "#7C5CFF",
+  legendary:  "#F0A500",
 };
 
 function sleep(ms: number) {
@@ -97,36 +105,40 @@ function mergeBulkPaste(
 /* ─── Step indicator ─── */
 function StepIndicator({ step }: { step: Step }) {
   const steps = [
-    { id: "setup", label: "SETUP" },
-    { id: "questions", label: "QUESTIONS" },
-    { id: "review", label: "REVIEW" },
-    { id: "lobby", label: "LAUNCH" },
+    { id: "setup", label: "Setup" },
+    { id: "questions", label: "Questions" },
+    { id: "review", label: "Review" },
+    { id: "lobby", label: "Launch" },
   ];
   const activeIdx = ["setup", "questions", "review", "lobby"].indexOf(step);
   return (
     <div className="mb-12 md:mb-16">
-      <p className="sm:hidden text-sm font-medium text-plum mb-4">
+      <p className="sm:hidden font-mono text-xs text-[var(--brand-primary)] tracking-widest uppercase mb-4">
         Step {activeIdx + 1} of {steps.length} · {steps[activeIdx]?.label}
       </p>
-      <div className="flex items-center justify-start sm:justify-center gap-3 sm:gap-5 flex-wrap">
+      <div className="hidden sm:flex items-center justify-center gap-4 md:gap-6 flex-wrap">
         {steps.map((s, i) => (
-          <div key={s.id} className="flex items-center gap-3 sm:gap-4 shrink-0">
+          <div key={s.id} className="flex items-center gap-4 md:gap-5 shrink-0">
             <div className="flex items-center gap-3 shrink-0">
-              <div className={`w-10 h-10 md:w-11 md:h-11 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
-                i < activeIdx ? "bg-[var(--brand-primary)] border-[var(--brand-primary)] text-white" : i === activeIdx ? "border-[var(--brand-primary)] bg-[var(--void-tint)]" : "border-[var(--border-2)] bg-transparent"
+              <div className={`w-11 h-11 md:w-12 md:h-12 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+                i < activeIdx
+                  ? "bg-[var(--brand-primary)] border-[var(--brand-primary)] text-white shadow-[0_0_18px_var(--glow-1)]"
+                  : i === activeIdx
+                    ? "border-[var(--brand-primary)] bg-[var(--void-tint)] shadow-[0_0_18px_var(--glow-1)]"
+                    : "border-[var(--border-2)] bg-transparent"
               }`}>
                 {i < activeIdx ? (
-                  <svg width="12" height="12" viewBox="0 0 10 10" fill="none"><path d="M2 5l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  <svg width="14" height="14" viewBox="0 0 10 10" fill="none"><path d="M2 5l2 2 4-4" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
                 ) : (
-                  <span className={`text-sm font-semibold tabular-nums ${i === activeIdx ? "text-[var(--brand-primary)]" : "text-haze-3"}`}>{i + 1}</span>
+                  <span className={`font-stats text-base font-bold tabular-nums ${i === activeIdx ? "text-[var(--brand-primary)]" : "text-haze-3"}`}>{i + 1}</span>
                 )}
               </div>
-              <span className={`hidden sm:inline text-sm md:text-base font-medium ${i === activeIdx ? "text-haze" : i < activeIdx ? "text-[var(--brand-primary)]" : "text-haze-3"}`}>
-                {s.label.charAt(0) + s.label.slice(1).toLowerCase()}
+              <span className={`text-sm md:text-base font-semibold tracking-wide ${i === activeIdx ? "text-haze" : i < activeIdx ? "text-[var(--brand-primary)]" : "text-haze-3"}`}>
+                {s.label}
               </span>
             </div>
             {i < steps.length - 1 && (
-              <div className={`w-10 sm:w-16 h-px transition-all ${i < activeIdx ? "bg-[var(--brand-primary)]" : "bg-[var(--border-2)]"}`} />
+              <div className={`w-10 md:w-20 h-[2px] rounded-full transition-all ${i < activeIdx ? "bg-[var(--brand-primary)]" : "bg-[var(--border-1)]"}`} />
             )}
           </div>
         ))}
@@ -158,49 +170,47 @@ function SetupStep({
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -16 }}
-      className="grid grid-cols-1 lg:grid-cols-2 gap-10 md:gap-12 xl:gap-16 w-full"
+      className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-10 xl:gap-14 w-full"
     >
-      {/* Left Column */}
-      <div className="flex flex-col gap-10 min-w-0">
-        <div className="flex flex-col gap-4 rounded-2xl bg-[var(--void-tint)] border-2 border-[var(--border-accent)] px-8 py-7 md:px-10 md:py-9">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-            <span className="text-sm font-semibold text-plum uppercase tracking-wide">Bounty entry fee</span>
-            <span className="font-stats font-bold text-lg text-haze">{ENTRY_FEE} coins / player</span>
+      <div className="flex flex-col gap-8 md:gap-10 min-w-0">
+        <div className="flex flex-col gap-4 rounded-2xl bg-[var(--void-tint)] border border-[var(--border-accent)] px-7 py-7 md:px-9 md:py-8 shadow-sm">
+          <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2">
+            <span className="font-mono text-xs sm:text-sm font-semibold text-[var(--brand-primary)] uppercase tracking-[2px]">Bounty entry fee</span>
+            <span className="font-stats font-bold text-lg md:text-xl text-haze">{ENTRY_FEE} coins / player</span>
           </div>
-          <span className="text-base text-haze-2 leading-relaxed">{ENTRY_FEE_SUMMARY}</span>
-          <span className="text-sm text-haze-3">{HOSTING_FREE_SUMMARY}</span>
+          <span className="font-body text-base md:text-lg text-haze-2 leading-relaxed">{ENTRY_FEE_SUMMARY}</span>
+          <span className="font-body text-sm md:text-base text-haze-3">{HOSTING_FREE_SUMMARY}</span>
         </div>
 
         <div>
-          <label className="block text-sm font-semibold uppercase tracking-wide text-haze-2 mb-4">Arena name</label>
+          <label className="block font-mono text-xs sm:text-sm font-semibold uppercase tracking-[2px] text-haze-2 mb-4">Arena name</label>
           <input
             type="text"
             maxLength={60}
             placeholder="e.g. Friday Coding Battle"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full h-14 md:h-16 px-6 bg-[var(--surface-inset)] border-2 border-[var(--border-2)] rounded-xl text-haze font-rajdhani text-lg md:text-xl placeholder:text-haze-3 focus:outline-none focus:border-[var(--brand-primary)] focus:shadow-[0_0_0_3px_var(--focus-ring)] transition-all"
+            className="w-full h-14 md:h-16 px-6 bg-[var(--surface-inset)] border border-[var(--border-2)] rounded-xl text-haze font-display text-lg md:text-xl placeholder:text-haze-3 focus:outline-none focus:border-[var(--brand-primary)] focus:shadow-[0_0_0_3px_var(--focus-ring)] transition-all"
           />
         </div>
       </div>
 
-      {/* Right Column */}
-      <div className="flex flex-col gap-10 min-w-0">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-8">
+      <div className="flex flex-col gap-8 md:gap-10 min-w-0">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-6 md:gap-7">
           <div>
-            <label className="block text-sm font-semibold uppercase tracking-wide text-haze-2 mb-4">Players (2–20)</label>
-            <div className="flex items-center border-2 border-[var(--border-2)] bg-[var(--surface-inset)] h-14 md:h-16 rounded-xl overflow-hidden">
-              <button type="button" onClick={() => setPlayers((n) => Math.max(2, n - 1))} className="cursor-target w-14 h-full text-haze-2 hover:text-plum hover:bg-[var(--surface-hover)] transition-colors font-semibold text-2xl">−</button>
+            <label className="block font-mono text-xs sm:text-sm font-semibold uppercase tracking-[2px] text-haze-2 mb-4">Players (2–20)</label>
+            <div className="flex items-center border border-[var(--border-2)] bg-[var(--surface-inset)] h-14 md:h-16 rounded-xl overflow-hidden">
+              <button type="button" onClick={() => setPlayers((n) => Math.max(2, n - 1))} className="cursor-target w-14 h-full text-haze-2 hover:text-[var(--brand-primary)] hover:bg-[var(--surface-hover)] transition-colors font-semibold text-2xl">−</button>
               <span className="flex-1 text-center font-stats font-bold text-2xl md:text-3xl text-haze tabular-nums">{players}</span>
-              <button type="button" onClick={() => setPlayers((n) => Math.min(20, n + 1))} className="cursor-target w-14 h-full text-haze-2 hover:text-plum hover:bg-[var(--surface-hover)] transition-colors font-semibold text-2xl">+</button>
+              <button type="button" onClick={() => setPlayers((n) => Math.min(20, n + 1))} className="cursor-target w-14 h-full text-haze-2 hover:text-[var(--brand-primary)] hover:bg-[var(--surface-hover)] transition-colors font-semibold text-2xl">+</button>
             </div>
-            <p className="text-sm text-haze-3 mt-3">Max bounty pool: {maxBountyPool(players)} coins ({ENTRY_FEE} × competing players)</p>
+            <p className="font-body text-sm md:text-base text-haze-3 mt-3 leading-relaxed">Max bounty pool: {maxBountyPool(players)} coins ({ENTRY_FEE} × competing players)</p>
           </div>
           <div>
-            <label className="block text-sm font-semibold uppercase tracking-wide text-haze-2 mb-4">Timer</label>
+            <label className="block font-mono text-xs sm:text-sm font-semibold uppercase tracking-[2px] text-haze-2 mb-4">Timer</label>
             <button type="button" onClick={() => setTimer(!timer)} role="switch" aria-checked={timer}
-              className={`cursor-target w-full h-14 md:h-16 flex items-center justify-center gap-3 border-2 rounded-xl text-base md:text-lg font-semibold transition-all ${timer ? "border-plum text-plum bg-[var(--void-tint)]" : "border-[var(--border-2)] text-haze-3"}`}>
-              <span className={`w-3 h-3 rounded-full transition-colors ${timer ? "bg-plum" : "bg-[var(--border-2)]"}`} aria-hidden />
+              className={`cursor-target w-full h-14 md:h-16 flex items-center justify-center gap-3 border rounded-xl text-base md:text-lg font-semibold transition-all ${timer ? "border-[var(--brand-primary)] text-[var(--brand-primary)] bg-[var(--void-tint)]" : "border-[var(--border-2)] text-haze-3"}`}>
+              <span className={`w-3 h-3 rounded-full transition-colors ${timer ? "bg-[var(--brand-primary)]" : "bg-[var(--border-2)]"}`} aria-hidden />
               {timer ? "On" : "Off"}
             </button>
           </div>
@@ -208,16 +218,16 @@ function SetupStep({
 
         {timer && (
           <div>
-            <label className="block text-sm font-semibold uppercase tracking-wide text-haze-2 mb-3">Duration — {timerMin} minutes</label>
-            <input type="range" min={1} max={60} value={timerMin} onChange={(e) => setTimerMin(Number(e.target.value))} className="w-full h-2 accent-[#F92313]" />
-            <div className="flex justify-between text-sm text-haze-3 mt-3"><span>1 min</span><span>60 min</span></div>
+            <label className="block font-mono text-xs sm:text-sm font-semibold uppercase tracking-[2px] text-haze-2 mb-4">Duration — {timerMin} minutes</label>
+            <input type="range" min={1} max={60} value={timerMin} onChange={(e) => setTimerMin(Number(e.target.value))} className="w-full h-2" style={{ accentColor: "var(--brand-primary)" }} />
+            <div className="flex justify-between font-mono text-xs text-haze-3 mt-3"><span>1 min</span><span>60 min</span></div>
           </div>
         )}
       </div>
 
       {error && (
         <div className="lg:col-span-2">
-          <p className="flex items-center gap-2 text-base text-danger"><AlertCircle size={18} /> {error}</p>
+          <p className="flex items-center gap-2 font-body text-base text-danger"><AlertCircle size={18} /> {error}</p>
         </div>
       )}
 
@@ -266,22 +276,22 @@ function QuestionCard({
 
   return (
     <motion.div layout initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }}
-      className="rounded-2xl border-2 border-[var(--border-1)] bg-[var(--surface-inset)] p-8 md:p-12 lg:p-14 shadow-sm">
-      <div className="flex items-center justify-between mb-6 md:mb-8">
-        <span className="font-space-mono text-sm text-void tracking-widest uppercase">Question {index + 1}</span>
+      className="rounded-2xl border border-[var(--border-1)] bg-[var(--surface-card)] p-6 sm:p-8 md:p-10 lg:p-12 shadow-sm">
+      <div className="flex items-center justify-between gap-4 mb-6 md:mb-7">
+        <span className="font-mono text-xs sm:text-sm text-[var(--brand-primary)] tracking-widest uppercase">Question {index + 1}</span>
         <div className="flex items-center gap-3">
           {q.status === "done" && q.analysis?.valid && (
-            <span className="font-space-mono text-xs text-success tracking-wider uppercase">Ready</span>
+            <span className="font-mono text-[10px] sm:text-xs text-success tracking-wider uppercase">Ready</span>
           )}
           {q.status === "clarify" && (
-            <span className="font-space-mono text-xs text-crown tracking-wider uppercase">Needs input</span>
+            <span className="font-mono text-[10px] sm:text-xs text-crown tracking-wider uppercase">Needs input</span>
           )}
           {q.status === "invalid" && (
-            <span className="font-space-mono text-xs text-danger tracking-wider uppercase">Invalid</span>
+            <span className="font-mono text-[10px] sm:text-xs text-danger tracking-wider uppercase">Invalid</span>
           )}
           {total > 1 && (
-            <button type="button" onClick={onDelete} className="cursor-target text-haze-3 hover:text-danger transition-colors p-2.5 rounded-lg hover:bg-danger/10" aria-label="Remove question">
-              <Trash2 size={22} />
+            <button type="button" onClick={onDelete} className="cursor-target text-haze-3 hover:text-danger transition-colors p-2 rounded-lg hover:bg-[var(--surface-hover)]" aria-label="Remove question">
+              <Trash2 size={20} />
             </button>
           )}
         </div>
@@ -320,26 +330,26 @@ function QuestionCard({
           }
         }}
         disabled={q.status === "analyzing"}
-        className="w-full min-h-[180px] px-6 py-5 bg-cosmos border-2 border-cosmos-4 text-haze font-rajdhani text-lg md:text-xl placeholder:text-haze-3 focus:outline-none focus:border-void focus:shadow-[0_0_0_3px_rgba(168,85,247,0.2)] transition-all resize-y disabled:opacity-50 rounded-xl"
+        className="w-full min-h-[180px] px-5 py-4 sm:px-6 sm:py-5 bg-[var(--surface-inset)] border border-[var(--border-2)] text-haze font-body text-base md:text-lg placeholder:text-haze-3 focus:outline-none focus:border-[var(--brand-primary)] focus:shadow-[0_0_0_3px_var(--focus-ring)] transition-all resize-y disabled:opacity-50 rounded-xl"
       />
 
       {/* Error */}
-      {q.error && <p className="font-rajdhani text-base text-danger mt-3">{q.error}</p>}
+      {q.error && <p className="font-body text-sm md:text-base text-danger mt-3">{q.error}</p>}
       {q.status === "invalid" && q.analysis && (
-        <p className="font-rajdhani text-base text-danger mt-3">{q.analysis.invalidReason}</p>
+        <p className="font-body text-sm md:text-base text-danger mt-3">{q.analysis.invalidReason}</p>
       )}
 
-      {/* Clarification needed — task is real but the AI needs the host to decide something */}
+      {/* Clarification needed */}
       {q.status === "clarify" && q.analysis && (
-        <div className="mt-5 border border-crown/30 bg-crown/5 p-5 md:p-6 rounded-xl">
+        <div className="mt-5 border border-crown/40 bg-crown/5 p-5 md:p-6 rounded-xl">
           <div className="flex items-start gap-3 mb-4">
             <AlertCircle size={18} className="text-crown shrink-0 mt-0.5" aria-hidden />
-            <p className="font-rajdhani text-base md:text-lg text-haze leading-relaxed">{q.analysis.clarificationReason}</p>
+            <p className="font-body text-base md:text-lg text-haze leading-relaxed">{q.analysis.clarificationReason}</p>
           </div>
 
           {q.analysis.category === "coding" ? (
             <>
-              <p className="font-space-mono text-xs text-haze-3 tracking-widest uppercase mb-3">
+              <p className="font-mono text-xs text-haze-3 tracking-widest uppercase mb-3">
                 Pick the language for this challenge
               </p>
               <div className="flex flex-wrap gap-2 mb-4">
@@ -348,10 +358,10 @@ function QuestionCard({
                     key={k}
                     type="button"
                     onClick={() => setPickLang(k)}
-                    className={`cursor-target font-space-mono text-sm px-4 py-2 border rounded-lg transition-all ${
+                    className={`cursor-target font-mono text-sm px-4 py-2 border rounded-lg transition-all ${
                       pickLang === k
-                        ? "border-void text-void bg-void/10"
-                        : "border-cosmos-4 text-haze-3 hover:text-haze-2 hover:border-void/40"
+                        ? "border-[var(--brand-primary)] text-[var(--brand-primary)] bg-[var(--void-tint)]"
+                        : "border-[var(--border-1)] text-haze-2 hover:text-haze hover:border-[var(--border-accent)]"
                     }`}
                   >
                     {LANGUAGES[k].label}
@@ -367,13 +377,13 @@ function QuestionCard({
               {q.analysis.suggestions && q.analysis.suggestions.length > 0 && (
                 <ul className="mb-4 space-y-2">
                   {q.analysis.suggestions.map((s, i) => (
-                    <li key={i} className="font-rajdhani text-base text-haze-2 flex gap-2">
+                    <li key={i} className="font-body text-base text-haze-2 flex gap-2">
                       <span className="text-crown">›</span> {s}
                     </li>
                   ))}
                 </ul>
               )}
-              <p className="font-rajdhani text-sm text-haze-3">
+              <p className="font-body text-sm text-haze-3">
                 Edit the question above to be more specific, then re-analyze.
               </p>
             </>
@@ -385,20 +395,20 @@ function QuestionCard({
       {q.status === "done" && q.analysis?.valid && (
         <>
           <div className="mt-5 flex flex-wrap gap-3 items-center">
-            <span className="font-space-mono text-sm px-4 py-1.5 border rounded-lg" style={{ color: catColor, borderColor: `${catColor}44`, background: `${catColor}11` }}>
+            <span className="font-mono text-xs sm:text-sm px-3 py-1.5 border rounded-lg" style={{ color: catColor, borderColor: `${catColor}55`, background: `${catColor}14` }}>
               {q.analysis.category.toUpperCase()}
             </span>
-            <span className="font-space-mono text-sm px-4 py-1.5 border rounded-lg" style={{ color: DIFF_COLORS[q.analysis.difficulty], borderColor: `${DIFF_COLORS[q.analysis.difficulty]}44`, background: `${DIFF_COLORS[q.analysis.difficulty]}11` }}>
+            <span className="font-mono text-xs sm:text-sm px-3 py-1.5 border rounded-lg" style={{ color: DIFF_COLORS[q.analysis.difficulty], borderColor: `${DIFF_COLORS[q.analysis.difficulty]}55`, background: `${DIFF_COLORS[q.analysis.difficulty]}14` }}>
               {q.analysis.difficulty.toUpperCase()}
             </span>
-            <span className="font-rajdhani text-lg md:text-xl text-haze font-semibold">"{q.analysis.title}"</span>
+            <span className="font-display text-base sm:text-lg md:text-xl text-haze">&ldquo;{q.analysis.title}&rdquo;</span>
           </div>
 
           {q.analysis.category !== "coding" && (
-            <div className="mt-6 border border-crown/30 bg-crown/5 p-5 md:p-6 rounded-xl">
+            <div className="mt-6 border border-crown/40 bg-crown/5 p-5 md:p-6 rounded-xl">
               <label
                 htmlFor={`answer-${q.localId}`}
-                className="font-space-mono text-sm text-crown tracking-widest uppercase block mb-3"
+                className="font-mono text-[11px] sm:text-xs text-crown tracking-widest uppercase block mb-3"
               >
                 Correct answer (AI) — edit if wrong
               </label>
@@ -408,22 +418,22 @@ function QuestionCard({
                 value={q.analysis.canonicalAnswer ?? ""}
                 onChange={(e) => onAnswerChange(e.target.value)}
                 placeholder="The answer players must match"
-                className="w-full h-14 px-5 bg-cosmos border border-cosmos-4 text-haze font-rajdhani text-lg focus:outline-none focus:border-crown transition-colors rounded-xl"
+                className="w-full h-14 px-5 bg-[var(--surface-inset)] border border-[var(--border-2)] text-haze font-body text-base md:text-lg focus:outline-none focus:border-crown transition-colors rounded-xl"
               />
-              <p className="font-rajdhani text-base text-haze-2 mt-3 leading-relaxed">
+              <p className="font-body text-sm md:text-base text-haze-2 mt-3 leading-relaxed">
                 The AI fact-checks this answer. It must be one specific name, number, or fact — edit it if the AI got it wrong.
               </p>
             </div>
           )}
 
           {q.analysis.category === "coding" && (
-            <div className="mt-5 border border-void/30 bg-void/5 p-5 md:p-6 rounded-xl">
-              <div className="flex items-center justify-between gap-3 mb-3">
-                <span className="font-space-mono text-xs text-void tracking-widest uppercase">Coding environment</span>
+            <div className="mt-5 border border-[var(--border-accent)] bg-[var(--void-tint)] p-5 md:p-6 rounded-xl">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                <span className="font-mono text-xs text-[var(--brand-primary)] tracking-widest uppercase">Coding environment</span>
                 <select
                   value={q.analysis.language ?? "javascript"}
                   onChange={(e) => onAnalyze(e.target.value)}
-                  className="bg-cosmos border border-cosmos-4 text-haze-2 font-space-mono text-sm px-3 py-2 rounded-lg focus:outline-none focus:border-void"
+                  className="bg-[var(--surface-inset)] border border-[var(--border-1)] text-haze-2 font-mono text-sm px-3 py-2 rounded-lg focus:outline-none focus:border-[var(--brand-primary)]"
                   aria-label="Change language"
                 >
                   {LANGUAGE_KEYS.map((k) => (
@@ -431,13 +441,13 @@ function QuestionCard({
                   ))}
                 </select>
               </div>
-              <p className="font-rajdhani text-base text-haze-2 mb-2">
-                Editor language: <span className="text-void font-semibold">{getLanguage(q.analysis.language).label}</span>
+              <p className="font-body text-base text-haze-2 mb-2">
+                Editor language: <span className="text-[var(--brand-primary)] font-semibold">{getLanguage(q.analysis.language).label}</span>
               </p>
               {q.analysis.ioFormat && (
-                <p className="font-space-mono text-sm text-haze-3 leading-relaxed mb-2">I/O: {q.analysis.ioFormat}</p>
+                <p className="font-mono text-xs sm:text-sm text-haze-3 leading-relaxed mb-2">I/O: {q.analysis.ioFormat}</p>
               )}
-              <p className="font-space-mono text-sm text-haze-3">
+              <p className="font-mono text-xs sm:text-sm text-haze-3">
                 {q.analysis.publicTests?.length ?? 0} public + {q.analysis.hiddenTests?.length ?? 0} hidden tests · change the language to rebuild the room
               </p>
             </div>
@@ -450,10 +460,10 @@ function QuestionCard({
         type="button"
         onClick={() => onAnalyze()}
         disabled={q.status === "analyzing" || !q.taskRaw.trim()}
-        className={`cursor-target mt-5 w-full h-12 md:h-14 flex items-center justify-center gap-2 border rounded-xl font-space-mono text-sm tracking-widest uppercase transition-all disabled:opacity-40 ${
+        className={`cursor-target mt-5 w-full h-12 md:h-14 flex items-center justify-center gap-2 border rounded-xl font-mono text-xs sm:text-sm tracking-widest uppercase transition-all disabled:opacity-40 ${
           q.status === "done" && q.analysis?.valid
             ? "border-success/40 text-success bg-success/5 hover:bg-success/10"
-            : "border-void/40 text-void bg-void/5 hover:bg-void/10"
+            : "border-[var(--border-accent)] text-[var(--brand-primary)] bg-[var(--void-tint)] hover:bg-[var(--void-tint-hover)]"
         }`}
       >
         {q.status === "analyzing" ? (
@@ -556,13 +566,13 @@ function QuestionsStep({
 
       {questions.length < 10 && (
         <button type="button" onClick={onAdd}
-          className="cursor-target flex items-center justify-center gap-3 h-14 md:h-16 border-2 border-dashed border-cosmos-4 text-haze-3 hover:text-void hover:border-void/50 font-space-mono text-sm tracking-widest uppercase transition-all rounded-xl">
+          className="cursor-target flex items-center justify-center gap-3 h-14 md:h-16 border-2 border-dashed border-[var(--border-1)] text-haze-3 hover:text-[var(--brand-primary)] hover:border-[var(--border-accent)] font-mono text-xs sm:text-sm tracking-widest uppercase transition-all rounded-xl">
           <Plus size={18} /> Add question ({questions.length}/10)
         </button>
       )}
 
       {!allValid && questions.length > 0 && (
-        <p className="font-rajdhani text-base text-haze-3 text-center">
+        <p className="font-body text-base text-haze-3 text-center">
           Analyze all questions and confirm each has a specific correct answer before continuing
         </p>
       )}
@@ -598,52 +608,52 @@ function ReviewStep({
   const maxPrizePool = maxBountyPool(playerCap);
 
   return (
-    <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} className="flex flex-col gap-12 md:gap-14 lg:gap-16">
-      <div className="bg-cosmos-2 border border-cosmos-4 p-6 md:p-8 rounded-2xl">
-        <p className="font-space-mono text-sm text-void tracking-widest mb-4 uppercase">Arena summary</p>
-        <div className="flex flex-col gap-3 font-rajdhani text-base md:text-lg">
-          <div className="flex justify-between gap-4"><span className="text-haze-3">Name</span><span className="text-haze font-semibold text-right">{arenaName}</span></div>
-          <div className="flex justify-between gap-4"><span className="text-haze-3">Questions</span><span className="text-haze font-semibold">{questions.length}</span></div>
-          <div className="flex justify-between gap-4"><span className="text-haze-3">Entry fee</span><span className="text-coin-gold font-semibold">{ENTRY_FEE} coins / player → bounty</span></div>
-          <div className="flex justify-between gap-4"><span className="text-haze-3">Max bounty pool</span><span className="text-coin-gold font-bold text-xl">{maxPrizePool} coins</span></div>
-          <p className="text-haze-3 text-sm pt-4 border-t border-cosmos-4 mt-2 leading-relaxed">
+    <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} className="flex flex-col gap-10 md:gap-12 lg:gap-14">
+      <div className="bg-[var(--surface-inset)] border border-[var(--border-1)] p-6 md:p-8 lg:p-9 rounded-2xl shadow-sm">
+        <p className="font-mono text-xs sm:text-sm text-[var(--brand-primary)] tracking-widest mb-5 uppercase">Arena summary</p>
+        <div className="flex flex-col gap-3.5 font-body text-base md:text-lg">
+          <div className="flex flex-wrap justify-between gap-4"><span className="text-haze-3">Name</span><span className="text-haze font-semibold text-right">{arenaName}</span></div>
+          <div className="flex flex-wrap justify-between gap-4"><span className="text-haze-3">Questions</span><span className="text-haze font-semibold">{questions.length}</span></div>
+          <div className="flex flex-wrap justify-between gap-4"><span className="text-haze-3">Entry fee</span><span className="text-coin-gold font-semibold">{ENTRY_FEE} coins / player → bounty</span></div>
+          <div className="flex flex-wrap justify-between gap-4"><span className="text-haze-3">Max bounty pool</span><span className="font-stats text-coin-gold font-bold text-xl md:text-2xl">{maxPrizePool} coins</span></div>
+          <p className="text-haze-3 text-sm md:text-base pt-4 border-t border-[var(--border-1)] mt-2 leading-relaxed">
             {HOSTING_FREE_SUMMARY} {ENTRY_FEE_SUMMARY}
           </p>
         </div>
       </div>
 
-      <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-5 md:gap-6">
         {questions.map((q, i) => {
           const a = q.analysis!;
-          const catColor = CAT_COLORS[a.category] ?? "#9B8FC0";
+          const catColor = CAT_COLORS[a.category] ?? "#A78BFA";
           return (
-            <div key={q.localId} className="bg-cosmos-2 border border-cosmos-4 p-5 md:p-6 rounded-xl">
-              <div className="flex items-center justify-between mb-3">
-                <span className="font-space-mono text-sm text-haze-3 uppercase">Q{i + 1}</span>
+            <div key={q.localId} className="bg-[var(--surface-inset)] border border-[var(--border-1)] p-5 sm:p-6 md:p-7 rounded-xl shadow-sm">
+              <div className="flex items-center justify-between gap-3 mb-3">
+                <span className="font-mono text-xs sm:text-sm text-haze-3 uppercase tracking-widest">Q{i + 1}</span>
                 <div className="flex items-center gap-2">
-                  <span className="font-space-mono text-xs px-3 py-1 border rounded-lg" style={{ color: catColor, borderColor: `${catColor}44`, background: `${catColor}11` }}>
+                  <span className="font-mono text-[10px] sm:text-xs px-2.5 py-1 border rounded-md" style={{ color: catColor, borderColor: `${catColor}55`, background: `${catColor}14` }}>
                     {a.category.toUpperCase()}
                   </span>
-                  <span className="font-space-mono text-xs font-semibold" style={{ color: DIFF_COLORS[a.difficulty] }}>
+                  <span className="font-mono text-[10px] sm:text-xs font-semibold tracking-wider" style={{ color: DIFF_COLORS[a.difficulty] }}>
                     {a.difficulty.toUpperCase()}
                   </span>
                 </div>
               </div>
-              <p className="font-rajdhani font-bold text-lg md:text-xl text-haze mb-2">"{a.title}"</p>
-              <p className="font-rajdhani text-base text-haze-2 line-clamp-3">{a.taskNormalised}</p>
+              <p className="font-display text-lg md:text-xl text-haze mb-2 leading-snug">&ldquo;{a.title}&rdquo;</p>
+              <p className="font-body text-base text-haze-2 line-clamp-3 leading-relaxed">{a.taskNormalised}</p>
               {a.category !== "coding" && a.canonicalAnswer && (
-                <p className="font-space-mono text-sm text-crown mt-3">
+                <p className="font-mono text-xs sm:text-sm text-crown mt-3">
                   Answer: <span className="text-haze">{a.canonicalAnswer}</span>
                 </p>
               )}
-              {a.publicTests && <p className="font-space-mono text-sm text-haze-3 mt-2">{a.publicTests.length} public · {a.hiddenTests?.length ?? 0} hidden tests</p>}
+              {a.publicTests && <p className="font-mono text-xs sm:text-sm text-haze-3 mt-2">{a.publicTests.length} public · {a.hiddenTests?.length ?? 0} hidden tests</p>}
             </div>
           );
         })}
       </div>
 
       {createError && (
-        <p className="flex items-center justify-center gap-2 font-rajdhani text-base text-danger text-center">
+        <p className="flex items-center justify-center gap-2 font-body text-base text-danger text-center">
           <AlertCircle size={18} /> {createError}
         </p>
       )}
@@ -663,15 +673,15 @@ function LobbyView({ room }: { room: CreatedRoom }) {
   const router = useRouter();
 
   return (
-    <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-8 md:gap-10">
-      <div className="text-center py-4">
-        <h2 className="font-orbitron font-black text-4xl md:text-5xl text-haze mb-2">Arena created</h2>
-        <p className="font-rajdhani font-bold text-xl md:text-2xl text-void">{room.name}</p>
-        <p className="font-space-mono text-sm text-success mt-3 tracking-widest uppercase">Lobby ready</p>
+    <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-10 md:gap-12 max-w-2xl mx-auto w-full">
+      <div className="text-center py-6 md:py-8">
+        <h2 className="font-display text-4xl md:text-5xl lg:text-6xl text-haze mb-3 leading-tight">Arena created</h2>
+        <p className="font-stats font-bold text-xl md:text-2xl text-[var(--brand-primary)]">{room.name}</p>
+        <p className="font-mono text-xs sm:text-sm text-success mt-4 tracking-widest uppercase">Lobby ready</p>
       </div>
 
       <div>
-        <p className="font-space-mono text-sm text-haze-3 tracking-widest mb-4 uppercase">Invite friends</p>
+        <p className="font-mono text-xs sm:text-sm text-haze-3 tracking-widest mb-5 uppercase">Invite friends</p>
         <InviteSharePanel roomId={room.id} qrSize={160} />
       </div>
 
@@ -679,7 +689,7 @@ function LobbyView({ room }: { room: CreatedRoom }) {
         <Button variant="primary" size="lg" fullWidth magnetic className="h-14 text-base" onClick={() => router.push(`/lobby/${room.id}`)}>
           Enter lobby →
         </Button>
-        <button type="button" onClick={() => router.push("/dashboard")} className="font-rajdhani text-base text-haze-3 hover:text-void transition-colors text-center py-3">
+        <button type="button" onClick={() => router.push("/dashboard")} className="font-body text-base text-haze-3 hover:text-[var(--brand-primary)] transition-colors text-center py-3">
           Go to dashboard
         </button>
       </div>
@@ -877,9 +887,9 @@ export default function CreatePage() {
   return (
     <AppLayout>
       <AppPage className="max-w-none">
-        <p className="text-sm font-semibold uppercase tracking-wide text-plum mb-4">New arena</p>
-        <h1 className="font-display text-4xl md:text-5xl lg:text-6xl text-haze mb-5 md:mb-8 text-balance leading-[1.05]">Create your arena</h1>
-        <p className="text-lg md:text-xl lg:text-2xl text-haze-2 mb-12 md:mb-16 max-w-4xl leading-relaxed">
+        <p className="font-mono text-xs sm:text-sm font-semibold uppercase tracking-[3px] text-[var(--brand-primary)] mb-4">New arena</p>
+        <h1 className="font-display text-4xl md:text-5xl lg:text-6xl text-haze mb-5 md:mb-7 text-balance leading-[1.05]">Create your arena</h1>
+        <p className="font-body text-lg md:text-xl lg:text-2xl text-haze-2 mb-12 md:mb-16 max-w-3xl leading-relaxed">
           Set up your challenge. The AI validates and builds the rest.
         </p>
 

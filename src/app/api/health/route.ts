@@ -14,6 +14,17 @@ export async function GET(req: Request) {
   const groq = hasGroqApiKeys();
   const groqKeyCount = groqApiKeyCount();
   const gemini = Boolean(process.env.GEMINI_API_KEY?.trim());
+  const jdoodleId = Boolean(process.env.JDOODLE_CLIENT_ID?.trim());
+  const jdoodleSecret = Boolean(process.env.JDOODLE_CLIENT_SECRET?.trim());
+  const judge0 = Boolean(process.env.JUDGE0_URL?.trim());
+  const piston = Boolean(process.env.PISTON_URL?.trim());
+  const codeRunner = jdoodleId && jdoodleSecret
+    ? "jdoodle"
+    : judge0
+      ? "judge0"
+      : piston
+        ? "piston"
+        : "js-only";
 
   const clerkProbe = await clerkAuthHealth(req);
   const dbProbe = await pingDatabase();
@@ -58,6 +69,14 @@ export async function GET(req: Request) {
         groq: groq,
         groqKeyCount: groqKeyCount,
         gemini: gemini,
+      },
+      codeRunner: {
+        active: codeRunner,
+        jdoodle: jdoodleId && jdoodleSecret,
+        jdoodleClientId: jdoodleId,
+        jdoodleClientSecret: jdoodleSecret,
+        judge0,
+        piston,
       },
     },
     { status: ok ? 200 : 503 }

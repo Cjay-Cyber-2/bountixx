@@ -15,7 +15,6 @@ type FilterTab = "ALL" | "EARNED" | "SPENT" | "PURCHASED";
 type PaymentMethod = "paystack" | "stripe";
 type Transaction = { type: string; desc: string; amount: number; date: string };
 
-// Maps a raw transaction type to a readable label when no reference is stored.
 const TX_LABELS: Record<string, string> = {
   earned: "Bounty won",
   spent: "Arena created",
@@ -118,41 +117,49 @@ export default function WalletPage() {
   return (
     <AppLayout>
       <AppPage>
-        <p className="font-space-mono text-[11px] text-plum tracking-[3px] uppercase mb-2">Treasury</p>
-        <h1 className="font-zen-dots text-2xl md:text-3xl text-haze mb-8">Your wallet</h1>
+        <p className="font-mono text-[11px] text-[var(--brand-primary)] tracking-[3px] uppercase mb-3">Treasury</p>
+        <h1 className="font-display text-3xl md:text-4xl lg:text-5xl text-haze mb-10 md:mb-12 leading-[1.1]">Your wallet</h1>
 
-        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(300px,380px)] gap-8 xl:gap-12 w-full">
+        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(320px,400px)] gap-8 md:gap-10 xl:gap-14 w-full">
           {/* Left */}
-          <div className="flex flex-col gap-8">
+          <div className="flex flex-col gap-8 md:gap-10 min-w-0">
             {/* Balance */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="relative p-7 md:p-9 flex items-center gap-5 md:gap-6 clip-arena overflow-hidden"
-              style={{ background: "rgba(240,165,0,0.05)", border: "1px solid rgba(240,165,0,0.3)" }}
+              className="relative rounded-2xl p-7 md:p-10 flex items-center gap-6 md:gap-8 overflow-hidden shadow-sm"
+              style={{
+                background: "linear-gradient(135deg, rgba(240,165,0,0.08), rgba(240,165,0,0.02))",
+                border: "1px solid rgba(240,165,0,0.32)",
+              }}
             >
               <div
-                className="absolute -top-10 -right-10 w-44 h-44 rounded-full opacity-40 pointer-events-none"
+                className="absolute -top-12 -right-12 w-52 h-52 rounded-full opacity-50 pointer-events-none"
                 style={{ background: "radial-gradient(circle, rgba(240,165,0,0.35), transparent 70%)" }}
                 aria-hidden
               />
-              <div className="shrink-0" style={{ filter: "drop-shadow(0 0 16px rgba(240,165,0,0.4))" }}>
-                <CrownMark size={64} crownColor="#F0A500" crownLight="#FFC94D" dotColor="#111B56" id="wallet-balance" />
+              <div className="shrink-0" style={{ filter: "drop-shadow(0 0 18px rgba(240,165,0,0.4))" }}>
+                <CrownMark size={64} crownColor="#F0A500" crownLight="#FFC94D" dotColor="#7C5CFF" id="wallet-balance" />
               </div>
-              <div>
-                <p className="font-space-mono text-[10px] text-haze-3 tracking-[2px] mb-1 uppercase">Bountixx coins</p>
-                <AnimatedNumber value={balance} className="font-orbitron font-black text-5xl md:text-6xl text-coin-gold block leading-none" />
+              <div className="min-w-0">
+                <p className="font-mono text-[10px] md:text-xs text-haze-3 tracking-[2px] mb-2 uppercase">Bountixx coins</p>
+                <AnimatedNumber
+                  value={balance}
+                  className="font-stats font-black text-4xl sm:text-5xl md:text-6xl text-coin-gold block leading-none"
+                />
               </div>
             </motion.div>
 
             {/* Filter tabs */}
-            <div className="flex gap-1 border-b border-cosmos-4 overflow-x-auto">
+            <div className="flex gap-1 border-b border-[var(--border-1)] overflow-x-auto -mx-1 px-1">
               {(["ALL", "EARNED", "SPENT", "PURCHASED"] as FilterTab[]).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setFilter(tab)}
-                  className={`cursor-target px-4 py-3 font-space-mono text-[10px] tracking-[2px] border-b-2 transition-all whitespace-nowrap ${
-                    filter === tab ? "border-void text-void" : "border-transparent text-haze-3 hover:text-haze-2"
+                  className={`cursor-target px-5 py-3 font-mono text-[11px] md:text-xs tracking-[2px] border-b-2 transition-all whitespace-nowrap ${
+                    filter === tab
+                      ? "border-[var(--brand-primary)] text-[var(--brand-primary)]"
+                      : "border-transparent text-haze-3 hover:text-haze-2"
                   }`}
                 >
                   {tab}
@@ -161,50 +168,52 @@ export default function WalletPage() {
             </div>
 
             {/* Transactions */}
-            <div className="clip-arena overflow-hidden" style={{ border: "1px solid rgba(45,27,105,0.7)" }}>
+            <div className="rounded-2xl overflow-hidden border border-[var(--border-1)]">
               {loading ? (
                 Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="flex items-center gap-3.5 px-4 md:px-5 py-3.5 bg-cosmos-2 border-b border-cosmos-4 last:border-0">
-                    <div className="w-8 h-8 shrink-0 bg-cosmos-3 animate-pulse clip-arena-sm" />
+                  <div key={i} className="flex items-center gap-4 px-5 md:px-7 py-4 bg-[var(--surface-inset)] border-b border-[var(--border-1)] last:border-0">
+                    <div className="w-9 h-9 shrink-0 bg-cosmos-3 animate-pulse rounded-lg" />
                     <div className="flex-1">
-                      <div className="h-3.5 w-40 bg-cosmos-3 animate-pulse mb-1.5" />
-                      <div className="h-2.5 w-20 bg-cosmos-3 animate-pulse" />
+                      <div className="h-4 w-40 bg-cosmos-3 animate-pulse rounded mb-2" />
+                      <div className="h-2.5 w-20 bg-cosmos-3 animate-pulse rounded" />
                     </div>
-                    <div className="h-4 w-12 bg-cosmos-3 animate-pulse" />
+                    <div className="h-4 w-12 bg-cosmos-3 animate-pulse rounded" />
                   </div>
                 ))
               ) : filtered.length === 0 ? (
-                <div className="p-10 text-center bg-cosmos-2">
-                  <p className="font-rajdhani font-bold text-lg text-haze-2">No transactions yet</p>
-                  <p className="font-rajdhani text-sm text-haze-3 mt-1">Win arenas or buy coins to get started.</p>
+                <div className="p-12 text-center bg-[var(--surface-inset)]">
+                  <p className="font-display text-lg text-haze mb-2">No transactions yet</p>
+                  <p className="font-body text-sm text-haze-3">Win arenas or buy coins to get started.</p>
                 </div>
               ) : (
                 filtered.map((t, i) => (
                   <div
                     key={i}
-                    className="flex items-center gap-3.5 px-4 md:px-5 py-3.5 bg-cosmos-2 border-b border-cosmos-4 last:border-0 hover:bg-cosmos-3 transition-colors"
+                    className="flex items-center gap-4 px-5 md:px-7 py-4 bg-[var(--surface-inset)] border-b border-[var(--border-1)] last:border-0 hover:bg-[var(--surface-hover)] transition-colors"
                   >
                     <div
-                      className="w-8 h-8 flex items-center justify-center shrink-0 clip-arena-sm"
-                      style={{ background: t.amount > 0 ? "rgba(0,214,143,0.12)" : "rgba(255,45,85,0.12)" }}
+                      className="w-9 h-9 flex items-center justify-center shrink-0 rounded-lg"
+                      style={{
+                        background: t.amount > 0 ? "rgba(110,231,183,0.14)" : "rgba(251,113,133,0.14)",
+                      }}
                     >
                       {t.amount > 0 ? (
-                        <Plus size={14} className="text-success" aria-hidden />
+                        <Plus size={16} className="text-success" aria-hidden />
                       ) : (
-                        <Minus size={14} className="text-danger" aria-hidden />
+                        <Minus size={16} className="text-danger" aria-hidden />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-rajdhani font-semibold text-sm text-haze truncate">{t.desc}</p>
-                      <p className="font-space-mono text-[10px] text-haze-3 mt-0.5 sm:hidden">{t.date}</p>
+                      <p className="font-body font-semibold text-sm md:text-base text-haze truncate">{t.desc}</p>
+                      <p className="font-mono text-[10px] text-haze-3 mt-1 sm:hidden">{t.date}</p>
                     </div>
                     <span
-                      className="font-orbitron font-bold text-sm shrink-0"
-                      style={{ color: t.amount > 0 ? "#00D68F" : t.amount === 0 ? "var(--haze-3)" : "#FF2D55" }}
+                      className="font-stats font-bold text-sm md:text-base shrink-0"
+                      style={{ color: t.amount > 0 ? "var(--success)" : t.amount === 0 ? "var(--haze-3)" : "var(--danger)" }}
                     >
                       {t.amount > 0 ? `+${t.amount}` : t.amount === 0 ? "FREE" : t.amount}
                     </span>
-                    <span className="hidden sm:inline font-space-mono text-[10px] text-haze-3 shrink-0 w-12 text-right">{t.date}</span>
+                    <span className="hidden sm:inline font-mono text-[10px] text-haze-3 shrink-0 w-14 text-right">{t.date}</span>
                   </div>
                 ))
               )}
@@ -212,31 +221,36 @@ export default function WalletPage() {
           </div>
 
           {/* Right: bundles */}
-          <div className="flex flex-col gap-3">
-            <div className="mb-1">
-              <p className="font-space-mono text-[10px] text-haze-3 tracking-[2px] mb-1 uppercase">Top up</p>
-              <h2 className="font-zen-dots text-xl text-haze">Buy coins</h2>
+          <div className="flex flex-col gap-4">
+            <div className="mb-2">
+              <p className="font-mono text-[11px] text-haze-3 tracking-[2px] mb-2 uppercase">Top up</p>
+              <h2 className="font-display text-2xl md:text-3xl text-haze">Buy coins</h2>
             </div>
 
             {BUNDLES.map((b, i) => (
               <button
                 key={b.label}
                 onClick={() => setSelected(i)}
-                className={`cursor-target relative text-left p-4 border transition-all hover:-translate-y-0.5 clip-arena-sm ${
-                  selected === i ? "border-void bg-void/10" : "border-cosmos-4 bg-cosmos-2 hover:border-void/50"
+                className={`cursor-target relative text-left p-5 md:p-6 border rounded-xl transition-all hover:-translate-y-0.5 ${
+                  selected === i
+                    ? "border-[var(--brand-primary)] bg-[var(--void-tint)] shadow-sm"
+                    : "border-[var(--border-1)] bg-[var(--surface-inset)] hover:border-[var(--border-accent)]"
                 }`}
               >
                 {b.popular && (
-                  <span className="absolute top-2 right-2 font-space-mono text-[8px] text-cosmos bg-void px-2 py-0.5 tracking-[1px]">
+                  <span
+                    className="absolute top-3 right-3 font-mono text-[9px] px-2 py-0.5 rounded tracking-[1px] uppercase"
+                    style={{ background: "var(--brand-primary)", color: "#FFFFFF" }}
+                  >
                     POPULAR
                   </span>
                 )}
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-orbitron font-bold text-2xl text-coin-gold leading-none">{b.coins.toLocaleString()}</p>
-                    <p className="font-space-mono text-[9px] text-haze-3 mt-1.5 uppercase tracking-wider">{b.label}</p>
+                <div className="flex items-center justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="font-stats font-bold text-3xl text-coin-gold leading-none">{b.coins.toLocaleString()}</p>
+                    <p className="font-mono text-[10px] text-haze-3 mt-2 uppercase tracking-wider">{b.label}</p>
                   </div>
-                  <p className="font-rajdhani font-bold text-xl text-haze">
+                  <p className="font-display text-xl md:text-2xl text-haze shrink-0">
                     {paymentMethod === "paystack" ? b.priceNGN : b.priceUSD}
                   </p>
                 </div>
@@ -244,23 +258,23 @@ export default function WalletPage() {
             ))}
 
             {/* Payment method toggle */}
-            <div className="flex border border-cosmos-4 mt-1">
+            <div className="flex border border-[var(--border-1)] rounded-xl overflow-hidden mt-2">
               <button
                 onClick={() => setPaymentMethod("paystack")}
-                className={`flex-1 py-2 font-space-mono text-[10px] tracking-[1px] transition-all ${
+                className={`flex-1 py-2.5 font-mono text-[11px] tracking-[1px] transition-all ${
                   paymentMethod === "paystack"
-                    ? "bg-void text-cosmos"
-                    : "text-haze-3 hover:text-haze-2 hover:bg-cosmos-3"
+                    ? "bg-[var(--brand-primary)] text-white"
+                    : "text-haze-3 hover:text-haze-2 hover:bg-[var(--surface-hover)]"
                 }`}
               >
                 NGN · Paystack
               </button>
               <button
                 onClick={() => setPaymentMethod("stripe")}
-                className={`flex-1 py-2 font-space-mono text-[10px] tracking-[1px] transition-all ${
+                className={`flex-1 py-2.5 font-mono text-[11px] tracking-[1px] transition-all ${
                   paymentMethod === "stripe"
-                    ? "bg-void text-cosmos"
-                    : "text-haze-3 hover:text-haze-2 hover:bg-cosmos-3"
+                    ? "bg-[var(--brand-primary)] text-white"
+                    : "text-haze-3 hover:text-haze-2 hover:bg-[var(--surface-hover)]"
                 }`}
               >
                 USD · Stripe
@@ -274,12 +288,12 @@ export default function WalletPage() {
               magnetic
               onClick={handlePayment}
               disabled={paying}
-              className="mt-1"
+              className="mt-2"
             >
-              <ShoppingBag size={16} aria-hidden />
+              <ShoppingBag size={18} aria-hidden />
               {paying ? "REDIRECTING…" : `PAY ${displayPrice}`}
             </Button>
-            <p className="font-space-mono text-[9px] text-haze-3 text-center tracking-wider leading-relaxed">
+            <p className="font-mono text-[10px] text-haze-3 text-center tracking-wider leading-relaxed">
               Secure checkout · Coins are non-refundable · Not redeemable for cash
             </p>
           </div>

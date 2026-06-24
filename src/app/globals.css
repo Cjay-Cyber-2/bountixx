@@ -1,25 +1,30 @@
-@import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Tourney:wght@400;500;600;700;800&family=Zen+Dots&family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;500;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Audiowide&family=Russo+One&family=Rajdhani:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=Chakra+Petch:wght@300;400;500;600;700&family=Tourney:wght@400;500;600;700;800&family=Zen+Dots&display=swap');
 @import "tailwindcss";
 
 
-/* ─── Bountixx 3-Color System ───
-   Primary:  #F92313  (accent, links, highlights)
-   Button:   #4E2725  (CTA surfaces, brown)
-   Bridge:   #DDEAE1  (text on dark, light mode canvas)
+/* ─── Bountixx Arena Palette ───
+   Primary:  #7C5CFF  (electric violet — accent, links, highlights, CTAs)
+   Bridge:   #DDEAE1  (mint — text on dark, light-mode canvas)
+   Coin:     #F0A500  (gold — wallet accents only)
+
+   The primary is the same hue in both themes. We only nudge brightness
+   so it remains readable on a near-black surface AND on a pale-mint surface
+   without screaming at the user when they toggle.
 ─── */
 :root {
-  --font-display: 'Instrument Serif', Georgia, serif;
-  --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
-  --font-stats: 'Plus Jakarta Sans', system-ui, sans-serif;
-  --font-mono: 'DM Mono', ui-monospace, monospace;
+  /* Gaming font system */
+  --font-display: 'Audiowide', 'Russo One', system-ui, sans-serif;
+  --font-body: 'Rajdhani', system-ui, sans-serif;
+  --font-stats: 'Orbitron', 'Rajdhani', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
   --font-legacy-display: 'Tourney', sans-serif;
   --font-legacy-body: 'Chakra Petch', sans-serif;
 
-  --brand-primary:       #F92313;
-  --brand-primary-light: #FF4A3D;
-  --brand-primary-deep:  #C91C0F;
-  --brand-button:        #4E2725;
-  --brand-button-hover:  #3A1D1B;
+  --brand-primary:       #7C5CFF;
+  --brand-primary-light: #A78BFA;
+  --brand-primary-deep:  #5B3CE6;
+  --brand-button:        #7C5CFF;
+  --brand-button-hover:  #6A47F0;
   --brand-bridge:        #DDEAE1;
   --brand-bridge-dim:    #B8CFC4;
   --brand-bridge-deep:   #9BB5A8;
@@ -35,9 +40,9 @@
   --void:       var(--brand-primary);
   --void-light: var(--brand-primary-light);
   --void-deep:  var(--brand-primary-deep);
-  --crown:      var(--brand-primary);
-  --danger:     var(--brand-primary);
-  --success:    var(--brand-bridge);
+  --crown:      #F0A500;
+  --danger:     #FB7185;
+  --success:    #6EE7B7;
 
   --radius-sm:  8px;
   --radius-md:  12px;
@@ -50,85 +55,87 @@
                       box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ─── Dark theme (default) — only red, brown, mint ─── */
+/* ─── Dark theme (default) — near-black canvas, violet accents, mint type ─── */
 :root,
 [data-theme="dark"] {
   color-scheme: dark;
 
-  --cosmos:     #120C0B;
-  --cosmos-2:   #1A1211;
-  --cosmos-3:   #241917;
-  --cosmos-4:   #362220;
+  --cosmos:     #0B0A14;
+  --cosmos-2:   #11101D;
+  --cosmos-3:   #181628;
+  --cosmos-4:   #221F38;
   --haze:       var(--brand-bridge);
   --haze-2:     #B8CFC4;
   --haze-3:     #8FA89C;
 
-  --surface-card:    rgba(78, 39, 37, 0.32);
-  --surface-raised:  #1A1211;
-  --surface-inset:   #120C0B;
-  --surface-hover:   rgba(249, 35, 19, 0.1);
-  --border-1:        rgba(221, 234, 225, 0.1);
+  --surface-card:    rgba(124, 92, 255, 0.06);
+  --surface-raised:  #11101D;
+  --surface-inset:   #0F0E1A;
+  --surface-hover:   rgba(124, 92, 255, 0.10);
+  --border-1:        rgba(221, 234, 225, 0.09);
   --border-2:        rgba(221, 234, 225, 0.16);
-  --border-accent:   rgba(249, 35, 19, 0.42);
-  --void-tint:       rgba(249, 35, 19, 0.12);
-  --void-tint-hover: rgba(249, 35, 19, 0.2);
-  --glow-1:          rgba(249, 35, 19, 0.08);
-  --terminal-bg:     #1A1211;
+  --border-accent:   rgba(124, 92, 255, 0.45);
+  --void-tint:       rgba(124, 92, 255, 0.12);
+  --void-tint-hover: rgba(124, 92, 255, 0.22);
+  --glow-1:          rgba(124, 92, 255, 0.10);
+  --terminal-bg:     #11101D;
   --terminal-border: rgba(221, 234, 225, 0.12);
-  --focus-ring:      rgba(249, 35, 19, 0.38);
-  --btn-primary-bg:  var(--brand-button);
-  --btn-primary-fg:  var(--brand-bridge);
-  --btn-primary-hover: var(--brand-button-hover);
+  --focus-ring:      rgba(124, 92, 255, 0.4);
+  --btn-primary-bg:  var(--brand-primary);
+  --btn-primary-fg:  #FFFFFF;
+  --btn-primary-hover: var(--brand-primary-deep);
   --accent:          var(--brand-primary);
-  --success:         var(--brand-bridge);
+  --success:         #6EE7B7;
+  --danger:          #FB7185;
   --coin-gold-text:  #F0A500;
 }
 
-/* ─── Light theme — mint page canvas, brown ink, white elevated surfaces ─── */
+/* ─── Light theme — soft cream-mint canvas, deep slate ink, white elevated surfaces ─── */
 [data-theme="light"] {
   color-scheme: light;
 
-  --cosmos:     #DDEAE1;
-  --cosmos-2:   #D0E4D8;
-  --cosmos-3:   #C5DAD0;
-  --cosmos-4:   #A8C0B4;
-  --haze:       #4E2725;
-  --haze-2:     #6B4542;
-  --haze-3:     #8A6B67;
+  --cosmos:     #F4F1FA;
+  --cosmos-2:   #ECE6F7;
+  --cosmos-3:   #E1D9F3;
+  --cosmos-4:   #C9BDE6;
+  --haze:       #1F1B36;
+  --haze-2:     #4A4470;
+  --haze-3:     #7A7194;
 
   --surface-card:    #FFFFFF;
   --surface-raised:  #FFFFFF;
-  --surface-inset:   #F7FAF8;
-  --surface-hover:   rgba(78, 39, 37, 0.05);
-  --border-1:        rgba(78, 39, 37, 0.14);
-  --border-2:        rgba(78, 39, 37, 0.22);
-  --border-accent:   rgba(249, 35, 19, 0.4);
-  --void-tint:       rgba(249, 35, 19, 0.08);
-  --void-tint-hover: rgba(249, 35, 19, 0.14);
-  --glow-1:          rgba(249, 35, 19, 0.06);
+  --surface-inset:   #FAF8FF;
+  --surface-hover:   rgba(124, 92, 255, 0.06);
+  --border-1:        rgba(31, 27, 54, 0.10);
+  --border-2:        rgba(31, 27, 54, 0.18);
+  --border-accent:   rgba(91, 60, 230, 0.45);
+  --void-tint:       rgba(124, 92, 255, 0.08);
+  --void-tint-hover: rgba(124, 92, 255, 0.14);
+  --glow-1:          rgba(124, 92, 255, 0.06);
   --terminal-bg:     #FFFFFF;
-  --terminal-border: rgba(78, 39, 37, 0.16);
-  --focus-ring:      rgba(249, 35, 19, 0.3);
-  --btn-primary-bg:  var(--brand-button);
-  --btn-primary-fg:  var(--brand-bridge);
-  --btn-primary-hover: var(--brand-button-hover);
-  --accent:          var(--brand-primary);
-  --success:         #047857;
+  --terminal-border: rgba(31, 27, 54, 0.14);
+  --focus-ring:      rgba(91, 60, 230, 0.32);
+  --btn-primary-bg:  var(--brand-primary-deep);
+  --btn-primary-fg:  #FFFFFF;
+  --btn-primary-hover: #4A2DD0;
+  --accent:          var(--brand-primary-deep);
+  --success:         #059669;
+  --danger:          #DC2626;
   --coin-gold-text:  #B27A00;
 }
 
 /* ─── Legacy cyber aesthetic (Hero + auth left panel only) ─── */
 [data-legacy-aesthetic] {
-  --cosmos:     #0E0818;
-  --cosmos-2:   #130C24;
-  --cosmos-3:   #1E1340;
-  --cosmos-4:   #2D1B69;
-  --haze:       #E8E0FF;
-  --haze-2:     #9B8FC0;
-  --haze-3:     #7A6FAE;
-  --void:       #a855f7;
-  --void-light: #8660fa;
-  --void-deep:  #8400ff;
+  --cosmos:     #0B0A14;
+  --cosmos-2:   #11101D;
+  --cosmos-3:   #181628;
+  --cosmos-4:   #221F38;
+  --haze:       #E8E4FF;
+  --haze-2:     #B0A8D6;
+  --haze-3:     #8278B0;
+  --void:       var(--brand-primary);
+  --void-light: var(--brand-primary-light);
+  --void-deep:  var(--brand-primary-deep);
   --ignite:     #FF6B1A;
   --crown:      #F0A500;
 }
@@ -217,28 +224,29 @@ footer,
 /* ─── Typography ─── */
 .font-body,
 .font-rajdhani {
-  font-family: var(--font-body), "Plus Jakarta Sans", system-ui, sans-serif;
+  font-family: var(--font-body), "Rajdhani", system-ui, sans-serif;
+  letter-spacing: 0.005em;
 }
 
 .font-display,
 .font-zen-dots,
 .font-nunito,
 .font-heading {
-  font-family: var(--font-display), "Instrument Serif", Georgia, serif;
-  letter-spacing: -0.02em;
+  font-family: var(--font-display), "Audiowide", "Russo One", system-ui, sans-serif;
+  letter-spacing: 0.01em;
 }
 
 .font-stats,
 .font-orbitron {
-  font-family: var(--font-stats), "Plus Jakarta Sans", system-ui, sans-serif;
+  font-family: var(--font-stats), "Orbitron", system-ui, sans-serif;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.01em;
+  letter-spacing: 0.005em;
 }
 
 .font-mono,
 .font-space-mono {
-  font-family: var(--font-mono), "DM Mono", ui-monospace, monospace;
-  letter-spacing: 0.02em;
+  font-family: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
+  letter-spacing: 0.01em;
 }
 
 [data-legacy-aesthetic] .font-display,
@@ -431,6 +439,13 @@ footer,
   background: var(--cosmos);
 }
 
+.auth-brand-panel {
+  background: var(--cosmos);
+  border-right: 1px solid var(--border-1);
+  transition: background-color 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 /* ─── Clip-path (legacy compat, neutralized) ─── */
 .clip-arena,
 .clip-arena-sm { clip-path: none; border-radius: var(--radius-md); }
@@ -495,10 +510,10 @@ footer,
 }
 
 /* ─── Glow helpers (subtle) ─── */
-.glow-ignite  { box-shadow: 0 4px 24px rgba(249, 35, 19, 0.22); }
-.glow-crown   { box-shadow: 0 4px 24px rgba(249, 35, 19, 0.18); }
-.glow-void    { box-shadow: 0 4px 24px rgba(249, 35, 19, 0.18); }
-.glow-success { box-shadow: 0 4px 20px rgba(221, 234, 225, 0.2); }
+.glow-ignite  { box-shadow: 0 4px 24px rgba(124, 92, 255, 0.28); }
+.glow-crown   { box-shadow: 0 4px 24px rgba(240, 165,   0, 0.22); }
+.glow-void    { box-shadow: 0 4px 24px rgba(124, 92, 255, 0.22); }
+.glow-success { box-shadow: 0 4px 20px rgba(110, 231, 183, 0.22); }
 
 /* ─── Float bob ─── */
 @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }

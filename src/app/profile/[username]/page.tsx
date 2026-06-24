@@ -7,7 +7,7 @@ import { useUser } from "@clerk/nextjs";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { APP_GUTTERS } from "@/components/landing/_section";
+import { AppPage } from "@/components/landing/_section";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { XPBar } from "@/components/ui/XPBar";
 
@@ -31,7 +31,13 @@ const ALL_BADGES = [
 ];
 
 const CATEGORY_COLORS: Record<string, string> = {
-  coding: "#FF6B1A", trivia: "#9B6BFF", logic: "#00D68F", math: "#F0A500",
+  coding:  "#7C5CFF",
+  trivia:  "#A78BFA",
+  logic:   "#22D3EE",
+  math:    "#F0A500",
+  writing: "#F472B6",
+  design:  "#34D399",
+  meme:    "#FB7185",
 };
 
 type UserProfile = {
@@ -63,7 +69,6 @@ export default function ProfilePage() {
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Editing state
   const [editingUsername, setEditingUsername] = useState(false);
   const [usernameInput, setUsernameInput] = useState("");
   const [savingUsername, setSavingUsername] = useState(false);
@@ -86,7 +91,7 @@ export default function ProfilePage() {
       if (statsData) setStats(statsData);
       if (achData.achievements) setAchievements(achData.achievements);
     } catch {
-      // silently fail - show placeholder data
+      // silently fail
     } finally {
       setLoading(false);
     }
@@ -102,12 +107,10 @@ export default function ProfilePage() {
     if (!file || !clerkUser) return;
     setUploadingAvatar(true);
     try {
-      // Clerk stores and serves the profile image (replaces Firebase Storage).
       await clerkUser.setProfileImage({ file });
       await clerkUser.reload();
       const url = clerkUser.imageUrl;
 
-      // Mirror the URL into our Neon row so other players see the new avatar.
       await fetchWithAuth("/api/user/me", {
         method: "PUT",
         body: JSON.stringify({ avatarUrl: url }),
@@ -115,7 +118,7 @@ export default function ProfilePage() {
 
       setProfile((p) => p ? { ...p, avatarUrl: url } : p);
     } catch {
-      // fail silently for now
+      // ignored
     } finally {
       setUploadingAvatar(false);
     }
@@ -150,153 +153,157 @@ export default function ProfilePage() {
 
   return (
     <AppLayout>
-      <div className={`${APP_GUTTERS} pt-10 md:pt-14 lg:pt-16 pb-[max(3rem,calc(5rem+env(safe-area-inset-bottom,0px)))] md:pb-16`}>
-        {/* Banner */}
-        <div
-          className="relative border-b border-cosmos-4"
-          style={{
-            background:
-              "repeating-linear-gradient(135deg, rgba(45,27,105,0.25) 0 1px, transparent 1px 20px)",
-          }}
+      <AppPage>
+        {/* Banner card */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45 }}
+          className="relative overflow-hidden rounded-2xl border bg-[var(--surface-card)] mb-10 md:mb-14"
+          style={{ borderColor: "var(--border-1)" }}
         >
           <div
             className="absolute inset-0 pointer-events-none"
-            style={{ background: "radial-gradient(ellipse 70% 100% at 20% 100%, rgba(155,107,255,0.12), transparent 70%)" }}
+            style={{
+              background:
+                "radial-gradient(ellipse 70% 100% at 12% 100%, var(--void-tint), transparent 70%)",
+            }}
             aria-hidden
           />
-          <div className="relative px-0 md:px-2 pt-10 pb-8">
-            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-5">
-              {/* Avatar + identity */}
-              <div className="flex items-end gap-5">
-                {/* Avatar circle — clickable to upload */}
-                <div className="relative shrink-0 group">
-                  <div
-                    className="w-20 h-20 rounded-full bg-cosmos-3 flex items-center justify-center cursor-pointer"
-                    style={{ border: "3px solid #9B6BFF", boxShadow: "0 0 24px rgba(155,107,255,0.3)" }}
-                    onClick={() => fileInputRef.current?.click()}
-                    role="button"
-                    aria-label="Change profile picture"
-                  >
-                    {uploadingAvatar ? (
-                      <div className="w-5 h-5 border-2 border-void border-t-transparent rounded-full animate-spin" />
-                    ) : profile?.avatarUrl ? (
-                      <img
-                        src={profile.avatarUrl}
-                        alt={profile.username}
-                        className="w-full h-full rounded-full object-cover"
-                      />
-                    ) : (
-                      <span className="font-orbitron font-bold text-2xl text-void">
-                        {loading ? "…" : initials}
-                      </span>
+          <div className="relative px-6 md:px-10 py-9 md:py-12 flex flex-col sm:flex-row sm:items-center justify-between gap-8">
+            <div className="flex items-center gap-5 md:gap-7 min-w-0">
+              <div className="relative shrink-0 group">
+                <div
+                  className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-[var(--surface-inset)] flex items-center justify-center cursor-pointer overflow-hidden"
+                  style={{
+                    border: "3px solid var(--brand-primary)",
+                    boxShadow: "0 0 24px var(--glow-1)",
+                  }}
+                  onClick={() => fileInputRef.current?.click()}
+                  role="button"
+                  aria-label="Change profile picture"
+                >
+                  {uploadingAvatar ? (
+                    <div className="w-5 h-5 border-2 border-[var(--brand-primary)] border-t-transparent rounded-full animate-spin" />
+                  ) : profile?.avatarUrl ? (
+                    <img
+                      src={profile.avatarUrl}
+                      alt={profile.username}
+                      className="w-full h-full rounded-full object-cover"
+                    />
+                  ) : (
+                    <span className="font-stats font-black text-2xl md:text-3xl text-[var(--brand-primary)]">
+                      {loading ? "…" : initials}
+                    </span>
+                  )}
+                </div>
+                <div
+                  className="absolute inset-0 rounded-full bg-cosmos/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                  onClick={() => fileInputRef.current?.click()}
+                  aria-hidden
+                >
+                  <Camera size={20} className="text-haze" />
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleAvatarUpload}
+                />
+              </div>
+
+              <div className="min-w-0 flex-1">
+                {editingUsername ? (
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="font-display text-[var(--brand-primary)] text-base">@</span>
+                    <input
+                      autoFocus
+                      value={usernameInput}
+                      onChange={(e) => setUsernameInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleSaveUsername();
+                        if (e.key === "Escape") setEditingUsername(false);
+                      }}
+                      className="bg-[var(--surface-inset)] border border-[var(--border-accent)] rounded-lg px-3 py-1.5 font-display text-lg md:text-xl text-haze focus:outline-none focus:border-[var(--brand-primary)] w-44"
+                      maxLength={30}
+                    />
+                    <button
+                      onClick={handleSaveUsername}
+                      disabled={savingUsername}
+                      className="text-success hover:opacity-80 transition-opacity disabled:opacity-40"
+                      aria-label="Save username"
+                    >
+                      <Check size={18} />
+                    </button>
+                    <button
+                      onClick={() => { setEditingUsername(false); setUsernameError(""); }}
+                      className="text-haze-3 hover:text-haze-2 transition-colors"
+                      aria-label="Cancel"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2.5 mb-2 group/username">
+                    <h1 className="font-display text-2xl md:text-3xl lg:text-4xl text-haze truncate">
+                      @{loading ? "loading…" : (profile?.username ?? "arena_player")}
+                    </h1>
+                    {user && (
+                      <button
+                        onClick={() => {
+                          setUsernameInput(profile?.username ?? "");
+                          setEditingUsername(true);
+                        }}
+                        className="text-haze-3 hover:text-[var(--brand-primary)] transition-colors opacity-0 group-hover/username:opacity-100"
+                        aria-label="Edit username"
+                      >
+                        <Pencil size={15} />
+                      </button>
                     )}
                   </div>
-                  {/* Camera overlay */}
-                  <div
-                    className="absolute inset-0 rounded-full bg-cosmos/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                    onClick={() => fileInputRef.current?.click()}
-                    aria-hidden
+                )}
+                {usernameError && (
+                  <p className="font-body text-xs text-danger mb-2">{usernameError}</p>
+                )}
+                <div className="flex flex-wrap items-center gap-3">
+                  <span
+                    className="font-mono text-[10px] md:text-xs px-2.5 py-1 rounded-md uppercase tracking-widest text-[var(--brand-primary)]"
+                    style={{
+                      background: "var(--void-tint)",
+                      border: "1px solid var(--border-accent)",
+                    }}
                   >
-                    <Camera size={18} className="text-haze" />
-                  </div>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleAvatarUpload}
-                  />
+                    {rankInfo.label}
+                  </span>
+                  <span className="font-mono text-[10px] md:text-xs text-haze-3 uppercase tracking-wide">
+                    {profile?.createdAt
+                      ? `Joined ${new Date(profile.createdAt).toLocaleDateString("en-US", { month: "short", year: "numeric" })}`
+                      : ""}
+                  </span>
                 </div>
-
-                <div className="pb-1">
-                  {/* Username — editable */}
-                  {editingUsername ? (
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <span className="font-zen-dots text-void text-sm">@</span>
-                      <input
-                        autoFocus
-                        value={usernameInput}
-                        onChange={(e) => setUsernameInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") handleSaveUsername();
-                          if (e.key === "Escape") setEditingUsername(false);
-                        }}
-                        className="bg-cosmos-2 border border-void px-2 py-1 font-zen-dots text-lg text-haze focus:outline-none w-40"
-                        style={{ borderRadius: 0 }}
-                        maxLength={30}
-                      />
-                      <button
-                        onClick={handleSaveUsername}
-                        disabled={savingUsername}
-                        className="text-success hover:text-success/80 transition-colors disabled:opacity-40"
-                        aria-label="Save username"
-                      >
-                        <Check size={16} />
-                      </button>
-                      <button
-                        onClick={() => { setEditingUsername(false); setUsernameError(""); }}
-                        className="text-haze-3 hover:text-haze-2 transition-colors"
-                        aria-label="Cancel"
-                      >
-                        <X size={16} />
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2 mb-1.5 group/username">
-                      <h1 className="font-zen-dots text-xl md:text-2xl text-haze">
-                        @{loading ? "loading…" : (profile?.username ?? "arena_player")}
-                      </h1>
-                      {user && (
-                        <button
-                          onClick={() => {
-                            setUsernameInput(profile?.username ?? "");
-                            setEditingUsername(true);
-                          }}
-                          className="text-haze-3 hover:text-void transition-colors opacity-0 group-hover/username:opacity-100"
-                          aria-label="Edit username"
-                        >
-                          <Pencil size={14} />
-                        </button>
-                      )}
-                    </div>
-                  )}
-                  {usernameError && (
-                    <p className="font-rajdhani text-xs text-danger mb-1.5">{usernameError}</p>
-                  )}
-                  <div className="flex items-center gap-2.5">
-                    <span
-                      className="font-space-mono text-[10px] px-2 py-0.5 text-void"
-                      style={{ background: "rgba(155,107,255,0.12)", border: "1px solid rgba(155,107,255,0.3)" }}
-                    >
-                      {rankInfo.label}
-                    </span>
-                    <span className="font-space-mono text-[10px] text-haze-3">
-                      {profile?.createdAt
-                        ? `Joined ${new Date(profile.createdAt).toLocaleDateString("en-US", { month: "short", year: "numeric" })}`
-                        : ""}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Coin balance */}
-              <div className="flex items-center gap-2 sm:flex-col sm:items-end pb-1">
-                <span className="font-space-mono text-[9px] text-haze-3 tracking-[2px] uppercase">Balance</span>
-                <span className="font-orbitron font-bold text-2xl text-coin-gold">
-                  {profile?.coinsBalance ?? 0} <span className="text-xs">◈</span>
-                </span>
               </div>
             </div>
-          </div>
-        </div>
 
-        <div className="px-0 md:px-2 py-8 md:py-10 flex flex-col gap-10 md:gap-12">
+            <div className="flex flex-col sm:items-end gap-1.5 shrink-0">
+              <span className="font-mono text-[10px] text-haze-3 tracking-widest uppercase">
+                Balance
+              </span>
+              <span className="font-stats font-black text-3xl md:text-4xl text-coin-gold leading-none">
+                {profile?.coinsBalance ?? 0}
+                <span className="text-base ml-1.5 align-middle">◈</span>
+              </span>
+            </div>
+          </div>
+        </motion.div>
+
+        <div className="flex flex-col gap-10 md:gap-14">
           {/* Stats */}
           <motion.div
             initial="hidden"
             animate="show"
             variants={{ show: { transition: { staggerChildren: 0.07 } } }}
-            className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5"
+            className="grid grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6"
           >
             {[
               { label: "Arenas played", value: stats?.roomsPlayed ?? 0 },
@@ -307,25 +314,26 @@ export default function ProfilePage() {
               <motion.div
                 key={s.label}
                 variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}
-                className="bg-cosmos-2 clip-arena p-5 md:p-6 min-h-[100px]"
-                style={{ border: "1px solid rgba(45,27,105,0.7)" }}
+                className="rounded-2xl bg-[var(--surface-inset)] border border-[var(--border-1)] px-6 py-7 md:px-7 md:py-8 min-h-[140px] flex flex-col justify-end shadow-sm"
               >
                 <AnimatedNumber
                   value={s.value}
                   suffix={s.suffix}
-                  className="font-orbitron font-black text-xl sm:text-2xl md:text-3xl text-haze block mb-2 leading-tight break-words"
+                  className="font-stats font-black text-3xl md:text-4xl text-haze block leading-none mb-3"
                   format={!s.suffix}
                 />
-                <p className="font-space-mono text-[10px] text-haze-3 tracking-[1.5px] uppercase leading-snug">{s.label}</p>
+                <p className="font-mono text-[10px] text-haze-3 tracking-[1.5px] uppercase leading-snug">
+                  {s.label}
+                </p>
               </motion.div>
             ))}
           </motion.div>
 
           {/* XP bar */}
-          <div className="bg-cosmos-2 clip-arena p-6" style={{ border: "1px solid rgba(45,27,105,0.7)" }}>
-            <div className="flex items-center justify-between mb-4">
-              <p className="font-orbitron font-bold text-sm text-haze tracking-wide">{rankInfo.label}</p>
-              <p className="font-space-mono text-[11px] text-void">
+          <div className="rounded-2xl bg-[var(--surface-inset)] border border-[var(--border-1)] p-7 md:p-9 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-5">
+              <p className="font-display text-base md:text-lg text-haze tracking-wide">{rankInfo.label}</p>
+              <p className="font-mono text-[11px] md:text-xs text-[var(--brand-primary)] tracking-wide">
                 {(profile?.xp ?? 0).toLocaleString()} / {rankInfo.max.toLocaleString()} XP
                 {rankInfo.next !== "MAX" && ` → ${rankInfo.next}`}
               </p>
@@ -335,39 +343,41 @@ export default function ProfilePage() {
 
           {/* Achievements */}
           <div>
-            <h2 className="font-orbitron font-bold text-base text-haze tracking-wide mb-4">ACHIEVEMENTS</h2>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+            <h2 className="font-display text-lg md:text-xl text-haze tracking-wide mb-5">ACHIEVEMENTS</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
               {ALL_BADGES.map((badge) => {
                 const earned = earnedBadgeIds.has(badge.id);
                 return (
                   <div
                     key={badge.id}
-                    className="relative bg-cosmos-2 clip-arena-sm p-5 md:p-6 min-h-[130px]"
+                    className="relative rounded-2xl bg-[var(--surface-inset)] p-6 md:p-7 min-h-[150px] flex flex-col gap-3 shadow-sm transition-colors"
                     style={{
                       border: earned
-                        ? "1px solid rgba(155,107,255,0.35)"
-                        : "1px solid rgba(45,27,105,0.5)",
+                        ? "1px solid var(--border-accent)"
+                        : "1px solid var(--border-1)",
                     }}
                   >
                     <div
-                      className="w-9 h-9 flex items-center justify-center mb-3 clip-arena-sm"
+                      className="w-10 h-10 rounded-lg flex items-center justify-center"
                       style={{
-                        background: earned ? "rgba(155,107,255,0.14)" : "rgba(45,27,105,0.3)",
-                        border: earned ? "1px solid rgba(155,107,255,0.4)" : "1px solid rgba(74,63,112,0.5)",
+                        background: earned ? "var(--void-tint)" : "var(--surface-hover)",
+                        border: earned ? "1px solid var(--border-accent)" : "1px solid var(--border-1)",
                       }}
                     >
                       {earned ? (
-                        <Trophy size={16} className="text-void" aria-hidden />
+                        <Trophy size={18} className="text-[var(--brand-primary)]" aria-hidden />
                       ) : (
-                        <Lock size={14} className="text-haze-3" aria-hidden />
+                        <Lock size={16} className="text-haze-3" aria-hidden />
                       )}
                     </div>
-                    <p className={`font-rajdhani font-bold text-base mb-2 leading-snug ${earned ? "text-haze" : "text-haze-2"}`}>
+                    <p className={`font-display text-base md:text-lg leading-snug ${earned ? "text-haze" : "text-haze-2"}`}>
                       {badge.name}
                     </p>
-                    <p className="font-rajdhani text-sm text-haze-2 leading-relaxed pr-8">{badge.desc}</p>
+                    <p className="font-body text-sm text-haze-2 leading-relaxed">{badge.desc}</p>
                     {!earned && (
-                      <span className="absolute top-4 right-4 font-space-mono text-[9px] text-haze-3 tracking-wider px-2 py-0.5 border border-cosmos-4">LOCKED</span>
+                      <span className="absolute top-4 right-4 font-mono text-[9px] text-haze-3 tracking-wider px-2 py-0.5 rounded border border-[var(--border-1)]">
+                        LOCKED
+                      </span>
                     )}
                   </div>
                 );
@@ -378,23 +388,23 @@ export default function ProfilePage() {
           {/* Recent arenas */}
           {stats?.recentRooms && stats.recentRooms.length > 0 && (
             <div>
-              <h2 className="font-orbitron font-bold text-base text-haze tracking-wide mb-4">RECENT ARENAS</h2>
-              <div className="clip-arena overflow-hidden" style={{ border: "1px solid rgba(45,27,105,0.7)" }}>
+              <h2 className="font-display text-lg md:text-xl text-haze tracking-wide mb-5">RECENT ARENAS</h2>
+              <div className="rounded-2xl overflow-hidden border border-[var(--border-1)]">
                 {stats.recentRooms.map((h, i) => {
-                  const catColor = CATEGORY_COLORS[h.category] ?? "#9B8FC0";
+                  const catColor = CATEGORY_COLORS[h.category] ?? "#A78BFA";
                   return (
                     <div
                       key={i}
-                      className="flex items-center gap-3 px-4 md:px-5 py-3.5 bg-cosmos-2 border-b border-cosmos-4 last:border-0 hover:bg-cosmos-3 transition-colors"
+                      className="flex items-center gap-4 px-5 md:px-7 py-4 bg-[var(--surface-inset)] border-b border-[var(--border-1)] last:border-0 hover:bg-[var(--surface-hover)] transition-colors"
                     >
-                      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: catColor }} aria-hidden />
+                      <span className="w-2 h-2 rounded-full shrink-0" style={{ background: catColor }} aria-hidden />
                       <div className="flex-1 min-w-0">
-                        <p className="font-rajdhani font-bold text-sm text-haze truncate">{h.name}</p>
-                        <p className="font-space-mono text-[10px] text-haze-3 mt-0.5">
+                        <p className="font-body font-semibold text-sm md:text-base text-haze truncate">{h.name}</p>
+                        <p className="font-mono text-[10px] md:text-xs text-haze-3 mt-1">
                           <span style={{ color: catColor }}>{h.category}</span> · {h.place} · {h.date}
                         </p>
                       </div>
-                      <span className="font-orbitron font-bold text-sm text-coin-gold shrink-0">+{h.coins} ◈</span>
+                      <span className="font-stats font-bold text-sm md:text-base text-coin-gold shrink-0">+{h.coins} ◈</span>
                     </div>
                   );
                 })}
@@ -402,7 +412,7 @@ export default function ProfilePage() {
             </div>
           )}
         </div>
-      </div>
+      </AppPage>
     </AppLayout>
   );
 }
