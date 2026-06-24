@@ -25,8 +25,8 @@ export const metadata: Metadata = {
 
 export const viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#DDEAE1" },
-    { media: "(prefers-color-scheme: dark)", color: "#120C0B" },
+    { media: "(prefers-color-scheme: light)", color: "#F4F1FA" },
+    { media: "(prefers-color-scheme: dark)", color: "#0B0A14" },
   ],
 };
 
@@ -43,7 +43,7 @@ export default function RootLayout({
       signUpFallbackRedirectUrl={
         process.env.NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL ?? "/dashboard"
       }
-      appearance={{ variables: { colorPrimary: "#F92313" } }}
+      appearance={{ variables: { colorPrimary: "#7C5CFF" } }}
     >
       <html
         lang="en"

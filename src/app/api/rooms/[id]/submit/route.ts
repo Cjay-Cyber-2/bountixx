@@ -202,7 +202,7 @@ export async function POST(
     const lang = currentQuestion.language ?? room.language ?? body.language ?? "javascript";
     if (!codeExecutionEnabled(lang)) {
       return NextResponse.json(
-        { error: "Code execution is not configured for this language. Set PISTON_URL or JUDGE0_URL — JavaScript works out of the box." },
+        { error: "Code execution is not configured for this language. Set JDOODLE_CLIENT_ID + JDOODLE_CLIENT_SECRET (preferred), or JUDGE0_URL / PISTON_URL — JavaScript works out of the box." },
         { status: 503 },
       );
     }

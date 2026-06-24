@@ -1,4 +1,11 @@
-export type ArenaCheatReason = "tab-switch" | "split-view" | "side-panel" | "external-input";
+export type ArenaCheatReason =
+  | "tab-switch"
+  | "split-view"
+  | "side-panel"
+  | "external-input"
+  | "window-blur"
+  | "devtools"
+  | "new-window";
 
 export type ViewSnapshot = {
   innerWidth: number;
@@ -33,6 +40,12 @@ export const INTEGRITY_TIMING = {
   SPLIT_RECOVERY_RATIO: 0.7,
   RECOVERY_HOLD_MS: 900,
   WARNING_LEAD_MS: 2_000,
+  /** Window has lost focus this long without any split/sidebar cause → strike. */
+  WINDOW_BLUR_MS: 3_500,
+  /** Outer-vs-inner viewport difference (px) treated as DevTools docked open. */
+  DEVTOOLS_MIN_GAP: 160,
+  /** DevTools sustained this long → strike. */
+  DEVTOOLS_MS: 3_000,
 } as const;
 
 export function readViewSnapshot(): ViewSnapshot {
@@ -125,14 +138,41 @@ export function arenaCheatMessage(reason: ArenaCheatReason): string {
       return "An external side panel or assistant was detected. Close it and use only the arena page.";
     case "external-input":
       return "Pasting or external text insertion isn't allowed during live arenas.";
+    case "window-blur":
+      return "Focus left the arena window. Keep the arena window active for the whole round.";
+    case "devtools":
+      return "Developer tools were opened. Close them and stay in the arena UI.";
+    case "new-window":
+      return "A second arena window was detected. Use only one arena tab at a time.";
   }
 }
 
-export function arenaWarningMessage(kind: "split-view" | "side-panel"): string {
-  if (kind === "split-view") {
-    return "Split view detected — switch to a full-width tab or you'll be removed.";
+export function arenaWarningMessage(kind: "split-view" | "side-panel" | "window-blur" | "devtools"): string {
+  switch (kind) {
+    case "split-view":
+      return "Split view detected — switch to a full-width tab or you'll be removed.";
+    case "side-panel":
+      return "External panel detected — close side tools and stay focused on the arena.";
+    case "window-blur":
+      return "Arena window is not focused — click back into it now to avoid disqualification.";
+    case "devtools":
+      return "Developer tools appear open — close them now to avoid disqualification.";
   }
-  return "External panel detected — close side tools and stay focused on the arena.";
+}
+
+/** Heuristic for detecting that browser DevTools are docked open. */
+export function isDevToolsOpen(snapshot: ViewSnapshot, baseline: ViewSnapshot): boolean {
+  if (isMobileIntegrityLayout(snapshot)) return false;
+  const heightGap = Math.max(0, snapshot.outerHeight - snapshot.innerHeight);
+  const widthGap = Math.max(0, snapshot.outerWidth - snapshot.innerWidth);
+  // Browser chrome (tab strip + address bar) usually accounts for ~70–120px height.
+  // DevTools docked at the bottom pushes this past ~160px without a sidebar present.
+  const baselineHeightGap = Math.max(0, baseline.outerHeight - baseline.innerHeight);
+  const baselineWidthGap = Math.max(0, baseline.outerWidth - baseline.innerWidth);
+  return (
+    heightGap - baselineHeightGap >= INTEGRITY_TIMING.DEVTOOLS_MIN_GAP ||
+    widthGap - baselineWidthGap >= INTEGRITY_TIMING.DEVTOOLS_MIN_GAP
+  );
 }
 
 export function isBlockedBeforeInput(inputType: string): boolean {

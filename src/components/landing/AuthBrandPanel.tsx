@@ -3,53 +3,35 @@
 /**
  * Left-side brand panel shared by /login and /signup.
  *
- * Dark mode  → legacy dark blue (#0E0818)
- * Light mode → mint canvas (#DDEAE1)
+ * Both panels (this one + the form on the right) share the SAME theme canvas
+ * so dark mode is dark on both sides and light mode is light on both sides.
  *
- * Backgrounds are set explicitly from theme so they never inherit the wrong
- * palette (display:contents wrappers do not pass CSS variables reliably).
+ * The animated SVG / video fills the entire panel and tints with the
+ * active brand primary via CSS color-mix so it never clashes with the theme.
  */
 
 import { useState } from "react";
 import { useTheme } from "@/components/providers/ThemeProvider";
 
-/** Legacy cyber palette — matches [data-legacy-aesthetic] in globals.css */
-const PANEL = {
-  dark: {
-    bg: "#0E0818",
-    border: "rgba(155, 107, 255, 0.22)",
-  },
-  light: {
-    bg: "#DDEAE1",
-    border: "rgba(78, 39, 37, 0.22)",
-  },
-} as const;
-
 export function AuthBrandPanel() {
   const [svgFailed, setSvgFailed] = useState(false);
   const { theme } = useTheme();
   const isLight = theme === "light";
-  const palette = isLight ? PANEL.light : PANEL.dark;
 
   return (
     <div
-      data-legacy-aesthetic={isLight ? undefined : ""}
-      className="hidden lg:flex relative min-h-screen overflow-hidden border-r transition-[background-color,border-color] duration-350"
-      style={{
-        backgroundColor: palette.bg,
-        borderColor: palette.border,
-      }}
+      className="auth-brand-panel hidden lg:flex relative min-h-screen overflow-hidden"
+      aria-hidden={false}
     >
-      {/* Ambient glow layers */}
+      {/* Ambient brand glow */}
       <div
         className="absolute inset-0 pointer-events-none z-[2]"
         style={{
           background: isLight
-            ? "radial-gradient(ellipse 70% 55% at 50% 40%, rgba(249,35,19,0.05) 0%, transparent 70%)"
-            : "radial-gradient(ellipse 70% 55% at 50% 40%, rgba(155,107,255,0.10) 0%, transparent 70%)," +
-              "radial-gradient(ellipse 55% 45% at 50% 85%, rgba(255,107,26,0.06) 0%, transparent 72%)",
+            ? "radial-gradient(ellipse 70% 55% at 50% 40%, rgba(124,92,255,0.10) 0%, transparent 70%)"
+            : "radial-gradient(ellipse 70% 55% at 50% 40%, rgba(124,92,255,0.16) 0%, transparent 70%)," +
+              "radial-gradient(ellipse 55% 45% at 50% 85%, rgba(255,107,26,0.05) 0%, transparent 72%)",
         }}
-        aria-hidden
       />
 
       {/* Corner brackets — minimal HUD frame */}
@@ -62,12 +44,12 @@ export function AuthBrandPanel() {
         <div
           key={c}
           className={`absolute ${c} w-8 h-8 ${b} z-10`}
-          style={{ borderColor: isLight ? PANEL.light.border : "rgba(155,107,255,0.30)" }}
+          style={{ borderColor: "var(--border-accent)" }}
           aria-hidden
         />
       ))}
 
-      {/* SVG animation — full bleed, no boxing */}
+      {/* Brand visual — full bleed */}
       <div className="absolute inset-0 z-[1]">
         {svgFailed ? (
           <video
@@ -87,8 +69,8 @@ export function AuthBrandPanel() {
             style={{
               display: "block",
               filter: isLight
-                ? "drop-shadow(0 4px 24px rgba(78,39,37,0.10))"
-                : "drop-shadow(0 0 40px rgba(155,107,255,0.20))",
+                ? "drop-shadow(0 4px 24px rgba(31,27,54,0.08))"
+                : "drop-shadow(0 0 40px rgba(124,92,255,0.22))",
             }}
             aria-label="Bountixx arena animation"
           />

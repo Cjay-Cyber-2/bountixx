@@ -30,6 +30,8 @@ export interface LanguageSpec {
   judge0Id: number;
   /** Piston runtime name (used with version "*" on a self-hosted instance). */
   piston: string;
+  /** JDoodle compiler-API language code + default versionIndex. */
+  jdoodle: { language: string; versionIndex: string };
   /** Fallback starter program that reads ALL of stdin and prints the answer to stdout. */
   template: string;
 }
@@ -41,6 +43,7 @@ export const LANGUAGES: Record<LanguageKey, LanguageSpec> = {
     ext: "py",
     judge0Id: 71,
     piston: "python",
+    jdoodle: { language: "python3", versionIndex: "5" },
     template: `import sys
 
 data = sys.stdin.read().strip()
@@ -53,6 +56,7 @@ data = sys.stdin.read().strip()
     ext: "js",
     judge0Id: 63,
     piston: "javascript",
+    jdoodle: { language: "nodejs", versionIndex: "4" },
     template: `const data = require("fs").readFileSync(0, "utf8").trim();
 // Read the input above, then console.log your answer.
 `,
@@ -63,6 +67,7 @@ data = sys.stdin.read().strip()
     ext: "ts",
     judge0Id: 74,
     piston: "typescript",
+    jdoodle: { language: "typescript", versionIndex: "4" },
     template: `const data: string = require("fs").readFileSync(0, "utf8").trim();
 // Read the input above, then console.log your answer.
 `,
@@ -73,6 +78,7 @@ data = sys.stdin.read().strip()
     ext: "java",
     judge0Id: 62,
     piston: "java",
+    jdoodle: { language: "java", versionIndex: "4" },
     template: `import java.util.*;
 
 public class Main {
@@ -89,6 +95,7 @@ public class Main {
     ext: "cpp",
     judge0Id: 54,
     piston: "c++",
+    jdoodle: { language: "cpp17", versionIndex: "1" },
     template: `#include <bits/stdc++.h>
 using namespace std;
 
@@ -104,6 +111,7 @@ int main() {
     ext: "c",
     judge0Id: 50,
     piston: "c",
+    jdoodle: { language: "c", versionIndex: "5" },
     template: `#include <stdio.h>
 
 int main() {
@@ -118,6 +126,7 @@ int main() {
     ext: "go",
     judge0Id: 60,
     piston: "go",
+    jdoodle: { language: "go", versionIndex: "4" },
     template: `package main
 
 import (
@@ -139,6 +148,7 @@ func main() {
     ext: "rs",
     judge0Id: 73,
     piston: "rust",
+    jdoodle: { language: "rust", versionIndex: "4" },
     template: `use std::io::{self, Read};
 
 fn main() {
@@ -154,6 +164,7 @@ fn main() {
     ext: "rb",
     judge0Id: 72,
     piston: "ruby",
+    jdoodle: { language: "ruby", versionIndex: "4" },
     template: `data = STDIN.read.strip
 # Read the input above, then puts your answer.
 `,
@@ -164,6 +175,7 @@ fn main() {
     ext: "php",
     judge0Id: 68,
     piston: "php",
+    jdoodle: { language: "php", versionIndex: "4" },
     template: `<?php
 $data = trim(file_get_contents("php://stdin"));
 // Read the input above, then echo your answer.
@@ -175,6 +187,7 @@ $data = trim(file_get_contents("php://stdin"));
     ext: "cs",
     judge0Id: 51,
     piston: "csharp",
+    jdoodle: { language: "csharp", versionIndex: "4" },
     template: `using System;
 
 class Main {

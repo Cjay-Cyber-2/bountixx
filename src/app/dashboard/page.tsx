@@ -15,11 +15,17 @@ import { useToast } from "@/components/ui/Toast";
 import { OnlineFriendsList } from "@/components/arena/OnlineFriendsList";
 
 const CATEGORY_COLORS: Record<string, string> = {
-  coding: "#a855f7", trivia: "#9B6BFF", logic: "#8660fa", math: "#c084fc",
+  coding:  "#7C5CFF",
+  trivia:  "#A78BFA",
+  logic:   "#22D3EE",
+  math:    "#F0A500",
+  writing: "#F472B6",
+  design:  "#34D399",
+  meme:    "#FB7185",
 };
 
 const RESULT_COLORS: Record<string, string> = {
-  "1st": "#F0A500", "2nd": "#9B8FC0", "3rd": "#7A6FAE", "—": "#9B6BFF",
+  "1st": "#F0A500", "2nd": "#A78BFA", "3rd": "#7A6FAE", "—": "#7C5CFF",
 };
 
 type DashboardData = {
@@ -109,10 +115,10 @@ export default function DashboardPage() {
   }, [authLoading, fetchData, user]);
 
   const statCards = [
-    { label: "Rooms created",  value: data?.roomsCreated  ?? 0, icon: Swords,     accent: "var(--brand-primary)",  accentRaw: "#F92313" },
-    { label: "Rooms won",      value: data?.roomsWon      ?? 0, icon: Trophy,     accent: "var(--brand-primary)",  accentRaw: "#F92313" },
-    { label: "Total XP",       value: data?.totalXp       ?? 0, icon: TrendingUp,  accent: "var(--brand-primary)",  accentRaw: "#F92313" },
-    { label: "Coin balance",   value: data?.coinsBalance  ?? 0, icon: Coins,      accent: "var(--brand-primary)",  accentRaw: "#F92313", gold: true },
+    { label: "Rooms created",  value: data?.roomsCreated  ?? 0, icon: Swords,     accent: "var(--brand-primary)",  accentRaw: "#7C5CFF" },
+    { label: "Rooms won",      value: data?.roomsWon      ?? 0, icon: Trophy,     accent: "var(--brand-primary)",  accentRaw: "#7C5CFF" },
+    { label: "Total XP",       value: data?.totalXp       ?? 0, icon: TrendingUp, accent: "var(--brand-primary)",  accentRaw: "#7C5CFF" },
+    { label: "Coin balance",   value: data?.coinsBalance  ?? 0, icon: Coins,      accent: "var(--coin-gold-text)", accentRaw: "#F0A500", gold: true },
   ];
 
   return (
@@ -123,14 +129,14 @@ export default function DashboardPage() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="flex flex-col gap-1.5 mb-8"
+          className="flex flex-col gap-2 mb-10 md:mb-14"
         >
-          <div>
-            <p className="font-space-mono text-[10px] text-plum uppercase tracking-widest">
-              Welcome back
-            </p>
-            <h1 className="font-display text-4xl md:text-5xl text-haze leading-tight mt-1">Arena Dashboard</h1>
-          </div>
+          <p className="font-mono text-xs sm:text-sm text-[var(--brand-primary)] uppercase tracking-[3px]">
+            Welcome back
+          </p>
+          <h1 className="font-display text-4xl md:text-5xl lg:text-6xl text-haze leading-[1.05] mt-2">
+            Arena Dashboard
+          </h1>
         </motion.div>
 
         {loadError && !data ? (
@@ -221,24 +227,24 @@ export default function DashboardPage() {
         )}
 
         {/* Create CTA + Online */}
-        <div className="grid lg:grid-cols-2 gap-6 md:gap-8 mb-10 md:mb-12">
+        <div className="grid lg:grid-cols-2 gap-6 md:gap-8 mb-12 md:mb-16">
           {/* Create arena CTA */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.5 }}
-            className="relative overflow-hidden p-8 md:p-10 flex flex-col gap-6"
+            className="relative overflow-hidden rounded-2xl p-8 md:p-10 flex flex-col gap-7 shadow-sm"
             style={{
               background: "var(--void-tint)",
               border: "1px solid var(--border-accent)",
             }}
           >
             <div
-              className="absolute -top-10 -right-10 w-44 h-44 rounded-full opacity-30 pointer-events-none"
-              style={{ background: "radial-gradient(circle, rgba(155,107,255,0.5), transparent 70%)" }}
+              className="absolute -top-12 -right-12 w-48 h-48 rounded-full opacity-40 pointer-events-none"
+              style={{ background: "radial-gradient(circle, rgba(124,92,255,0.55), transparent 70%)" }}
               aria-hidden
             />
-            <div className="relative w-11 h-11 flex items-center justify-center">
+            <div className="relative w-12 h-12 flex items-center justify-center">
               <span
                 className="absolute inset-0 rounded-full border animate-[pulsering_2s_ease-out_infinite]"
                 style={{ borderColor: "var(--border-accent)" }}
@@ -249,17 +255,17 @@ export default function DashboardPage() {
                 style={{ borderColor: "var(--border-2)" }}
                 aria-hidden
               />
-              <Zap size={22} className="text-void relative z-10" aria-hidden />
+              <Zap size={24} className="text-[var(--brand-primary)] relative z-10" aria-hidden />
             </div>
             <div>
-              <h2 className="font-zen-dots text-xl text-haze mb-2 leading-tight">Ready to compete?</h2>
-              <p className="font-rajdhani text-base text-haze-2 leading-relaxed">
+              <h2 className="font-display text-2xl md:text-3xl text-haze mb-3 leading-tight">Ready to compete?</h2>
+              <p className="font-body text-base md:text-lg text-haze-2 leading-relaxed">
                 Drop any challenge. Lock the room. One winner claims the bounty.
               </p>
             </div>
             <Link href="/create" className="mt-auto">
-              <Button variant="primary" magnetic className="w-full justify-center gap-2">
-                Create arena <ArrowRight size={15} aria-hidden />
+              <Button variant="primary" magnetic size="lg" className="w-full justify-center gap-2">
+                Create arena <ArrowRight size={16} aria-hidden />
               </Button>
             </Link>
           </motion.div>
@@ -269,16 +275,16 @@ export default function DashboardPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.5 }}
-            className="p-7 md:p-8"
-            style={{ background: "var(--cosmos-2)", border: "1px solid var(--border-1)" }}
+            className="rounded-2xl p-7 md:p-9 shadow-sm"
+            style={{ background: "var(--surface-inset)", border: "1px solid var(--border-1)" }}
           >
-            <div className="flex items-center gap-3 mb-5">
-              <span className="relative flex h-2 w-2" aria-hidden>
+            <div className="flex items-center gap-3 mb-6">
+              <span className="relative flex h-2.5 w-2.5" aria-hidden>
                 <span className="absolute inset-0 rounded-full bg-success animate-[livepulse_1.5s_ease-in-out_infinite]" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-success" />
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-success" />
               </span>
-              <span className="font-zen-dots text-base text-haze tracking-wide">Who&apos;s online</span>
-              <span className="ml-auto font-space-mono text-[10px] text-haze-3">
+              <span className="font-display text-lg md:text-xl text-haze tracking-wide">Who&apos;s online</span>
+              <span className="ml-auto font-mono text-[11px] text-haze-3 tracking-wider">
                 {onlineCount > 0 ? `${onlineCount} online` : "live"}
               </span>
             </div>
@@ -289,9 +295,9 @@ export default function DashboardPage() {
               onNotify={(message, type = "info") => toast({ type, title: message })}
             />
             {!data?.activeLobby ? (
-                <p className="font-space-mono text-sm text-haze-3 mt-4 text-center leading-relaxed">
-                  Create an arena to invite online friends from here.
-                </p>
+              <p className="font-body text-sm md:text-base text-haze-3 mt-5 text-center leading-relaxed">
+                Create an arena to invite online friends from here.
+              </p>
             ) : null}
           </motion.div>
         </div>
@@ -302,50 +308,40 @@ export default function DashboardPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5, duration: 0.5 }}
         >
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-4 text-center">
-            <h3 className="font-zen-dots text-lg text-haze">Recent arenas</h3>
+          <div className="flex items-baseline justify-between gap-3 mb-5">
+            <h3 className="font-display text-xl md:text-2xl text-haze">Recent arenas</h3>
             <Link
               href="/profile/me"
-              className="cursor-target font-space-mono text-[10px] text-haze-3 hover:text-void transition-colors tracking-widest uppercase hidden sm:inline"
+              className="cursor-target font-mono text-[11px] text-haze-3 hover:text-[var(--brand-primary)] transition-colors tracking-widest uppercase"
             >
               View all →
             </Link>
           </div>
 
           {loading ? (
-            <div
-              className="overflow-hidden"
-              style={{ border: "1px solid var(--border-1)" }}
-            >
+            <div className="rounded-2xl overflow-hidden border border-[var(--border-1)]">
               {Array.from({ length: 3 }).map((_, i) => (
                 <div
                   key={i}
-                  className="flex items-center gap-3 px-5 py-3.5"
-                  style={{ background: "var(--cosmos-2)", borderBottom: "1px solid var(--border-1)" }}
+                  className="flex items-center gap-4 px-5 md:px-7 py-4 bg-[var(--surface-inset)] border-b border-[var(--border-1)] last:border-0"
                 >
-                  <div className="w-1.5 h-1.5 rounded-full bg-cosmos-4 shrink-0" />
+                  <div className="w-2 h-2 rounded-full bg-cosmos-4 shrink-0" />
                   <div className="flex-1">
-                    <div className="h-3 w-40 bg-cosmos-3 animate-pulse mb-1.5" />
-                    <div className="h-2 w-28 bg-cosmos-3 animate-pulse" />
+                    <div className="h-3.5 w-40 bg-cosmos-3 animate-pulse mb-1.5 rounded" />
+                    <div className="h-2.5 w-28 bg-cosmos-3 animate-pulse rounded" />
                   </div>
                 </div>
               ))}
             </div>
           ) : !data?.recentRooms?.length ? (
-            <div
-              className="p-10 text-center"
-              style={{ background: "var(--cosmos-2)", border: "1px solid var(--border-1)" }}
-            >
-              <p className="font-zen-dots text-base text-haze-2 mb-2">No arenas yet</p>
-              <p className="font-space-mono text-[10px] text-haze-3">
+            <div className="rounded-2xl p-12 text-center bg-[var(--surface-inset)] border border-[var(--border-1)]">
+              <p className="font-display text-lg md:text-xl text-haze mb-2">No arenas yet</p>
+              <p className="font-body text-sm md:text-base text-haze-3">
                 Create or join an arena to see your history here.
               </p>
             </div>
           ) : (
-            <div
-              className="overflow-hidden"
-              style={{ border: "1px solid var(--border-1)" }}
-            >
+            <div className="rounded-2xl overflow-hidden border border-[var(--border-1)]">
               {data.recentRooms.map((room, i) => (
                 <RoomRow key={i} room={room} />
               ))}
@@ -367,22 +363,22 @@ function RoomRow({
 
   return (
     <div
-      className="flex items-center gap-3 px-4 md:px-5 py-3.5 transition-colors last:border-0"
+      className="flex items-center gap-4 px-5 md:px-7 py-4 transition-colors last:border-0"
       style={{
-        background: "var(--cosmos-2)",
+        background: "var(--surface-inset)",
         borderBottom: "1px solid var(--border-1)",
       }}
       onMouseEnter={(e) => (e.currentTarget.style.background = "var(--surface-hover)")}
-      onMouseLeave={(e) => (e.currentTarget.style.background = "var(--cosmos-2)")}
+      onMouseLeave={(e) => (e.currentTarget.style.background = "var(--surface-inset)")}
     >
-      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: catColor }} aria-hidden />
+      <span className="w-2 h-2 rounded-full shrink-0" style={{ background: catColor }} aria-hidden />
       <div className="flex-1 min-w-0">
-        <p className="font-rajdhani font-bold text-sm text-haze truncate">{room.name}</p>
-        <p className="font-space-mono text-[10px] text-haze-3 mt-0.5">
+        <p className="font-body font-semibold text-sm md:text-base text-haze truncate">{room.name}</p>
+        <p className="font-mono text-[10px] md:text-xs text-haze-3 mt-1">
           <span style={{ color: catColor }}>{room.category}</span> · {room.date}
         </p>
       </div>
-      <span className="font-space-mono font-bold text-xs shrink-0 w-12 text-right tracking-wide" style={{ color: resColor }}>
+      <span className="font-stats font-bold text-sm shrink-0 w-14 text-right tracking-wide" style={{ color: resColor }}>
         {room.place}
       </span>
     </div>

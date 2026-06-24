@@ -57,15 +57,16 @@ If neither is set, **Analyze with AI** shows an error about missing keys (not a 
 
 Coding challenges run players' code against AI-generated test cases. **You need a code runner for every language except JavaScript** (JavaScript runs locally on the server with zero config).
 
-#### How Bountixx picks a runner (do not set more than one)
+#### How Bountixx picks a runner
 
-| Priority | Env var | What runs |
-|----------|---------|-----------|
-| 1 (highest) | `JUDGE0_URL` (+ optional `JUDGE0_KEY`) | Judge0 — all supported languages |
-| 2 | `PISTON_URL` | Piston — all supported languages |
-| 3 (fallback) | *(none)* | **JavaScript / TypeScript only** via built-in Node VM |
+| Priority | Env vars | What runs |
+|----------|----------|-----------|
+| **1 (default)** | `JDOODLE_CLIENT_ID` + `JDOODLE_CLIENT_SECRET` | **JDoodle** — all supported languages, zero infra |
+| 2 | `JUDGE0_URL` (+ optional `JUDGE0_KEY`) | Judge0 — all supported languages |
+| 3 | `PISTON_URL` | Piston — all supported languages |
+| 4 (fallback) | *(none)* | **JavaScript / TypeScript only** via built-in Node VM |
 
-If `JUDGE0_URL` is set, `PISTON_URL` is ignored. For Piston-only setup, leave `JUDGE0_URL` **unset**.
+Higher-priority runners win. **JDoodle is the recommended runner** — no servers to manage and supports every language out of the box.
 
 **Supported languages** (AI-detected, locked in the editor): Python, JavaScript, TypeScript, Java, C++, C, Go, Rust, Ruby, PHP, C#.
 
@@ -73,7 +74,64 @@ Non-coding arenas (trivia / logic / math) work without any of these variables.
 
 ---
 
-#### Option A — Piston (recommended: self-hosted, free, all languages)
+#### Option DEFAULT — JDoodle (recommended)
+
+JDoodle is a hosted code-execution API that supports every language Bountixx ships, with no infrastructure to maintain.
+
+##### Step J1 — Get JDoodle credentials
+
+1. Sign up at [https://www.jdoodle.com/compiler-api](https://www.jdoodle.com/compiler-api)
+2. Go to **My Account → API Credentials**
+3. Copy your **Client ID** and **Client Secret**
+
+The free tier includes 200 credits/day (enough for early testing). Paid plans start at 200k credits/month.
+
+##### Step J2 — Add the variables in Vercel
+
+Add these to **Production** and **Preview**, then **Redeploy**:
+
+| Variable | Value |
+|----------|-------|
+| `JDOODLE_CLIENT_ID` | `your-client-id` |
+| `JDOODLE_CLIENT_SECRET` | `your-client-secret` |
+| `JDOODLE_URL` *(optional)* | `https://api.jdoodle.com/v1/execute` (default — change only if you proxy JDoodle through your own gateway) |
+
+Both `JDOODLE_CLIENT_ID` and `JDOODLE_CLIENT_SECRET` must be set together — if either is missing, Bountixx falls back to the next configured runner.
+
+##### Step J3 — Smoke-test
+
+Bountixx posts this JSON to `JDOODLE_URL` for each test case:
+
+```json
+{
+  "clientId": "your-client-id",
+  "clientSecret": "your-client-secret",
+  "script": "print(input())",
+  "stdin": "hello",
+  "language": "python3",
+  "versionIndex": "5"
+}
+```
+
+Create a **coding** arena → **Run** in the editor → **Submit**. You should see real stdout in the test panel.
+
+Confirm `/api/health` reports `"codeRunner.active": "jdoodle"`.
+
+##### JDoodle troubleshooting
+
+| Symptom | Fix |
+|---------|-----|
+| `JDoodle auth failed (HTTP 401)` | Wrong client ID/secret — re-copy from JDoodle dashboard, redeploy |
+| `JDoodle auth failed (HTTP 403)` | Daily credit limit hit — upgrade plan or wait 24h |
+| `/api/health` shows `"active": "js-only"` | Vars not set in **Production** env, or not redeployed |
+| Java/C++ output but no compiled answer | Check player code reads stdin correctly — JDoodle returns combined stdout/stderr |
+| Older language version than expected | Bump `versionIndex` in `src/lib/languages.ts` (per-language) |
+
+---
+
+---
+
+#### Option A — Piston (self-hosted alternative)
 
 > **Do not use `https://emkc.org/api/v2/piston/execute` without an authorization token.**  
 > As of **15 Feb 2026**, the public Piston API is **whitelist-only**. Bountixx does **not** send a Piston API key, so the public endpoint will fail for production. **Self-host Piston** (open source, MIT) on a VPS, Railway, Fly.io, etc.
@@ -373,7 +431,7 @@ Open `http://localhost:3000/login` — you should see **your** Bountixx UI, not 
 | **Analyze with AI** fails / “could not reach service” | Add `GROQ_API_KEY` or `GEMINI_API_KEY` in Vercel → redeploy. Open `/api/health` to see which env check failed |
 | **Analyze with AI** — “Clerk server auth failed” | `CLERK_SECRET_KEY` missing or mismatched with your publishable key — add in Vercel Production + Preview, redeploy |
 | **Analyze with AI** — Groq/Gemini error in UI | API key invalid or rate-limited — the UI now shows the provider message |
-| **Coding Run/Submit** — “execution not configured” | Set `PISTON_URL` (self-hosted) or `JUDGE0_URL` — see **ADD for CODING arenas** above. JS works without config. |
+| **Coding Run/Submit** — “execution not configured” | Set `JDOODLE_CLIENT_ID` + `JDOODLE_CLIENT_SECRET` (default) — or `JUDGE0_URL` / `PISTON_URL`. See **ADD for CODING arenas** above. JS works without config. |
 | **Coding Run/Submit** — “runtime is unknown” / execution error | Piston language not installed — run `ppman install python` (etc.) on your Piston server |
 | **Invite link / QR not working** | Set `NEXT_PUBLIC_APP_URL=https://bountixx.vercel.app` in Vercel so links always use your production domain, then redeploy |
 
@@ -415,8 +473,12 @@ NEXT_PUBLIC_APP_URL=https://YOUR-DOMAIN.com
 GROQ_API_KEY=your-groq-api-key
 
 # Coding execution — pick ONE (see "ADD for CODING arenas" section)
-# Self-hosted Piston (recommended):
-PISTON_URL=https://piston.yourdomain.com/api/v2/execute
+# JDoodle (default — hosted, all languages, zero infra):
+JDOODLE_CLIENT_ID=your-jdoodle-client-id
+JDOODLE_CLIENT_SECRET=your-jdoodle-client-secret
+
+# OR self-hosted Piston:
+# PISTON_URL=https://piston.yourdomain.com/api/v2/execute
 
 # OR Judge0 via RapidAPI:
 # JUDGE0_URL=https://judge0-ce.p.rapidapi.com

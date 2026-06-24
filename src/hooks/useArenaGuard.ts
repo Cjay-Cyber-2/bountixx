@@ -7,6 +7,7 @@ import {
   buildIntegrityProfile,
   INTEGRITY_TIMING,
   isBlockedBeforeInput,
+  isDevToolsOpen,
   isDynamicSidebar,
   readViewSnapshot,
   type ArenaCheatReason,
@@ -18,11 +19,17 @@ export { arenaCheatMessage };
 
 interface ArenaGuardOptions {
   onStrike: (count: number, reason: ArenaCheatReason) => void;
-  onWarning?: (kind: "split-view" | "side-panel" | null, message: string | null) => void;
+  onWarning?: (
+    kind: "split-view" | "side-panel" | "window-blur" | "devtools" | null,
+    message: string | null,
+  ) => void;
   onDisqualify?: () => void;
   maxStrikes?: number;
   enabled?: boolean;
 }
+
+/** Sentinel value persisted to localStorage to detect a second arena window. */
+const ARENA_LOCK_KEY = "bountixx:arena-lock";
 
 export function useArenaGuard({
   onStrike,
@@ -70,12 +77,24 @@ export function useArenaGuard({
     let splitViewAt: number | null = null;
     let sidebarAt: number | null = null;
     let recoveryAt: number | null = null;
+    let devtoolsAt: number | null = null;
 
     let warnedSplit = false;
     let warnedSidebar = false;
+    let warnedBlur = false;
+    let warnedDevtools = false;
 
     let settleTimer: number | null = null;
     let pollTimer: number | null = null;
+    let lockTimer: number | null = null;
+
+    /** Unique token to claim the arena lock — detects a second arena tab. */
+    const lockId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    try {
+      window.localStorage.setItem(ARENA_LOCK_KEY, lockId);
+    } catch {
+      // localStorage unavailable — skip the second-window guard
+    }
 
     function inGracePeriod(): boolean {
       return Date.now() - startedAt < INTEGRITY_TIMING.ENTRY_GRACE_MS;
@@ -92,29 +111,44 @@ export function useArenaGuard({
     }
 
     function clearFocusWatch() {
+      if (focusLostAt !== null && warnedBlur) onWarning?.(null, null);
       focusLostAt = null;
+      warnedBlur = false;
     }
 
     function clearSplitWatch() {
-      if (splitViewAt !== null) onWarning?.(null, null);
+      if (splitViewAt !== null && warnedSplit) onWarning?.(null, null);
       splitViewAt = null;
       warnedSplit = false;
     }
 
     function clearSidebarWatch() {
-      if (sidebarAt !== null) onWarning?.(null, null);
+      if (sidebarAt !== null && warnedSidebar) onWarning?.(null, null);
       sidebarAt = null;
       warnedSidebar = false;
     }
 
-    function maybeWarn(kind: "split-view" | "side-panel", started: number | null) {
+    function clearDevtoolsWatch() {
+      if (devtoolsAt !== null && warnedDevtools) onWarning?.(null, null);
+      devtoolsAt = null;
+      warnedDevtools = false;
+    }
+
+    function maybeWarn(
+      kind: "split-view" | "side-panel" | "window-blur" | "devtools",
+      started: number | null,
+    ) {
       if (!onWarning || started === null) return;
       const elapsed = Date.now() - started;
       if (elapsed < INTEGRITY_TIMING.WARNING_LEAD_MS) return;
       if (kind === "split-view" && warnedSplit) return;
       if (kind === "side-panel" && warnedSidebar) return;
+      if (kind === "window-blur" && warnedBlur) return;
+      if (kind === "devtools" && warnedDevtools) return;
       if (kind === "split-view") warnedSplit = true;
       if (kind === "side-panel") warnedSidebar = true;
+      if (kind === "window-blur") warnedBlur = true;
+      if (kind === "devtools") warnedDevtools = true;
       onWarning(kind, arenaWarningMessage(kind));
     }
 
@@ -123,11 +157,13 @@ export function useArenaGuard({
         clearFocusWatch();
         clearSplitWatch();
         clearSidebarWatch();
-        disqualify("tab-switch");
+        clearDevtoolsWatch();
+        if (!inGracePeriod()) disqualify("tab-switch");
       } else {
         clearFocusWatch();
         clearSplitWatch();
         clearSidebarWatch();
+        clearDevtoolsWatch();
       }
     }
 
@@ -139,7 +175,7 @@ export function useArenaGuard({
       if (document.hidden || firedRef.current) return;
       const profile = buildIntegrityProfile(baseline);
       if (profile.keyboardOpen) return;
-      focusLostAt = Date.now();
+      if (focusLostAt === null) focusLostAt = Date.now();
     }
 
     function handleContextMenu(e: MouseEvent) {
@@ -158,6 +194,41 @@ export function useArenaGuard({
       }
     }
 
+    /**
+     * Block keyboard shortcuts that could open a new tab/window/devtools.
+     * The browser still owns these — we can't truly block Ctrl+T on most platforms —
+     * but we strike immediately if they fire. Together with the visibility
+     * watchdog this ensures any tab-opening shortcut results in disqualification.
+     */
+    function handleKeyDown(e: KeyboardEvent) {
+      if (firedRef.current || inGracePeriod()) return;
+      const mod = e.ctrlKey || e.metaKey;
+      const key = e.key.toLowerCase();
+      const isForbiddenCombo =
+        (mod && (key === "t" || key === "n" || key === "w")) ||
+        (mod && e.shiftKey && (key === "t" || key === "n" || key === "p")) ||
+        // DevTools shortcuts
+        key === "f12" ||
+        (mod && e.shiftKey && (key === "i" || key === "j" || key === "c")) ||
+        (mod && key === "u");
+      if (isForbiddenCombo) {
+        e.preventDefault();
+        // Surface a strike immediately — the browser may still execute on some OS.
+        disqualify(
+          key === "f12" || (mod && e.shiftKey && (key === "i" || key === "j" || key === "c")) || (mod && key === "u")
+            ? "devtools"
+            : "new-window",
+        );
+      }
+    }
+
+    function handleStorage(e: StorageEvent) {
+      if (e.key !== ARENA_LOCK_KEY) return;
+      if (e.newValue && e.newValue !== lockId) {
+        disqualify("new-window");
+      }
+    }
+
     function pollIntegrity() {
       if (firedRef.current || document.hidden || !baselineReady) return;
       if (inGracePeriod()) return;
@@ -169,19 +240,43 @@ export function useArenaGuard({
         clearFocusWatch();
         clearSplitWatch();
         clearSidebarWatch();
+        clearDevtoolsWatch();
         recoveryAt = null;
         return;
       }
 
       const splitActive = profile.splitTabLayout;
       const sidebarActive = isDynamicSidebar(profile.snapshot, baseline);
+      const devtoolsActive = isDevToolsOpen(profile.snapshot, baseline);
 
-      if (!splitActive && !sidebarActive) {
+      // DevTools docked is an immediate concern — show warning + strike on sustained.
+      if (devtoolsActive) {
+        if (devtoolsAt === null) devtoolsAt = Date.now();
+        maybeWarn("devtools", devtoolsAt);
+        if (Date.now() - devtoolsAt >= INTEGRITY_TIMING.DEVTOOLS_MS) {
+          disqualify("devtools");
+          return;
+        }
+      } else {
+        clearDevtoolsWatch();
+      }
+
+      // Pure focus loss (no split or sidebar) — strike when sustained.
+      if (focusLost && !splitActive && !sidebarActive && !devtoolsActive) {
+        if (focusLostAt === null) focusLostAt = Date.now();
+        maybeWarn("window-blur", focusLostAt);
+        if (Date.now() - focusLostAt >= INTEGRITY_TIMING.WINDOW_BLUR_MS) {
+          disqualify("window-blur");
+          return;
+        }
+      }
+
+      if (!splitActive && !sidebarActive && !devtoolsActive) {
         if (recoveryAt === null) recoveryAt = Date.now();
         if (Date.now() - recoveryAt >= INTEGRITY_TIMING.RECOVERY_HOLD_MS) {
           clearSplitWatch();
           clearSidebarWatch();
-          clearFocusWatch();
+          if (!focusLost) clearFocusWatch();
           recoveryAt = null;
         }
         return;
@@ -243,11 +338,28 @@ export function useArenaGuard({
 
     pollTimer = window.setInterval(pollIntegrity, INTEGRITY_TIMING.POLL_MS);
 
+    // Re-assert the arena lock periodically so any new arena tab steals it
+    // and triggers the storage handler in the original tab.
+    lockTimer = window.setInterval(() => {
+      try {
+        const current = window.localStorage.getItem(ARENA_LOCK_KEY);
+        if (current && current !== lockId) {
+          disqualify("new-window");
+        } else {
+          window.localStorage.setItem(ARENA_LOCK_KEY, lockId);
+        }
+      } catch {
+        // ignore
+      }
+    }, 2_500);
+
     document.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("focus", handleFocusIn, true);
     window.addEventListener("blur", handleFocusOut, true);
     document.addEventListener("contextmenu", handleContextMenu, true);
     document.addEventListener("beforeinput", handleBeforeInput, true);
+    document.addEventListener("keydown", handleKeyDown, true);
+    window.addEventListener("storage", handleStorage);
     window.visualViewport?.addEventListener("resize", pollIntegrity);
     window.visualViewport?.addEventListener("scroll", pollIntegrity);
     window.addEventListener("resize", pollIntegrity);
@@ -255,14 +367,24 @@ export function useArenaGuard({
     return () => {
       if (settleTimer !== null) window.clearTimeout(settleTimer);
       if (pollTimer !== null) window.clearInterval(pollTimer);
+      if (lockTimer !== null) window.clearInterval(lockTimer);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("focus", handleFocusIn, true);
       window.removeEventListener("blur", handleFocusOut, true);
       document.removeEventListener("contextmenu", handleContextMenu, true);
       document.removeEventListener("beforeinput", handleBeforeInput, true);
+      document.removeEventListener("keydown", handleKeyDown, true);
+      window.removeEventListener("storage", handleStorage);
       window.visualViewport?.removeEventListener("resize", pollIntegrity);
       window.visualViewport?.removeEventListener("scroll", pollIntegrity);
       window.removeEventListener("resize", pollIntegrity);
+      try {
+        if (window.localStorage.getItem(ARENA_LOCK_KEY) === lockId) {
+          window.localStorage.removeItem(ARENA_LOCK_KEY);
+        }
+      } catch {
+        // ignore
+      }
     };
   }, [enabled, maxStrikes, onDisqualify, onStrike, onWarning]);
 
