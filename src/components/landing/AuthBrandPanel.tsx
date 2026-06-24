@@ -3,11 +3,12 @@
 /**
  * Left-side brand panel shared by /login and /signup.
  *
- * Both panels (this one + the form on the right) share the SAME theme canvas
- * so dark mode is dark on both sides and light mode is light on both sides.
+ * Both panels share the same `--cosmos` canvas as the form side so dark mode
+ * stays deep on both halves and light mode stays pale on both halves.
  *
- * The animated SVG / video fills the entire panel and tints with the
- * active brand primary via CSS color-mix so it never clashes with the theme.
+ * The SVG asset ships with white gradient fills; we always paint a solid
+ * cosmos layer underneath and vignette in dark mode so the object tag never
+ * reads as a light panel.
  */
 
 import { useState } from "react";
@@ -20,12 +21,20 @@ export function AuthBrandPanel() {
 
   return (
     <div
-      className="auth-brand-panel hidden lg:flex relative min-h-screen overflow-hidden"
+      className="auth-brand-panel hidden lg:flex relative min-h-screen overflow-hidden bg-cosmos"
+      style={{ backgroundColor: "var(--cosmos)" }}
       aria-hidden={false}
     >
+      {/* Solid canvas — matches auth-form-shell / right panel exactly */}
+      <div
+        className="auth-brand-canvas absolute inset-0 z-0 bg-cosmos"
+        style={{ backgroundColor: "var(--cosmos)" }}
+        aria-hidden
+      />
+
       {/* Ambient brand glow */}
       <div
-        className="absolute inset-0 pointer-events-none z-[2]"
+        className="absolute inset-0 pointer-events-none z-[3]"
         style={{
           background: isLight
             ? "radial-gradient(ellipse 70% 55% at 50% 40%, rgba(124,92,255,0.10) 0%, transparent 70%)"
@@ -49,8 +58,8 @@ export function AuthBrandPanel() {
         />
       ))}
 
-      {/* Brand visual — full bleed */}
-      <div className="absolute inset-0 z-[1]">
+      {/* Brand visual — full bleed; object defaults to white without an explicit bg */}
+      <div className="auth-brand-visual absolute inset-0 z-[1]">
         {svgFailed ? (
           <video
             src="/bountixx-hero.mp4"
@@ -58,16 +67,18 @@ export function AuthBrandPanel() {
             muted
             loop
             playsInline
-            className="w-full h-full object-cover"
+            className="auth-brand-media w-full h-full object-cover"
+            style={{ backgroundColor: "var(--cosmos)" }}
           />
         ) : (
           <object
             type="image/svg+xml"
             data="/bountixx.svg"
             onError={() => setSvgFailed(true)}
-            className="w-full h-full pointer-events-none"
+            className="auth-brand-media w-full h-full pointer-events-none"
             style={{
               display: "block",
+              backgroundColor: "var(--cosmos)",
               filter: isLight
                 ? "drop-shadow(0 4px 24px rgba(31,27,54,0.08))"
                 : "drop-shadow(0 0 40px rgba(124,92,255,0.22))",
@@ -76,6 +87,14 @@ export function AuthBrandPanel() {
           />
         )}
       </div>
+
+      {/* Dark mode — tame white SVG wash so panel matches the form side */}
+      {!isLight && (
+        <div
+          className="auth-brand-scrim absolute inset-0 z-[2] pointer-events-none"
+          aria-hidden
+        />
+      )}
     </div>
   );
 }
