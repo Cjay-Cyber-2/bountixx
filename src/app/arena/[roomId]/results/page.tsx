@@ -47,7 +47,7 @@ function Confetti() {
   const [particles] = useState(() => Array.from({ length: 40 }, (_, i) => ({
     id: i,
     x: Math.random() * 100,
-    color: ["#FF6B1A", "#F0A500", "#a855f7", "#FFFFFF", "#00D68F"][i % 5],
+    color: ["#7C5CFF", "#F0A500", "#A78BFA", "#FFFFFF", "#34D399"][i % 5],
     delay: Math.random() * 1.5,
     duration: 2 + Math.random() * 2,
     size: 3 + Math.random() * 6,

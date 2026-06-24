@@ -884,7 +884,7 @@ export default function ArenaPage() {
   }
 
   const { room, players, testCases } = data;
-  const catColor = CAT_COLORS[questionCategory] ?? "#FF6B1A";
+  const catColor = CAT_COLORS[questionCategory] ?? "#7C5CFF";
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-cosmos" onContextMenu={blockContextMenu}>
