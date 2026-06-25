@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { dismissedRecentRooms, roomPlayers } from "@/lib/schema";
-import { eq, and, inArray } from "drizzle-orm";
+import { eq, and, inArray, desc } from "drizzle-orm";
 import { getSession, unauthorized } from "@/lib/getSession";
 import { ensureDatabaseSchema } from "@/lib/ensureSchema";
 
@@ -27,7 +27,8 @@ export async function POST(req: Request) {
       .select({ roomId: roomPlayers.roomId })
       .from(roomPlayers)
       .where(eq(roomPlayers.userId, session.id))
-      .limit(50);
+      .orderBy(desc(roomPlayers.joinedAt))
+      .limit(10);
 
     const roomIds = recent.map((r) => r.roomId);
     if (roomIds.length === 0) {

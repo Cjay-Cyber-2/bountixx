@@ -262,6 +262,132 @@ function TestResults({ testCases, results, ran }: TestResultsProps) {
   );
 }
 
+/* ─── Question sidebar for coding IDE ─── */
+function CodingQuestionSidebar({
+  roomName,
+  questions,
+  questionIndex,
+  challengePrompt,
+  questionCategory,
+  catColor,
+  totalQuestions,
+  answeredIndices,
+  players,
+}: {
+  roomName: string;
+  questions: NonNullable<RoomData["questions"]>;
+  questionIndex: number;
+  challengePrompt: string;
+  questionCategory: RoomCategory;
+  catColor: string;
+  totalQuestions: number;
+  answeredIndices: number[];
+  players: Player[];
+}) {
+  const answeredSet = new Set(answeredIndices);
+
+  return (
+    <div
+      className="flex w-full md:w-[34%] lg:w-[30%] lg:max-w-[380px] border-b md:border-b-0 md:border-r flex-col overflow-hidden shrink-0 min-h-[220px] md:min-h-0 md:max-h-none"
+      style={{ background: "var(--surface-raised)", borderColor: "var(--border-1)" }}
+    >
+      <div
+        className="px-5 md:px-6 pt-5 pb-4 border-b shrink-0"
+        style={{ background: "var(--surface-inset)", borderColor: "var(--border-1)" }}
+      >
+        <p className="font-mono text-[10px] text-[var(--brand-primary)] tracking-[3px] uppercase mb-1.5">Arena</p>
+        <p className="font-display text-base md:text-lg text-haze leading-snug">{roomName}</p>
+      </div>
+
+      <div className="px-5 md:px-6 py-5 flex-1 overflow-y-auto min-h-0">
+        {totalQuestions > 1 && (
+          <div className="mb-5">
+            <p className="font-mono text-[10px] text-haze-3 tracking-widest uppercase mb-2">All questions</p>
+            <div className="flex flex-col gap-1.5">
+              {questions.map((q, i) => {
+                const isCurrent = i === questionIndex;
+                const isAnswered = answeredSet.has(i);
+                const qCat = (q.category ?? questionCategory) as RoomCategory;
+                const qColor = CAT_COLORS[qCat] ?? catColor;
+                return (
+                  <div
+                    key={q.index ?? i}
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg border text-left"
+                    style={{
+                      borderColor: isCurrent ? `${qColor}88` : "var(--border-1)",
+                      background: isCurrent ? `${qColor}18` : "var(--surface-inset)",
+                    }}
+                  >
+                    <span
+                      className="font-mono text-[10px] w-5 h-5 flex items-center justify-center rounded shrink-0"
+                      style={{
+                        color: isCurrent ? qColor : "var(--haze-3)",
+                        background: isCurrent ? `${qColor}22` : "transparent",
+                      }}
+                    >
+                      {i + 1}
+                    </span>
+                    <span className={`font-mono text-[10px] flex-1 truncate ${isCurrent ? "text-haze" : "text-haze-3"}`}>
+                      {(q.title || q.taskRaw || `Question ${i + 1}`).slice(0, 48)}
+                    </span>
+                    {isAnswered && (
+                      <span className="font-mono text-[9px] text-success shrink-0">DONE</span>
+                    )}
+                    {isCurrent && (
+                      <span className="font-mono text-[9px] shrink-0" style={{ color: qColor }}>NOW</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        <div
+          className="p-4 mb-5 border-l-2 rounded-r-md"
+          style={{ borderLeftColor: catColor, background: "var(--surface-inset)" }}
+        >
+          <p className="font-mono text-[10px] text-[var(--brand-primary)] tracking-widest uppercase mb-2">
+            Current challenge
+          </p>
+          <p className="font-body text-sm md:text-base text-haze leading-relaxed whitespace-pre-wrap">
+            {challengePrompt}
+          </p>
+          {totalQuestions > 1 && (
+            <p className="font-mono text-[10px] text-[var(--brand-primary)] mt-3 tracking-widest uppercase">
+              Question {questionIndex + 1} of {totalQuestions}
+            </p>
+          )}
+        </div>
+
+        <div className="flex flex-wrap gap-2 mb-6">
+          {questionCategory && (
+            <span
+              className="font-mono text-[10px] px-2.5 py-1 border rounded tracking-wider"
+              style={{ color: catColor, borderColor: `${catColor}55`, backgroundColor: `${catColor}14` }}
+            >
+              {questionCategory.toUpperCase()}
+            </span>
+          )}
+        </div>
+
+        <div className="rounded-xl border border-[var(--border-1)] bg-[var(--surface-inset)] p-4">
+          <p className="font-mono text-[10px] text-haze-3 tracking-widest mb-3 uppercase">Players</p>
+          {players.map((p) => (
+            <div key={p.id} className="flex items-center gap-2 py-1.5 border-b border-[var(--border-1)] last:border-0">
+              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${p.status === "completed" ? "bg-success" : p.status === "forfeited" ? "bg-danger" : "bg-haze-3"}`} />
+              <span className="font-mono text-[10px] text-haze-2 truncate flex-1">@{p.username ?? "player"}</span>
+              <span className={`font-mono text-[9px] shrink-0 tracking-wider ${p.status === "completed" ? "text-success" : p.status === "forfeited" ? "text-danger" : "text-haze-3"}`}>
+                {p.status}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Challenge prompt (coding + shared) ─── */
 function ChallengePromptCard({
   prompt,
@@ -388,7 +514,7 @@ function CodeEditor({
           onChange={(e) => setCode(e.target.value)}
           onKeyDown={handleKey}
           className="bx-native-cursor flex-1 p-4 bg-transparent text-haze font-mono text-sm resize-none focus:outline-none leading-relaxed select-text"
-          style={{ caretColor: "var(--brand-primary)" }}
+          style={{ caretColor: "#c4b5fd", color: "var(--haze)" }}
           spellCheck={false}
           aria-label="Code editor"
           disabled={disabled}
@@ -931,6 +1057,7 @@ export default function ArenaPage() {
 
       if (json.won) {
         setArenaComplete(true);
+        window.dispatchEvent(new CustomEvent("bountixx:refresh-balance"));
         toast({ type: "coins", title: "YOU WON! 🏆", message: "Redirecting to results...", duration: 2000 });
         setTimeout(() => router.replace(`/arena/${roomId}/results`), 2000);
         return;
@@ -1104,66 +1231,18 @@ export default function ArenaPage() {
       <div className="flex flex-col md:flex-row flex-1 pt-14 lg:h-[calc(100dvh-56px)] min-h-0">
 
         {/* Challenge panel — always visible beside the IDE when coding (competitors) */}
-        {isCoding && !data.isAdmin && (
-          <div
-            className="flex w-full md:w-[32%] lg:w-[28%] lg:max-w-[340px] border-b md:border-b-0 md:border-r flex-col overflow-y-auto shrink-0 max-h-[38vh] md:max-h-none"
-            style={{ background: "var(--surface-raised)", borderColor: "var(--border-1)" }}
-          >
-            <div
-              className="px-6 pt-5 pb-4 border-b shrink-0"
-              style={{ background: "var(--surface-inset)", borderColor: "var(--border-1)" }}
-            >
-              <p className="font-mono text-[10px] text-[var(--brand-primary)] tracking-[3px] uppercase mb-1.5">Arena</p>
-              <p className="font-display text-base md:text-lg text-haze leading-snug">{room.name}</p>
-            </div>
-
-            <div className="px-6 py-5 flex-1 overflow-y-auto">
-              <div
-                className="p-4 mb-5 border-l-2 rounded-r-md"
-                style={{ borderLeftColor: catColor, background: "var(--surface-inset)" }}
-              >
-                <p className="font-mono text-[10px] text-[var(--brand-primary)] tracking-widest uppercase mb-2">
-                  Challenge
-                </p>
-                <p className="font-body text-sm md:text-base text-haze leading-relaxed whitespace-pre-wrap">
-                  {challengePrompt}
-                </p>
-                {totalQuestions > 1 && (
-                  <p className="font-mono text-[10px] text-[var(--brand-primary)] mt-3 tracking-widest uppercase">
-                    Question {questionIndex + 1} of {totalQuestions}
-                  </p>
-                )}
-              </div>
-
-              <div className="flex flex-wrap gap-2 mb-6">
-                {questionCategory && (
-                  <span
-                    className="font-mono text-[10px] px-2.5 py-1 border rounded tracking-wider"
-                    style={{ color: catColor, borderColor: `${catColor}55`, backgroundColor: `${catColor}14` }}
-                  >
-                    {questionCategory.toUpperCase()}
-                  </span>
-                )}
-                {room.difficulty && (
-                  <Chip color={DIFF_CHIP_COLOR[room.difficulty]} size="xs">{room.difficulty.toUpperCase()}</Chip>
-                )}
-                <Chip color="crown" size="xs">{room.bountyTier.toUpperCase()}</Chip>
-              </div>
-
-              <div className="rounded-xl border border-[var(--border-1)] bg-[var(--surface-inset)] p-4">
-                <p className="font-mono text-[10px] text-haze-3 tracking-widest mb-3 uppercase">Players</p>
-                {players.map((p) => (
-                  <div key={p.id} className="flex items-center gap-2 py-1.5 border-b border-[var(--border-1)] last:border-0">
-                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${p.status === "completed" ? "bg-success" : p.status === "forfeited" ? "bg-danger" : "bg-haze-3"}`} />
-                    <span className="font-mono text-[10px] text-haze-2 truncate flex-1">@{p.username ?? "player"}</span>
-                    <span className={`font-mono text-[9px] shrink-0 tracking-wider ${p.status === "completed" ? "text-success" : p.status === "forfeited" ? "text-danger" : "text-haze-3"}`}>
-                      {p.status}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+        {isCoding && !data.isAdmin && data.questions && (
+          <CodingQuestionSidebar
+            roomName={room.name}
+            questions={data.questions}
+            questionIndex={questionIndex}
+            challengePrompt={challengePrompt}
+            questionCategory={questionCategory}
+            catColor={catColor}
+            totalQuestions={totalQuestions}
+            answeredIndices={data.progress?.answeredQuestionIndices ?? []}
+            players={players}
+          />
         )}
 
         {/* Editor + results (or host panel) */}

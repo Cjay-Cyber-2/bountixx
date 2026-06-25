@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Search } from "lucide-react";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
+import { requestInvitePoll } from "@/hooks/useInviteNotifications";
 import { readApiError } from "@/lib/readApiError";
 import { useAuth } from "@/components/providers/AuthProvider";
 import {
@@ -212,6 +213,7 @@ export function OnlineFriendsList({
         return;
       }
       setInvitedIds((prev) => new Set(prev).add(player.id));
+      requestInvitePoll();
       const roomName = activeLobby?.name ?? "your arena";
       onNotify?.(`Invite sent to @${player.username} for ${roomName}`, "success");
       if (variant === "dashboard") {

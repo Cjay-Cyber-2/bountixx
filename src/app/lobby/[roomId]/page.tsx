@@ -199,9 +199,30 @@ export default function LobbyPage() {
     [roomId, router]
   );
 
+  /* ─── Re-assert lobby membership on load (survives refresh after accepting invite) ─── */
   useEffect(() => {
-    fetchRoom(false);
-  }, [fetchRoom]);
+    let cancelled = false;
+    void (async () => {
+      try {
+        const joinRes = await fetchWithAuth(`/api/rooms/${roomId}/join`, { method: "POST" });
+        if (cancelled) return;
+        const joinJson = (await joinRes.json().catch(() => ({}))) as { redirectTo?: string };
+        if (joinRes.ok && joinJson.redirectTo?.includes("/lobby/")) {
+          try {
+            sessionStorage.setItem("bountixx-last-lobby", roomId);
+          } catch {
+            // ignore
+          }
+        }
+      } catch {
+        // join is best-effort; fetchRoom handles recovery too
+      }
+      if (!cancelled) void fetchRoom(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchRoom, roomId]);
 
   /* ─── Poll every 2s ─── */
   useEffect(() => {

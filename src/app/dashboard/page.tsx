@@ -139,6 +139,24 @@ export default function DashboardPage() {
   }, [data?.recentRooms?.length, fetchData, toast]);
 
   useEffect(() => {
+    if (authLoading || !user?.uid) return;
+
+    const lastLobby = (() => {
+      try {
+        return sessionStorage.getItem("bountixx-last-lobby");
+      } catch {
+        return null;
+      }
+    })();
+
+    if (lastLobby) {
+      void fetchWithAuth(`/api/rooms/${lastLobby}/join`, { method: "POST" })
+        .then(() => fetchData())
+        .catch(() => {});
+    }
+  }, [authLoading, fetchData, user?.uid]);
+
+  useEffect(() => {
     if (authLoading || !user?.uid || migratedRecentRef.current) return;
     migratedRecentRef.current = true;
 

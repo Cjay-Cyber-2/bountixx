@@ -55,7 +55,14 @@ export function TargetCursorWrapper() {
       .bx-native-cursor textarea,
       .bx-native-cursor input {
         cursor: text !important;
-        caret-color: #7C5CFF !important;
+        caret-color: #c4b5fd !important;
+      }
+      .bx-native-cursor textarea::selection,
+      .bx-native-cursor input::selection,
+      textarea.bx-native-cursor::selection,
+      input.bx-native-cursor::selection {
+        background: rgba(124, 92, 255, 0.55) !important;
+        color: #ffffff !important;
       }
     `;
     document.head.appendChild(styleEl);
@@ -118,7 +125,8 @@ export function TargetCursorWrapper() {
       py = e.clientY;
       const el = e.target as Element | null;
       const overNative = el?.closest?.(".bx-native-cursor");
-      if (overNative) {
+      const focusInNative = document.activeElement?.closest?.(".bx-native-cursor");
+      if (overNative || focusInNative) {
         setNativeActive(true);
         return;
       }
