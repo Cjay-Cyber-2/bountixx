@@ -5,6 +5,8 @@ import { db } from "@/lib/db";
 import { rooms, invites, users } from "@/lib/schema";
 import { eq, and } from "drizzle-orm";
 import { getSession, unauthorized } from "@/lib/getSession";
+import { expireLobbyIfStale } from "@/lib/roomExpiry";
+import { isInviteExpired } from "@/lib/inviteExpiry";
 import { randomUUID } from "crypto";
 
 export async function POST(
@@ -22,7 +24,11 @@ export async function POST(
   }
 
   const [room] = await db
-    .select({ adminId: rooms.adminId, status: rooms.status })
+    .select({
+      adminId: rooms.adminId,
+      status: rooms.status,
+      createdAt: rooms.createdAt,
+    })
     .from(rooms)
     .where(eq(rooms.id, roomId))
     .limit(1);
@@ -34,13 +40,15 @@ export async function POST(
   if (room.status !== "lobby") {
     return NextResponse.json({ error: "Room is no longer in lobby" }, { status: 409 });
   }
+  if (await expireLobbyIfStale({ id: roomId, ...room })) {
+    return NextResponse.json({ error: "This arena has expired" }, { status: 410 });
+  }
 
   const created: string[] = [];
 
   for (const inviteeId of inviteeIds) {
-    if (inviteeId === session.id) continue; // Can't invite yourself
+    if (inviteeId === session.id) continue;
 
-    // Check invitee exists
     const [invitee] = await db
       .select({ id: users.id })
       .from(users)
@@ -48,23 +56,37 @@ export async function POST(
       .limit(1);
     if (!invitee) continue;
 
-    // Check for existing invite
     const [existing] = await db
-      .select({ id: invites.id })
+      .select({ id: invites.id, status: invites.status, createdAt: invites.createdAt })
       .from(invites)
       .where(and(
         eq(invites.roomId, roomId),
         eq(invites.inviteeId, inviteeId),
       ))
       .limit(1);
-    if (existing) continue;
+
+    if (existing) {
+      if (existing.status === "accepted") continue;
+      if (existing.status === "pending" && !isInviteExpired(existing.createdAt)) continue;
+
+      await db
+        .update(invites)
+        .set({
+          status: "pending",
+          inviterId: session.id,
+          createdAt: new Date(),
+        })
+        .where(eq(invites.id, existing.id));
+      created.push(inviteeId);
+      continue;
+    }
 
     await db.insert(invites).values({
-      id:         randomUUID(),
+      id: randomUUID(),
       roomId,
-      inviterId:  session.id,
+      inviterId: session.id,
       inviteeId,
-      status:     "pending",
+      status: "pending",
     });
     created.push(inviteeId);
   }

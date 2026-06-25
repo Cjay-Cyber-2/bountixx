@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import { Check, Copy, QrCode, Share2 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { buildInviteLink } from "@/lib/appUrl";
+import { LOBBY_TTL_MINUTES } from "@/lib/lobbyTtl";
 
 type InviteSharePanelProps = {
   roomId: string;
@@ -85,7 +86,7 @@ export function InviteSharePanel({
               Share link
             </button>
             <p className="font-space-mono text-[9px] text-haze-3">
-              Friends sign in, then join automatically · Link expires in 30 min
+              Friends sign in, then join automatically · Link expires in {LOBBY_TTL_MINUTES} min
             </p>
           </div>
 

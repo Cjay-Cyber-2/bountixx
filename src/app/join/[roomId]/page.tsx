@@ -100,7 +100,7 @@ export default function JoinPage() {
         if (res.status === 404 && json.error?.toLowerCase().includes("expired")) {
           setState({
             phase: "error",
-            message: "This invite link expired after 30 minutes. Ask the host for a new link.",
+            message: "This invite link expired after 15 minutes. Ask the host for a new link.",
           });
           return;
         }

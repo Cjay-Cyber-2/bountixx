@@ -22,21 +22,32 @@ export type OnlinePlayer = {
 type OnlinePlayerRowProps = {
   player: OnlinePlayer;
   action?: React.ReactNode;
+  online?: boolean;
 };
 
-export function OnlinePlayerRow({ player, action }: OnlinePlayerRowProps) {
+export function OnlinePlayerRow({ player, action, online }: OnlinePlayerRowProps) {
   const color = RANK_COLORS[player.rank] ?? "var(--haze-3)";
 
   return (
     <div className="flex items-center gap-3 group py-2">
-      <div
-        className="w-9 h-9 rounded-full bg-cosmos-3 border-2 flex items-center justify-center shrink-0 overflow-hidden"
-        style={{ borderColor: `${color}44` }}
-      >
-        {player.avatarUrl ? (
-          <img src={player.avatarUrl} alt={player.username} className="w-full h-full object-cover" />
-        ) : (
-          <span className="font-orbitron font-bold text-[10px] text-haze">{player.initials}</span>
+      <div className="relative shrink-0">
+        <div
+          className="w-9 h-9 rounded-full bg-cosmos-3 border-2 flex items-center justify-center overflow-hidden"
+          style={{ borderColor: `${color}44` }}
+        >
+          {player.avatarUrl ? (
+            <img src={player.avatarUrl} alt={player.username} className="w-full h-full object-cover" />
+          ) : (
+            <span className="font-orbitron font-bold text-[10px] text-haze">{player.initials}</span>
+          )}
+        </div>
+        {online !== undefined && (
+          <span
+            className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-cosmos-2 ${
+              online ? "bg-success" : "bg-haze-3"
+            }`}
+            aria-hidden
+          />
         )}
       </div>
       <div className="flex-1 min-w-0">
@@ -45,6 +56,7 @@ export function OnlinePlayerRow({ player, action }: OnlinePlayerRowProps) {
         </p>
         <p className="font-space-mono text-[10px] mt-1" style={{ color }}>
           {player.rank}
+          {online === false ? " · offline" : online ? " · online" : ""}
         </p>
       </div>
       {action}

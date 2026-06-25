@@ -3,7 +3,7 @@ import { users } from "@/lib/schema";
 import { and, desc, eq, gte, isNull, lt, ne, or } from "drizzle-orm";
 
 /** Users seen within this window count as online. */
-export const ONLINE_WINDOW_MS = 60 * 1000;
+export const ONLINE_WINDOW_MS = 90 * 1000;
 
 const PRESENCE_WRITE_INTERVAL_MS = 15_000;
 

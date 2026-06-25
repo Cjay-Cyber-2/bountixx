@@ -451,11 +451,14 @@ export default function LobbyPage() {
               Players online
             </p>
           </div>
-          <OnlineFriendsList
-            roomId={roomId}
-            variant="lobby"
-            excludeUserIds={players.map((p) => p.userId)}
-            emptyMessage="No other players online right now. Share the invite link above — they appear here once they open the app."
+            <p className="font-space-mono text-[10px] text-haze-3 mb-4 leading-relaxed">
+              Search any username or pick from players online right now. Invites expire in 15 minutes.
+            </p>
+            <OnlineFriendsList
+              roomId={roomId}
+              variant="lobby"
+              excludeUserIds={players.map((p) => p.userId)}
+              emptyMessage="No other players online right now. Use search above to invite by username, or share the invite link."
             onNotify={(message, type = "info") => toast({ type, title: message })}
           />
         </motion.div>

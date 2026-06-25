@@ -8,6 +8,8 @@ import { getSession, unauthorized } from "@/lib/getSession";
 import { isUnlimitedCoinsEmail } from "@/lib/coins";
 import { listOnlineUsers, serializeOnlineUsers } from "@/lib/presence";
 import { timeAgo } from "@/lib/utils";
+import { expireStalePendingInvites, inviteMinutesLeft, isInviteExpired } from "@/lib/inviteExpiry";
+import { expireLobbyIfStale } from "@/lib/roomExpiry";
 
 const CATEGORY_COLORS: Record<string, string> = {
   coding: "#FF6B1A", trivia: "#9B6BFF", logic: "#00D68F", math: "#F0A500",
@@ -99,25 +101,64 @@ export async function GET(req: Request) {
   const onlineUsers = await listOnlineUsers(uid);
 
   const [activeLobby] = await db
-    .select({ id: rooms.id, name: rooms.name })
+    .select({ id: rooms.id, name: rooms.name, createdAt: rooms.createdAt, adminId: rooms.adminId, status: rooms.status })
     .from(rooms)
     .where(and(eq(rooms.adminId, uid), eq(rooms.status, "lobby")))
     .orderBy(desc(rooms.createdAt))
     .limit(1);
 
-  const pendingInvites = await db
+  let activeLobbyLive: { id: string; name: string } | null = null;
+  if (activeLobby) {
+    const lobbyExpired = await expireLobbyIfStale(activeLobby);
+    if (!lobbyExpired) {
+      activeLobbyLive = { id: activeLobby.id, name: activeLobby.name };
+    }
+  }
+
+  await expireStalePendingInvites(uid);
+
+  const pendingInviteRows = await db
     .select({
       id: invites.id,
       roomId: invites.roomId,
       roomName: rooms.name,
+      roomStatus: rooms.status,
+      roomCreatedAt: rooms.createdAt,
+      roomAdminId: rooms.adminId,
       inviterName: users.username,
+      createdAt: invites.createdAt,
     })
     .from(invites)
     .leftJoin(rooms, eq(invites.roomId, rooms.id))
     .leftJoin(users, eq(invites.inviterId, users.id))
     .where(and(eq(invites.inviteeId, uid), eq(invites.status, "pending")))
     .orderBy(desc(invites.createdAt))
-    .limit(5);
+    .limit(10);
+
+  const pendingInvites = [];
+  for (const inv of pendingInviteRows) {
+    if (!inv.roomId || !inv.roomName || inv.roomStatus !== "lobby") continue;
+    if (isInviteExpired(inv.createdAt)) continue;
+    if (
+      inv.roomAdminId &&
+      inv.roomCreatedAt &&
+      (await expireLobbyIfStale({
+        id: inv.roomId,
+        status: inv.roomStatus,
+        adminId: inv.roomAdminId,
+        createdAt: inv.roomCreatedAt,
+      }))
+    ) {
+      continue;
+    }
+    pendingInvites.push({
+      id: inv.id,
+      roomId: inv.roomId,
+      roomName: inv.roomName,
+      inviterName: inv.inviterName ?? "Someone",
+      minutesLeft: inviteMinutesLeft(inv.createdAt),
+    });
+  }
 
   return NextResponse.json({
     roomsCreated: session.roomsCreatedCount,
@@ -129,15 +170,8 @@ export async function GET(req: Request) {
     coinsUnlimited: isUnlimitedCoinsEmail(session.email),
     recentRooms,
     onlineUsers: serializeOnlineUsers(onlineUsers),
-    activeLobby: activeLobby ?? null,
-    pendingInvites: pendingInvites
-      .filter((inv) => inv.roomId && inv.roomName)
-      .map((inv) => ({
-        id: inv.id,
-        roomId: inv.roomId,
-        roomName: inv.roomName!,
-        inviterName: inv.inviterName ?? "Someone",
-      })),
+    activeLobby: activeLobbyLive,
+    pendingInvites,
   });
   } catch (err) {
     console.error("[dashboard] GET failed:", err);

@@ -37,7 +37,7 @@ type DashboardData = {
   recentRooms: { name: string; category: string; place: string; coins: number; date: string }[];
   onlineUsers: { id: string; username: string; rank: string; avatarUrl: string | null; initials: string }[];
   activeLobby: { id: string; name: string } | null;
-  pendingInvites: { id: string; roomId: string; roomName: string; inviterName: string }[];
+  pendingInvites: { id: string; roomId: string; roomName: string; inviterName: string; minutesLeft: number }[];
 };
 
 const MAX_AUTH_RETRIES = 4;
@@ -54,6 +54,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [onlineCount, setOnlineCount] = useState(0);
+  const [decliningId, setDecliningId] = useState<string | null>(null);
   const hasDataRef = useRef(false);
 
   useEffect(() => {
@@ -113,6 +114,28 @@ export default function DashboardPage() {
       window.removeEventListener("focus", refresh);
     };
   }, [authLoading, fetchData, user]);
+
+  const declineInvite = async (inviteId: string) => {
+    setDecliningId(inviteId);
+    try {
+      const res = await fetchWithAuth(`/api/invites/${inviteId}/decline`, { method: "POST" });
+      const json = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        toast({ type: "error", title: json.error ?? "Could not decline invite" });
+        return;
+      }
+      setData((prev) =>
+        prev
+          ? { ...prev, pendingInvites: prev.pendingInvites.filter((inv) => inv.id !== inviteId) }
+          : prev,
+      );
+      toast({ type: "info", title: "Invite declined" });
+    } catch {
+      toast({ type: "error", title: "Network error declining invite" });
+    } finally {
+      setDecliningId(null);
+    }
+  };
 
   const statCards = [
     { label: "Rooms created",  value: data?.roomsCreated  ?? 0, icon: Swords,     accent: "var(--brand-primary)",  accentRaw: "#7C5CFF" },
@@ -211,15 +234,32 @@ export default function DashboardPage() {
             <div className="space-y-3">
               {data.pendingInvites.map((inv) => (
                 <div key={inv.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <p className="font-rajdhani text-sm text-haze">
-                    <span className="text-void">@{inv.inviterName}</span> invited you to{" "}
-                    <span className="font-semibold">{inv.roomName}</span>
-                  </p>
-                  <Link href={`/join/${inv.roomId}`}>
-                    <Button variant="primary" size="sm" className="w-full sm:w-auto">
-                      Join arena
+                  <div>
+                    <p className="font-rajdhani text-sm text-haze">
+                      <span className="text-void">@{inv.inviterName}</span> invited you to{" "}
+                      <span className="font-semibold">{inv.roomName}</span>
+                    </p>
+                    <p className="font-space-mono text-[9px] text-haze-3 mt-1">
+                      Expires in {inv.minutesLeft} min
+                    </p>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="w-full sm:w-auto"
+                      loading={decliningId === inv.id}
+                      disabled={decliningId === inv.id}
+                      onClick={() => void declineInvite(inv.id)}
+                    >
+                      Decline
                     </Button>
-                  </Link>
+                    <Link href={`/join/${inv.roomId}`} className="w-full sm:w-auto">
+                      <Button variant="primary" size="sm" className="w-full">
+                        Join arena
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
               ))}
             </div>

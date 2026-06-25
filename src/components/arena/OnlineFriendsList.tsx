@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Search } from "lucide-react";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { readApiError } from "@/lib/readApiError";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -12,8 +13,11 @@ import {
 } from "@/components/arena/OnlinePlayerRow";
 
 const POLL_MS = 5_000;
+const SEARCH_DEBOUNCE_MS = 300;
 const MAX_AUTH_RETRIES = 4;
 const RETRY_DELAY_MS = 600;
+
+type SearchUser = OnlinePlayer & { isOnline?: boolean };
 
 type OnlineFriendsListProps = {
   roomId?: string;
@@ -51,11 +55,16 @@ export function OnlineFriendsList({
   const [error, setError] = useState<string | null>(null);
   const [invitingId, setInvitingId] = useState<string | null>(null);
   const [invitedIds, setInvitedIds] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<SearchUser[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
   const usersRef = useRef(users);
   const failStreakRef = useRef(0);
+  const searchTimerRef = useRef<number | null>(null);
 
   const targetRoomId = roomId ?? activeLobby?.id;
   const excludeKey = excludeUserIds.join(",");
+  const showSearch = variant === "lobby" && Boolean(targetRoomId);
 
   useEffect(() => {
     usersRef.current = users;
@@ -131,6 +140,60 @@ export function OnlineFriendsList({
     };
   }, [authLoading, loadOnline, user]);
 
+  const runSearch = useCallback(
+    async (query: string) => {
+      const trimmed = query.trim();
+      if (trimmed.length < 2) {
+        setSearchResults([]);
+        setSearchLoading(false);
+        return;
+      }
+
+      setSearchLoading(true);
+      try {
+        const res = await fetchWithAuth(
+          `/api/users/search?q=${encodeURIComponent(trimmed)}`,
+        );
+        if (!res.ok) {
+          setSearchResults([]);
+          return;
+        }
+        const data = (await res.json()) as { users?: SearchUser[] };
+        const excluded = new Set(excludeKey ? excludeKey.split(",") : []);
+        setSearchResults((data.users ?? []).filter((u) => !excluded.has(u.id)));
+      } catch {
+        setSearchResults([]);
+      } finally {
+        setSearchLoading(false);
+      }
+    },
+    [excludeKey],
+  );
+
+  useEffect(() => {
+    if (!showSearch) return;
+
+    if (searchTimerRef.current) {
+      window.clearTimeout(searchTimerRef.current);
+    }
+
+    if (searchQuery.trim().length < 2) {
+      setSearchResults([]);
+      setSearchLoading(false);
+      return;
+    }
+
+    searchTimerRef.current = window.setTimeout(() => {
+      void runSearch(searchQuery);
+    }, SEARCH_DEBOUNCE_MS);
+
+    return () => {
+      if (searchTimerRef.current) {
+        window.clearTimeout(searchTimerRef.current);
+      }
+    };
+  }, [runSearch, searchQuery, showSearch]);
+
   const invite = async (player: OnlinePlayer) => {
     if (!targetRoomId) {
       onNotify?.("Create an arena first — then invite players from here or the lobby.", "info");
@@ -167,6 +230,11 @@ export function OnlineFriendsList({
     }
   };
 
+  const InviteBtn = variant === "lobby" ? LobbyInviteButton : InvitePlayerButton;
+
+  const onlineIds = new Set(users.map((u) => u.id));
+  const searchOnlyResults = searchResults.filter((u) => !onlineIds.has(u.id));
+
   if (loading) {
     return (
       <div className="space-y-2.5">
@@ -183,35 +251,94 @@ export function OnlineFriendsList({
     );
   }
 
-  if (error && users.length === 0) {
-    return (
-      <p className="font-space-mono text-[10px] text-danger text-center py-6 leading-relaxed">{error}</p>
-    );
-  }
-
-  if (users.length === 0) {
-    return (
-      <p className="font-space-mono text-[10px] text-haze-3 text-center py-6 leading-relaxed">{emptyMessage}</p>
-    );
-  }
-
-  const InviteBtn = variant === "lobby" ? LobbyInviteButton : InvitePlayerButton;
-
   return (
-    <div className="space-y-3 max-h-[320px] overflow-y-auto pr-1">
-      {users.map((player) => (
-        <OnlinePlayerRow
-          key={player.id}
-          player={player}
-          action={
-            <InviteBtn
-              loading={invitingId === player.id}
-              invited={invitedIds.has(player.id)}
-              onClick={() => void invite(player)}
-            />
-          }
-        />
-      ))}
+    <div className="flex flex-col gap-4">
+      {showSearch && (
+        <div className="relative shrink-0">
+          <Search
+            size={15}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-haze-3 pointer-events-none"
+            aria-hidden
+          />
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by username to invite…"
+            className="bx-input w-full pl-9 h-10 text-sm"
+            aria-label="Search players by username"
+          />
+          {searchLoading && (
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 font-space-mono text-[9px] text-haze-3">
+              …
+            </span>
+          )}
+        </div>
+      )}
+
+      {showSearch && searchQuery.trim().length >= 2 && (
+        <div>
+          <p className="font-space-mono text-[9px] text-haze-3 tracking-widest uppercase mb-2">
+            Search results
+          </p>
+          {searchOnlyResults.length === 0 && !searchLoading ? (
+            <p className="font-space-mono text-[10px] text-haze-3 py-2">
+              No players match &quot;{searchQuery.trim()}&quot;
+            </p>
+          ) : (
+            <div className="space-y-2 max-h-[180px] overflow-y-auto pr-1">
+              {searchOnlyResults.map((player) => (
+                <OnlinePlayerRow
+                  key={`search-${player.id}`}
+                  player={player}
+                  online={player.isOnline}
+                  action={
+                    <InviteBtn
+                      loading={invitingId === player.id}
+                      invited={invitedIds.has(player.id)}
+                      onClick={() => void invite(player)}
+                    />
+                  }
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div>
+        <p className="font-space-mono text-[9px] text-haze-3 tracking-widest uppercase mb-2">
+          {showSearch ? "Online now" : "Players"}
+          {users.length > 0 ? ` · ${users.length}` : ""}
+        </p>
+
+        {error && users.length === 0 ? (
+          <p className="font-space-mono text-[10px] text-danger text-center py-6 leading-relaxed">
+            {error}
+          </p>
+        ) : users.length === 0 ? (
+          <p className="font-space-mono text-[10px] text-haze-3 text-center py-6 leading-relaxed">
+            {emptyMessage}
+          </p>
+        ) : (
+          <div className="space-y-3 max-h-[280px] overflow-y-auto pr-1">
+            {users.map((player) => (
+              <OnlinePlayerRow
+                key={player.id}
+                player={player}
+                online
+                action={
+                  <InviteBtn
+                    loading={invitingId === player.id}
+                    invited={invitedIds.has(player.id)}
+                    onClick={() => void invite(player)}
+                  />
+                }
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
