@@ -12,7 +12,7 @@ import {
   OnlinePlayerRow,
 } from "@/components/arena/OnlinePlayerRow";
 
-const POLL_MS = 5_000;
+const POLL_MS = 2_500;
 const SEARCH_DEBOUNCE_MS = 300;
 const MAX_AUTH_RETRIES = 4;
 const RETRY_DELAY_MS = 600;

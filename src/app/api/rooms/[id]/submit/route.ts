@@ -213,11 +213,13 @@ export async function POST(
       .from(testCases)
       .where(and(eq(testCases.roomId, roomId), eq(testCases.isActive, true)));
 
-    if (allTests.length === 0 && isMulti) {
-      const pub = currentQuestion.publicTests ?? [];
-      const hid = currentQuestion.hiddenTests ?? [];
+    const questionPublic = currentQuestion.publicTests ?? [];
+    const questionHidden = currentQuestion.hiddenTests ?? [];
+
+    // Multi-question arenas store per-question tests in questionsJson — always prefer those.
+    if (isMulti && (questionPublic.length > 0 || questionHidden.length > 0)) {
       allTests = [
-        ...pub.map((t, i) => ({
+        ...questionPublic.map((t, i) => ({
           id: `pub-${i}`,
           roomId,
           input: t.input,
@@ -225,7 +227,26 @@ export async function POST(
           isHidden: false,
           isActive: true,
         })),
-        ...hid.map((t, i) => ({
+        ...questionHidden.map((t, i) => ({
+          id: `hid-${i}`,
+          roomId,
+          input: t.input,
+          expectedOutput: t.expectedOutput,
+          isHidden: true,
+          isActive: true,
+        })),
+      ];
+    } else if (allTests.length === 0 && (questionPublic.length > 0 || questionHidden.length > 0)) {
+      allTests = [
+        ...questionPublic.map((t, i) => ({
+          id: `pub-${i}`,
+          roomId,
+          input: t.input,
+          expectedOutput: t.expectedOutput,
+          isHidden: false,
+          isActive: true,
+        })),
+        ...questionHidden.map((t, i) => ({
           id: `hid-${i}`,
           roomId,
           input: t.input,

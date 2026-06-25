@@ -37,10 +37,14 @@ export function TargetCursorWrapper() {
     const frame = frameRef.current;
     if (!root || !ring || !dot || !frame) return;
 
-    // Hide the native cursor
+    // Hide the native cursor except in text-editing zones (code editor, answer fields)
     const styleEl = document.createElement("style");
     styleEl.id = "bx-cursor-hide";
-    styleEl.textContent = `*, *::before, *::after { cursor: none !important; }`;
+    styleEl.textContent = `
+      *, *::before, *::after { cursor: none !important; }
+      .bx-native-cursor, .bx-native-cursor * { cursor: auto !important; }
+      textarea.bx-native-cursor, input.bx-native-cursor { cursor: text !important; caret-color: var(--brand-primary); }
+    `;
     document.head.appendChild(styleEl);
 
     let px = window.innerWidth / 2;
@@ -91,8 +95,14 @@ export function TargetCursorWrapper() {
     const onMove = (e: MouseEvent) => {
       px = e.clientX;
       py = e.clientY;
-      if (root.classList.contains("is-hidden")) root.classList.remove("is-hidden");
       const el = e.target as Element | null;
+      const overNative = el?.closest?.(".bx-native-cursor");
+      if (overNative) {
+        root.classList.add("is-hidden");
+        setTarget(null);
+        return;
+      }
+      if (root.classList.contains("is-hidden")) root.classList.remove("is-hidden");
       const t = (el?.closest?.(SELECTOR) as HTMLElement) || null;
       setTarget(t && !t.hasAttribute("disabled") ? t : null);
     };

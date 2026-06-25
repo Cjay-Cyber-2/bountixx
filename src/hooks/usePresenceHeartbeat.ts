@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { useAuth } from "@/components/providers/AuthProvider";
 
-const HEARTBEAT_MS = 5_000;
+const HEARTBEAT_MS = 3_000;
 
 /** Keeps the signed-in user visible in "Who's online" while the app is open. */
 export function usePresenceHeartbeat() {
@@ -23,9 +23,7 @@ export function usePresenceHeartbeat() {
       }
     };
 
-    const start = window.setTimeout(() => {
-      if (!cancelled) void ping();
-    }, 400);
+    void ping();
 
     const id = window.setInterval(() => {
       if (!cancelled) void ping();
@@ -34,13 +32,23 @@ export function usePresenceHeartbeat() {
     const onVisible = () => {
       if (document.visibilityState === "visible" && !cancelled) void ping();
     };
+    const onFocus = () => {
+      if (!cancelled) void ping();
+    };
+    const onPageShow = () => {
+      if (!cancelled) void ping();
+    };
+
     document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onFocus);
+    window.addEventListener("pageshow", onPageShow);
 
     return () => {
       cancelled = true;
-      window.clearTimeout(start);
       window.clearInterval(id);
       document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("pageshow", onPageShow);
     };
   }, [authLoading, user]);
 }

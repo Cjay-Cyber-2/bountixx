@@ -62,16 +62,38 @@ export async function GET(
     .where(eq(roomPlayers.roomId, id));
 
   const isAdmin = liveRoom.adminId === session.id;
-  const testCaseRows = liveRoom.category === "coding"
-    ? await db
-        .select()
-        .from(testCases)
-        .where(and(
-          eq(testCases.roomId, id),
-          eq(testCases.isActive, true),
-          ...(isAdmin || liveRoom.status === "ended" ? [] : [eq(testCases.isHidden, false)])
-        ))
-    : [];
+  const roomQuestions = getRoomQuestions(liveRoom);
+  const hasCodingQuestion = roomQuestions.some((q) => q.category === "coding");
+
+  const testCaseRows =
+    liveRoom.category === "coding" || hasCodingQuestion
+      ? await db
+          .select()
+          .from(testCases)
+          .where(
+            and(
+              eq(testCases.roomId, id),
+              eq(testCases.isActive, true),
+              ...(isAdmin || liveRoom.status === "ended" ? [] : [eq(testCases.isHidden, false)]),
+            ),
+          )
+      : [];
+
+  const userSubmissions = await db
+    .select({ questionIndex: submissions.questionIndex })
+    .from(submissions)
+    .where(and(eq(submissions.roomId, id), eq(submissions.userId, session.id)));
+
+  const answeredIndices = [...new Set(userSubmissions.map((s) => s.questionIndex))].sort(
+    (a, b) => a - b,
+  );
+  const nextUnanswered = roomQuestions.findIndex((_, i) => !answeredIndices.includes(i));
+  const progressNextIndex =
+    answeredIndices.length >= roomQuestions.length || nextUnanswered < 0
+      ? null
+      : nextUnanswered;
+  const allQuestionsAnswered =
+    roomQuestions.length > 0 && answeredIndices.length >= roomQuestions.length;
 
   const [userSubmission] = await db
     .select()
@@ -123,8 +145,13 @@ export async function GET(
     mySubmission: userSubmission ?? null,
     isAdmin,
     results,
-    questions: getRoomQuestions(liveRoom),
-    totalQuestions: getRoomQuestions(liveRoom).length,
+    questions: roomQuestions,
+    totalQuestions: roomQuestions.length,
+    progress: {
+      answeredQuestionIndices: answeredIndices,
+      nextQuestionIndex: progressNextIndex,
+      allQuestionsAnswered,
+    },
     timer,
   });
 }

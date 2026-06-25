@@ -70,8 +70,14 @@ interface RoomData {
     language?: string | null;
     starterCode?: string | null;
     title?: string;
+    publicTests?: { input: string; expectedOutput: string }[];
   }[];
   totalQuestions?: number;
+  progress?: {
+    answeredQuestionIndices: number[];
+    nextQuestionIndex: number | null;
+    allQuestionsAnswered: boolean;
+  };
   mySubmission: { id: string; isWinner: boolean; testsPassed: number; testsTotal: number } | null;
   isAdmin: boolean;
   timer?: {
@@ -130,6 +136,24 @@ function getDefaultCode(category: RoomCategory | null, language: string | null):
     return getLanguage(language).template;
   }
   return "";
+}
+
+function getPublicTestCases(
+  roomId: string,
+  dbCases: TestCase[],
+  question?: { index?: number; publicTests?: { input: string; expectedOutput: string }[] },
+): TestCase[] {
+  if (question?.publicTests?.length) {
+    return question.publicTests.map((t, i) => ({
+      id: `pub-${question.index ?? i}`,
+      roomId,
+      input: t.input,
+      expectedOutput: t.expectedOutput,
+      isHidden: false,
+      isActive: true,
+    }));
+  }
+  return dbCases.filter((t) => !t.isHidden);
 }
 
 /* ─── Timer component ─── */
@@ -363,7 +387,7 @@ function CodeEditor({
           value={code}
           onChange={(e) => setCode(e.target.value)}
           onKeyDown={handleKey}
-          className="flex-1 p-4 bg-transparent text-haze font-mono text-sm resize-none focus:outline-none leading-relaxed select-text cursor-text"
+          className="bx-native-cursor flex-1 p-4 bg-transparent text-haze font-mono text-sm resize-none focus:outline-none leading-relaxed select-text"
           style={{ caretColor: "var(--brand-primary)" }}
           spellCheck={false}
           aria-label="Code editor"
@@ -642,7 +666,7 @@ export default function ArenaPage() {
   const [tabDisqualified, setTabDisqualified] = useState(false);
   const [cheatReason, setCheatReason] = useState<ArenaCheatReason>("tab-switch");
   const [integrityWarning, setIntegrityWarning] = useState<string | null>(null);
-  const [submitted, setSubmitted] = useState(false);
+  const [arenaComplete, setArenaComplete] = useState(false);
   const [questionIndex, setQuestionIndex] = useState(0);
   const [questionsAnswered, setQuestionsAnswered] = useState(0);
 
@@ -655,7 +679,7 @@ export default function ArenaPage() {
     setHasTimer(false);
     setTimeLeft(null);
     setTimeUp(false);
-    setSubmitted(false);
+    setArenaComplete(false);
     setTabDisqualified(false);
     setTestResults([]);
     setTestRan(false);
@@ -703,15 +727,20 @@ export default function ArenaPage() {
       prevPlayersRef.current = json.players;
 
       if (!silent) {
-        const firstQ = json.questions?.[0];
-        const initCategory = (firstQ?.category ?? json.room.category) as RoomCategory;
-        setLanguage(firstQ?.language ?? json.room.language ?? "javascript");
-        setCode((prev) =>
-          prev === ""
-            ? (firstQ?.starterCode ??
-                json.room.starterCode ??
-                getDefaultCode(initCategory, firstQ?.language ?? json.room.language))
-            : prev
+        const resumeIndex = json.progress?.nextQuestionIndex ?? 0;
+        setQuestionIndex(resumeIndex);
+        setQuestionsAnswered(json.progress?.answeredQuestionIndices.length ?? 0);
+        if (json.progress?.allQuestionsAnswered) {
+          setArenaComplete(true);
+        }
+
+        const activeQ = json.questions?.[resumeIndex];
+        const initCategory = (activeQ?.category ?? json.room.category) as RoomCategory;
+        setLanguage(activeQ?.language ?? json.room.language ?? "javascript");
+        setCode(
+          activeQ?.starterCode ??
+            json.room.starterCode ??
+            getDefaultCode(initCategory, activeQ?.language ?? json.room.language),
         );
       }
 
@@ -731,7 +760,7 @@ export default function ArenaPage() {
 
   /* ─── Timer countdown — synced from server, ticks locally between polls ─── */
   useEffect(() => {
-    if (!hasTimer || timeUp || submitted || tabDisqualified || timeLeft == null || timeLeft <= 0) {
+    if (!hasTimer || timeUp || tabDisqualified || timeLeft == null || timeLeft <= 0) {
       return;
     }
 
@@ -746,7 +775,7 @@ export default function ArenaPage() {
     }, 1000);
 
     return () => clearInterval(id);
-  }, [hasTimer, timeUp, submitted, tabDisqualified]);
+  }, [hasTimer, timeUp, tabDisqualified, timeLeft]);
 
   useEffect(() => {
     if (!timeUp || !hasTimer) return;
@@ -809,7 +838,7 @@ export default function ArenaPage() {
   });
 
   /* ─── Derived ─── */
-  const inputDisabled = timeUp || tabDisqualified || submitted || loading;
+  const inputDisabled = timeUp || tabDisqualified || arenaComplete || loading;
   const totalQuestions = data?.totalQuestions ?? data?.questions?.length ?? 1;
   const currentQuestion = data?.questions?.[questionIndex];
   const questionCategory = (currentQuestion?.category ?? data?.room.category ?? "trivia") as RoomCategory;
@@ -817,6 +846,9 @@ export default function ArenaPage() {
   const challengePrompt = data
     ? getChallengePromptText(currentQuestion, data.room)
     : "";
+  const activeTestCases = data
+    ? getPublicTestCases(roomId, data.testCases, currentQuestion)
+    : [];
 
   const prevQuestionIndexRef = useRef(-1);
 
@@ -898,21 +930,73 @@ export default function ArenaPage() {
       };
 
       if (json.won) {
-        setSubmitted(true);
+        setArenaComplete(true);
         toast({ type: "coins", title: "YOU WON! 🏆", message: "Redirecting to results...", duration: 2000 });
         setTimeout(() => router.replace(`/arena/${roomId}/results`), 2000);
-      } else if (json.nextQuestionIndex != null) {
+        return;
+      }
+
+      if (json.nextQuestionIndex != null) {
         setQuestionIndex(json.nextQuestionIndex);
         setAnswer("");
+        setArenaComplete(false);
         setQuestionsAnswered(json.questionsAnswered ?? questionIndex + 1);
         const closeEnough = json.verdict === "close_enough";
+        const isCodingAdvance = isCodingSubmit && json.testResults;
         toast({
           type: "success",
-          title: closeEnough ? "Close enough!" : `Question ${json.questionsAnswered} correct!`,
-          message: json.feedback ?? (closeEnough ? "Moving to the next question..." : "Moving to the next question..."),
+          title: closeEnough
+            ? "Close enough!"
+            : isCodingAdvance
+              ? `Question ${json.questionsAnswered} submitted`
+              : `Question ${json.questionsAnswered} correct!`,
+          message:
+            json.feedback ??
+            (isCodingAdvance
+              ? "Moving to the next question..."
+              : "Moving to the next question..."),
         });
-      } else if (isCodingSubmit && json.testResults) {
-        setSubmitted(true);
+        return;
+      }
+
+      const allDone =
+        (json.questionsAnswered ?? 0) >= totalQuestions ||
+        (totalQuestions === 1 && (json.correct || isCodingSubmit));
+
+      if (allDone) {
+        setArenaComplete(true);
+        if (isCodingSubmit && json.testResults) {
+          const { passed, total } = json.testResults;
+          setTestResults(json.testResults.results);
+          setTestRan(true);
+          const pct = total > 0 ? Math.round((passed / total) * 100) : 0;
+          toast({
+            type: passed === 0 ? "error" : "info",
+            title: passed === 0 ? "All tests failed" : `${pct}% tests passed`,
+            message:
+              totalQuestions > 1
+                ? "All questions answered — waiting for other players..."
+                : passed === 0
+                  ? "Submission recorded."
+                  : `${passed}/${total} hidden tests passed`,
+          });
+        } else {
+          const closeEnough = json.verdict === "close_enough";
+          toast({
+            type: "success",
+            title: closeEnough ? "Close enough — you got it!" : "Correct!",
+            message:
+              json.feedback ??
+              (totalQuestions > 1
+                ? "All questions answered — waiting for other players..."
+                : "But someone was faster."),
+          });
+        }
+        return;
+      }
+
+      if (isCodingSubmit && json.testResults) {
+        setArenaComplete(true);
         const { passed, total } = json.testResults;
         setTestResults(json.testResults.results);
         setTestRan(true);
@@ -922,26 +1006,24 @@ export default function ArenaPage() {
           title: passed === 0 ? "All tests failed" : `${pct}% tests passed`,
           message: passed === 0 ? "Submission recorded." : `${passed}/${total} hidden tests passed`,
         });
-      } else if (totalQuestions > 1 && !json.nextQuestionIndex && json.questionsAnswered === totalQuestions) {
-        setSubmitted(true);
-        toast({ type: "info", title: "All questions answered", message: "Waiting for other players..." });
+        return;
+      }
+
+      const correct = json.correct ?? false;
+      const closeEnough = json.verdict === "close_enough";
+      if (correct) {
+        setArenaComplete(true);
+        toast({
+          type: "success",
+          title: closeEnough ? "Close enough — you got it!" : "Correct!",
+          message: json.feedback ?? "But someone was faster.",
+        });
       } else {
-        const correct = json.correct ?? false;
-        const closeEnough = json.verdict === "close_enough";
-        if (correct) {
-          setSubmitted(true);
-          toast({
-            type: "success",
-            title: closeEnough ? "Close enough — you got it!" : "Correct!",
-            message: json.feedback ?? (json.won ? "You won the bounty!" : "But someone was faster."),
-          });
-        } else {
-          toast({
-            type: "error",
-            title: "Not quite — try again",
-            message: json.feedback ?? "Your answer wasn't close enough. Give it another shot.",
-          });
-        }
+        toast({
+          type: "error",
+          title: "Not quite — try again",
+          message: json.feedback ?? "Your answer wasn't close enough. Give it another shot.",
+        });
       }
     } catch {
       toast({ type: "error", title: "Connection problem", message: "We couldn't reach the server. Try again." });
@@ -1036,16 +1118,22 @@ export default function ArenaPage() {
             </div>
 
             <div className="px-6 py-5 flex-1 overflow-y-auto">
-              {!isCoding && (
-                <div
-                  className="p-4 mb-5 border-l-2 rounded-r-md"
-                  style={{ borderLeftColor: catColor, background: "var(--surface-inset)" }}
-                >
-                  <p className="font-body text-sm md:text-base text-haze leading-relaxed whitespace-pre-wrap">
-                    {challengePrompt}
+              <div
+                className="p-4 mb-5 border-l-2 rounded-r-md"
+                style={{ borderLeftColor: catColor, background: "var(--surface-inset)" }}
+              >
+                <p className="font-mono text-[10px] text-[var(--brand-primary)] tracking-widest uppercase mb-2">
+                  Challenge
+                </p>
+                <p className="font-body text-sm md:text-base text-haze leading-relaxed whitespace-pre-wrap">
+                  {challengePrompt}
+                </p>
+                {totalQuestions > 1 && (
+                  <p className="font-mono text-[10px] text-[var(--brand-primary)] mt-3 tracking-widest uppercase">
+                    Question {questionIndex + 1} of {totalQuestions}
                   </p>
-                </div>
-              )}
+                )}
+              </div>
 
               <div className="flex flex-wrap gap-2 mb-6">
                 {questionCategory && (
@@ -1085,12 +1173,23 @@ export default function ArenaPage() {
             style={{ background: "var(--terminal-bg)", borderColor: "var(--border-1)" }}
           >
             {data.isAdmin ? (
-              <HostPanel
-                players={players}
-                adminId={room.adminId}
-                roomId={roomId}
-                onEnded={() => router.replace("/dashboard")}
-              />
+              <>
+                <ChallengePromptCard
+                  prompt={challengePrompt}
+                  questionCategory={questionCategory}
+                  catColor={catColor}
+                  questionIndex={questionIndex}
+                  totalQuestions={totalQuestions}
+                />
+                <div className="flex-1 min-h-0">
+                  <HostPanel
+                    players={players}
+                    adminId={room.adminId}
+                    roomId={roomId}
+                    onEnded={() => router.replace("/dashboard")}
+                  />
+                </div>
+              </>
             ) : isCoding ? (
               <>
                 <ChallengePromptCard
@@ -1176,7 +1275,7 @@ export default function ArenaPage() {
                       onBeforeInput={blockBeforeInput}
                       onDrop={blockDrop}
                       onContextMenu={blockContextMenu}
-                      className="w-full p-4 md:p-5 bg-[var(--surface-inset)] border border-[var(--border-2)] text-haze font-body text-base md:text-lg focus:outline-none focus:border-[var(--brand-primary)] focus:shadow-[0_0_0_3px_var(--focus-ring)] resize-none rounded-xl transition-all"
+                      className="bx-native-cursor w-full p-4 md:p-5 bg-[var(--surface-inset)] border border-[var(--border-2)] text-haze font-body text-base md:text-lg focus:outline-none focus:border-[var(--brand-primary)] focus:shadow-[0_0_0_3px_var(--focus-ring)] resize-none rounded-xl transition-all"
                       placeholder="Type your answer here..."
                       disabled={inputDisabled}
                       rows={4}
@@ -1228,7 +1327,7 @@ export default function ArenaPage() {
             )}
             {isCoding && (
               <div className="flex-1 p-4 overflow-y-auto border-b" style={{ borderColor: "var(--border-1)" }}>
-                <TestResults testCases={testCases} results={testResults} ran={testRan} />
+                <TestResults testCases={activeTestCases} results={testResults} ran={testRan} />
               </div>
             )}
             <div className={isCoding ? "p-4" : "flex-1 p-4"}>

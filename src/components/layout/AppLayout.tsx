@@ -1,6 +1,5 @@
 "use client";
 
-import { usePresenceHeartbeat } from "@/hooks/usePresenceHeartbeat";
 import { TopNav, MobileBottomNav } from "./TopNav";
 
 interface AppLayoutProps {
@@ -13,8 +12,6 @@ interface AppLayoutProps {
  * it. pb-24 on mobile leaves room for the bottom tab bar.
  */
 export function AppLayout({ children }: AppLayoutProps) {
-  usePresenceHeartbeat();
-
   return (
     <div className="flex min-h-[100dvh] flex-col bg-cosmos">
       <TopNav />
