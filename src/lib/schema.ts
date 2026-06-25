@@ -109,3 +109,10 @@ export const pushTokens = pgTable("push_tokens", {
   token: text("token").notNull().unique(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+/** Rooms hidden from the dashboard "Recent arenas" list (synced across devices). */
+export const dismissedRecentRooms = pgTable("dismissed_recent_rooms", {
+  userId: text("user_id").notNull().references(() => users.id),
+  roomId: text("room_id").notNull(),
+  dismissedAt: timestamp("dismissed_at").defaultNow().notNull(),
+});

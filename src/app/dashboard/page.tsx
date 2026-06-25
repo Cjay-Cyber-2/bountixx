@@ -15,8 +15,6 @@ import { useToast } from "@/components/ui/Toast";
 import { OnlineFriendsList } from "@/components/arena/OnlineFriendsList";
 import { useInviteNotifications, type PendingInvite } from "@/hooks/useInviteNotifications";
 
-const RECENT_HIDDEN_KEY = "bountixx-hidden-recent-rooms";
-
 const CATEGORY_COLORS: Record<string, string> = {
   coding:  "#7C5CFF",
   trivia:  "#A78BFA",
@@ -59,42 +57,8 @@ export default function DashboardPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [onlineCount, setOnlineCount] = useState(0);
   const [decliningId, setDecliningId] = useState<string | null>(null);
-  const [hiddenRecentIds, setHiddenRecentIds] = useState<Set<string>>(new Set());
   const hasDataRef = useRef(false);
-
-  useEffect(() => {
-    if (!user?.uid) return;
-    try {
-      const raw = localStorage.getItem(`${RECENT_HIDDEN_KEY}:${user.uid}`);
-      if (raw) setHiddenRecentIds(new Set(JSON.parse(raw) as string[]));
-    } catch {
-      // ignore
-    }
-  }, [user?.uid]);
-
-  const hideRecentRoom = useCallback(
-    (roomId: string) => {
-      if (!user?.uid) return;
-      setHiddenRecentIds((prev) => {
-        const next = new Set(prev);
-        next.add(roomId);
-        localStorage.setItem(`${RECENT_HIDDEN_KEY}:${user.uid}`, JSON.stringify([...next]));
-        return next;
-      });
-    },
-    [user?.uid],
-  );
-
-  const clearRecentRooms = useCallback(() => {
-    if (!data?.recentRooms?.length || !user?.uid) return;
-    setHiddenRecentIds((prev) => {
-      const next = new Set(prev);
-      for (const room of data.recentRooms) next.add(room.roomId);
-      localStorage.setItem(`${RECENT_HIDDEN_KEY}:${user.uid}`, JSON.stringify([...next]));
-      return next;
-    });
-    toast({ type: "info", title: "Recent arenas cleared" });
-  }, [data?.recentRooms, toast, user?.uid]);
+  const migratedRecentRef = useRef(false);
 
   useInviteNotifications({
     onInvites: (invites) => {
@@ -140,6 +104,64 @@ export default function DashboardPage() {
     }
     setLoading(false);
   }, [authLoading, user]);
+
+  const hideRecentRoom = useCallback(
+    async (roomId: string) => {
+      setData((prev) =>
+        prev ? { ...prev, recentRooms: prev.recentRooms.filter((r) => r.roomId !== roomId) } : prev,
+      );
+      try {
+        await fetchWithAuth("/api/dashboard/dismiss-recent", {
+          method: "POST",
+          body: JSON.stringify({ roomId }),
+        });
+      } catch {
+        toast({ type: "error", title: "Could not remove arena from list" });
+        void fetchData();
+      }
+    },
+    [fetchData, toast],
+  );
+
+  const clearRecentRooms = useCallback(async () => {
+    if (!data?.recentRooms?.length) return;
+    setData((prev) => (prev ? { ...prev, recentRooms: [] } : prev));
+    try {
+      await fetchWithAuth("/api/dashboard/dismiss-recent", {
+        method: "POST",
+        body: JSON.stringify({ clearAll: true }),
+      });
+      toast({ type: "info", title: "Recent arenas cleared" });
+    } catch {
+      toast({ type: "error", title: "Could not clear recent arenas" });
+      void fetchData();
+    }
+  }, [data?.recentRooms?.length, fetchData, toast]);
+
+  useEffect(() => {
+    if (authLoading || !user?.uid || migratedRecentRef.current) return;
+    migratedRecentRef.current = true;
+
+    const legacyKey = `bountixx-hidden-recent-rooms:${user.uid}`;
+    void (async () => {
+      try {
+        const raw = localStorage.getItem(legacyKey);
+        if (!raw) return;
+        const ids = JSON.parse(raw) as string[];
+        if (!Array.isArray(ids) || ids.length === 0) return;
+        for (const roomId of ids) {
+          await fetchWithAuth("/api/dashboard/dismiss-recent", {
+            method: "POST",
+            body: JSON.stringify({ roomId }),
+          });
+        }
+        localStorage.removeItem(legacyKey);
+        void fetchData();
+      } catch {
+        // ignore legacy migration errors
+      }
+    })();
+  }, [authLoading, fetchData, user?.uid]);
 
   useEffect(() => {
     if (authLoading || !user) return;
@@ -420,10 +442,10 @@ export default function DashboardPage() {
           <div className="flex items-baseline justify-between gap-3 mb-5">
             <h3 className="font-display text-xl md:text-2xl text-haze">Recent arenas</h3>
             <div className="flex items-center gap-4">
-              {data?.recentRooms?.some((r) => !hiddenRecentIds.has(r.roomId)) ? (
+              {data?.recentRooms?.length ? (
                 <button
                   type="button"
-                  onClick={clearRecentRooms}
+                  onClick={() => void clearRecentRooms()}
                   className="cursor-target font-mono text-[11px] text-haze-3 hover:text-danger transition-colors tracking-widest uppercase"
                 >
                   Clear all
@@ -453,7 +475,7 @@ export default function DashboardPage() {
                 </div>
               ))}
             </div>
-          ) : !data?.recentRooms?.filter((r) => !hiddenRecentIds.has(r.roomId)).length ? (
+          ) : !data?.recentRooms?.length ? (
             <div className="rounded-2xl p-12 text-center bg-[var(--surface-inset)] border border-[var(--border-1)]">
               <p className="font-display text-lg md:text-xl text-haze mb-2">No arenas yet</p>
               <p className="font-body text-sm md:text-base text-haze-3">
@@ -462,10 +484,8 @@ export default function DashboardPage() {
             </div>
           ) : (
             <div className="rounded-2xl overflow-hidden border border-[var(--border-1)]">
-              {data.recentRooms
-                .filter((room) => !hiddenRecentIds.has(room.roomId))
-                .map((room) => (
-                  <RoomRow key={room.roomId} room={room} onRemove={() => hideRecentRoom(room.roomId)} />
+              {data.recentRooms.map((room) => (
+                  <RoomRow key={room.roomId} room={room} onRemove={() => void hideRecentRoom(room.roomId)} />
                 ))}
             </div>
           )}

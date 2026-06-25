@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { rooms, submissions, roomPlayers, users, invites } from "@/lib/schema";
+import { rooms, submissions, roomPlayers, users, invites, dismissedRecentRooms } from "@/lib/schema";
 import { eq, and, desc, count, inArray, ne } from "drizzle-orm";
 import { getSession, unauthorized } from "@/lib/getSession";
 import { isUnlimitedCoinsEmail } from "@/lib/coins";
@@ -10,6 +10,7 @@ import { listOnlineUsers, serializeOnlineUsers } from "@/lib/presence";
 import { timeAgo } from "@/lib/utils";
 import { expireStalePendingInvites, inviteMinutesLeft, isInviteExpired } from "@/lib/inviteExpiry";
 import { expireLobbyIfStale } from "@/lib/roomExpiry";
+import { ensureDatabaseSchema } from "@/lib/ensureSchema";
 
 const CATEGORY_COLORS: Record<string, string> = {
   coding: "#FF6B1A", trivia: "#9B6BFF", logic: "#00D68F", math: "#F0A500",
@@ -21,6 +22,25 @@ export async function GET(req: Request) {
     if (!session) return unauthorized();
 
     const uid = session.id;
+
+  try {
+    await ensureDatabaseSchema();
+  } catch (err) {
+    console.error("[dashboard] schema ensure failed:", err);
+  }
+
+  let hiddenRecentRoomIds: string[] = [];
+  try {
+    const hiddenRows = await db
+      .select({ roomId: dismissedRecentRooms.roomId })
+      .from(dismissedRecentRooms)
+      .where(eq(dismissedRecentRooms.userId, uid));
+    hiddenRecentRoomIds = hiddenRows.map((r) => r.roomId);
+  } catch (err) {
+    console.error("[dashboard] dismissed recent rooms query failed:", err);
+  }
+
+  const hiddenRecentSet = new Set(hiddenRecentRoomIds);
 
   // Rooms won (submissions where this user is winner)
   const [wonResult] = await db
@@ -82,7 +102,9 @@ export async function GET(req: Request) {
 
     const submissionsMap = new Map(submissionsForRooms.map((s) => [s.roomId, s]));
 
-    recentRooms = roomDetails.map((room) => {
+    recentRooms = roomDetails
+      .filter((room) => !hiddenRecentSet.has(room.id))
+      .map((room) => {
       const sub = submissionsMap.get(room.id);
       const place = sub?.isWinner ? "1st" : "—";
       const coins = sub?.isWinner ? (room.prizePool ?? 0) : 0;
@@ -190,6 +212,7 @@ export async function GET(req: Request) {
     activeLobby: activeLobbyLive,
     joinedLobby: joinedLobbyLive,
     pendingInvites,
+    hiddenRecentRoomIds,
   });
   } catch (err) {
     console.error("[dashboard] GET failed:", err);

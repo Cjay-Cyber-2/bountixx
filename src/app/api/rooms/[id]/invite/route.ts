@@ -7,6 +7,7 @@ import { eq, and } from "drizzle-orm";
 import { getSession, unauthorized } from "@/lib/getSession";
 import { expireLobbyIfStale } from "@/lib/roomExpiry";
 import { isInviteExpired } from "@/lib/inviteExpiry";
+import { sendNotificationToUser } from "@/lib/sendNotification";
 import { randomUUID } from "crypto";
 
 export async function POST(
@@ -28,6 +29,7 @@ export async function POST(
       adminId: rooms.adminId,
       status: rooms.status,
       createdAt: rooms.createdAt,
+      name: rooms.name,
     })
     .from(rooms)
     .where(eq(rooms.id, roomId))
@@ -89,6 +91,21 @@ export async function POST(
       status: "pending",
     });
     created.push(inviteeId);
+  }
+
+  if (created.length > 0) {
+    const inviterName = session.username ?? "Someone";
+    const roomName = room.name ?? "an arena";
+    await Promise.all(
+      created.map((inviteeId) =>
+        sendNotificationToUser(
+          inviteeId,
+          "Arena invite",
+          `@${inviterName} invited you to ${roomName}`,
+          { url: `/join/${roomId}`, type: "invite", roomId },
+        ),
+      ),
+    );
   }
 
   return NextResponse.json({ invited: created.length, ids: created });

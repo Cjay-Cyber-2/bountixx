@@ -63,6 +63,16 @@ async function runSchemaStatements(): Promise<void> {
   await safeStep("rooms.prize_pool default", () =>
     sql`ALTER TABLE rooms ALTER COLUMN prize_pool SET DEFAULT 0`,
   );
+  await safeStep("dismissed_recent_rooms table", () =>
+    sql`
+      CREATE TABLE IF NOT EXISTS dismissed_recent_rooms (
+        user_id text NOT NULL REFERENCES users(id),
+        room_id text NOT NULL,
+        dismissed_at timestamp DEFAULT now() NOT NULL,
+        PRIMARY KEY (user_id, room_id)
+      )
+    `,
+  );
 }
 
 /** Ensures Neon has columns required by the current app code. */
