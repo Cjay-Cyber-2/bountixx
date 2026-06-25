@@ -7,6 +7,7 @@ import { Play, Upload, Users, AlertTriangle, Crown } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { arenaCheatMessage, useArenaGuard, type ArenaCheatReason } from "@/hooks/useArenaGuard";
+import { arenaStrikeMessage } from "@/lib/arenaIntegrity";
 import { useToast } from "@/components/ui/Toast";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { readApiError } from "@/lib/readApiError";
@@ -112,6 +113,8 @@ interface TestResult {
   pass: boolean;
   output: string;
 }
+
+const MAX_ARENA_STRIKES = 3;
 
 /* ─── Constants ─── */
 const CAT_COLORS: Record<string, string> = {
@@ -455,11 +458,13 @@ function CodeEditor({
   submitting,
   onPaste,
   onCopy,
+  onCut,
   onBeforeInput,
   onDrop,
 }: CodeEditorProps & {
   onPaste: (e: React.ClipboardEvent) => void;
   onCopy: (e: React.ClipboardEvent) => void;
+  onCut: (e: React.ClipboardEvent) => void;
   onBeforeInput: (e: React.FormEvent<HTMLTextAreaElement>) => void;
   onDrop: (e: React.DragEvent) => void;
 }) {
@@ -513,13 +518,14 @@ function CodeEditor({
           value={code}
           onChange={(e) => setCode(e.target.value)}
           onKeyDown={handleKey}
-          className="bx-native-cursor flex-1 p-4 bg-transparent text-haze font-mono text-sm resize-none focus:outline-none leading-relaxed select-text"
+          className="arena-protected-input bx-native-cursor flex-1 p-4 bg-transparent text-haze font-mono text-sm resize-none focus:outline-none leading-relaxed select-text"
           style={{ caretColor: "#c4b5fd", color: "var(--haze)" }}
           spellCheck={false}
           aria-label="Code editor"
           disabled={disabled}
           onPaste={onPaste}
           onCopy={onCopy}
+          onCut={onCut}
           onBeforeInput={onBeforeInput}
           onDrop={onDrop}
           onContextMenu={(e) => e.preventDefault()}
@@ -736,6 +742,31 @@ function DQBanner({ reason }: { reason: ArenaCheatReason }) {
   );
 }
 
+function StrikeWarningBanner({
+  count,
+  max,
+  reason,
+}: {
+  count: number;
+  max: number;
+  reason: ArenaCheatReason;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="fixed top-14 inset-x-0 z-35 flex items-center justify-center gap-2 px-4 py-2.5 bg-crown/95"
+      style={{ zIndex: 35 }}
+    >
+      <AlertTriangle size={14} className="text-cosmos shrink-0" aria-hidden="true" />
+      <p className="font-space-mono text-[10px] text-cosmos tracking-wide text-center max-w-2xl">
+        ANTI-CHEAT · WARNING {count}/{max} · {arenaStrikeMessage(count, max, reason)}
+      </p>
+    </motion.div>
+  );
+}
+
 function IntegrityWarningBanner({ message }: { message: string }) {
   return (
     <motion.div
@@ -790,6 +821,7 @@ export default function ArenaPage() {
 
   const [activityFeed, setActivityFeed] = useState<ActivityItem[]>([]);
   const [tabDisqualified, setTabDisqualified] = useState(false);
+  const [strikeCount, setStrikeCount] = useState(0);
   const [cheatReason, setCheatReason] = useState<ArenaCheatReason>("tab-switch");
   const [integrityWarning, setIntegrityWarning] = useState<string | null>(null);
   const [arenaComplete, setArenaComplete] = useState(false);
@@ -807,6 +839,8 @@ export default function ArenaPage() {
     setTimeUp(false);
     setArenaComplete(false);
     setTabDisqualified(false);
+    setStrikeCount(0);
+    setIntegrityWarning(null);
     setTestResults([]);
     setTestRan(false);
     setQuestionIndex(0);
@@ -927,21 +961,34 @@ export default function ArenaPage() {
     return () => document.removeEventListener("keydown", onKeyDown);
   });
 
-  /* ─── Anti-cheat: tab switch or external side panel = disqualification ─── */
+  /* ─── Anti-cheat: 3 warnings before disqualification ─── */
   const handleStrike = useCallback(
-    (_count: number, reason: ArenaCheatReason) => {
+    (count: number, reason: ArenaCheatReason) => {
       setCheatReason(reason);
-      setTabDisqualified(true);
+      setStrikeCount(count);
+      setIntegrityWarning(null);
+
+      if (count >= MAX_ARENA_STRIKES) {
+        setTabDisqualified(true);
+        toast({
+          type: "error",
+          title: "Disqualified",
+          message: `${arenaCheatMessage(reason)} You have been removed from this arena.`,
+        });
+        fetchWithAuth(`/api/rooms/${roomId}/submit`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ answer: "__forfeit__" }),
+        }).catch(() => {});
+        return;
+      }
+
       toast({
-        type: "error",
-        title: "Disqualified",
-        message: `${arenaCheatMessage(reason)} You have been removed from this arena.`,
+        type: "warning",
+        title: `Warning ${count}/${MAX_ARENA_STRIKES}`,
+        message: arenaStrikeMessage(count, MAX_ARENA_STRIKES, reason),
+        duration: 6000,
       });
-      fetchWithAuth(`/api/rooms/${roomId}/submit`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ answer: "__forfeit__" }),
-      }).catch(() => {});
     },
     [toast, roomId]
   );
@@ -956,10 +1003,10 @@ export default function ArenaPage() {
     [],
   );
 
-  const { blockPaste, blockBeforeInput, blockContextMenu, blockDrop, blockCopy } = useArenaGuard({
+  const { blockPaste, blockBeforeInput, blockContextMenu, blockDrop, blockCopy, blockCut } = useArenaGuard({
     onStrike: handleStrike,
     onWarning: handleIntegrityWarning,
-    maxStrikes: 1,
+    maxStrikes: MAX_ARENA_STRIKES,
     enabled: !(data?.isAdmin ?? true),
   });
 
@@ -1185,8 +1232,16 @@ export default function ArenaPage() {
   return (
     <div className="min-h-[100dvh] flex flex-col bg-cosmos" onContextMenu={blockContextMenu}>
       <AnimatePresence>
-        {integrityWarning && !tabDisqualified && (
+        {integrityWarning && !tabDisqualified && strikeCount === 0 && (
           <IntegrityWarningBanner key="integrity-warning" message={integrityWarning} />
+        )}
+        {strikeCount > 0 && !tabDisqualified && (
+          <StrikeWarningBanner
+            key="strike-warning"
+            count={strikeCount}
+            max={MAX_ARENA_STRIKES}
+            reason={cheatReason}
+          />
         )}
       </AnimatePresence>
       <AnimatePresence>{tabDisqualified && <DQBanner reason={cheatReason} />}</AnimatePresence>
@@ -1288,6 +1343,7 @@ export default function ArenaPage() {
                     disabled={inputDisabled} running={running} submitting={submitting}
                     onPaste={blockPaste}
                     onCopy={blockCopy}
+                    onCut={blockCut}
                     onBeforeInput={blockBeforeInput}
                     onDrop={blockDrop}
                   />
@@ -1353,16 +1409,17 @@ export default function ArenaPage() {
                       }}
                       onPaste={blockPaste}
                       onCopy={blockCopy}
+                      onCut={blockCut}
                       onBeforeInput={blockBeforeInput}
                       onDrop={blockDrop}
                       onContextMenu={blockContextMenu}
-                      className="bx-native-cursor w-full p-4 md:p-5 bg-[var(--surface-inset)] border border-[var(--border-2)] text-haze font-body text-base md:text-lg focus:outline-none focus:border-[var(--brand-primary)] focus:shadow-[0_0_0_3px_var(--focus-ring)] resize-none rounded-xl transition-all"
+                      className="arena-protected-input bx-native-cursor w-full p-4 md:p-5 bg-[var(--surface-inset)] border border-[var(--border-2)] text-haze font-body text-base md:text-lg focus:outline-none focus:border-[var(--brand-primary)] focus:shadow-[0_0_0_3px_var(--focus-ring)] resize-none rounded-xl transition-all"
                       placeholder="Type your answer here..."
                       disabled={inputDisabled}
                       rows={4}
                     />
                     <p className="font-mono text-[10px] text-haze-3 text-right">
-                      Full-width tab only · no split view · Enter to submit
+                      No copy/paste · full-width tab only · Enter to submit
                     </p>
                   </div>
 

@@ -17,6 +17,9 @@ import {
 export type { ArenaCheatReason };
 export { arenaCheatMessage };
 
+const ARENA_PROTECTED_SELECTOR =
+  ".arena-protected-input, .bx-native-cursor textarea, textarea.bx-native-cursor, input.bx-native-cursor";
+
 interface ArenaGuardOptions {
   onStrike: (count: number, reason: ArenaCheatReason) => void;
   onWarning?: (
@@ -30,16 +33,22 @@ interface ArenaGuardOptions {
 
 /** Sentinel value persisted to localStorage to detect a second arena window. */
 const ARENA_LOCK_KEY = "bountixx:arena-lock";
+const STRIKE_COOLDOWN_MS = 1_500;
+
+function isProtectedTarget(target: EventTarget | null): boolean {
+  return Boolean((target as Element | null)?.closest?.(ARENA_PROTECTED_SELECTOR));
+}
 
 export function useArenaGuard({
   onStrike,
   onWarning,
   onDisqualify,
-  maxStrikes = 1,
+  maxStrikes = 3,
   enabled = true,
 }: ArenaGuardOptions) {
   const strikeCount = useRef(0);
-  const firedRef = useRef(false);
+  const disqualifiedRef = useRef(false);
+  const lastStrikeAt = useRef(0);
 
   const blockPaste = useCallback((e: React.ClipboardEvent) => {
     e.preventDefault();
@@ -63,6 +72,10 @@ export function useArenaGuard({
   }, []);
 
   const blockCopy = useCallback((e: React.ClipboardEvent) => {
+    e.preventDefault();
+  }, []);
+
+  const blockCut = useCallback((e: React.ClipboardEvent) => {
     e.preventDefault();
   }, []);
 
@@ -100,13 +113,33 @@ export function useArenaGuard({
       return Date.now() - startedAt < INTEGRITY_TIMING.ENTRY_GRACE_MS;
     }
 
-    function disqualify(reason: ArenaCheatReason) {
-      if (firedRef.current) return;
-      firedRef.current = true;
+    function resetViolationTimers() {
+      clearFocusWatch();
+      clearSplitWatch();
+      clearSidebarWatch();
+      clearDevtoolsWatch();
+      focusLostAt = null;
+      splitViewAt = null;
+      sidebarAt = null;
+      devtoolsAt = null;
+      recoveryAt = null;
+    }
+
+    function recordStrike(reason: ArenaCheatReason) {
+      if (disqualifiedRef.current) return;
+
+      const now = Date.now();
+      if (now - lastStrikeAt.current < STRIKE_COOLDOWN_MS) return;
+
       strikeCount.current += 1;
+      lastStrikeAt.current = now;
       onStrike(strikeCount.current, reason);
+
       if (strikeCount.current >= maxStrikes) {
+        disqualifiedRef.current = true;
         onDisqualify?.();
+      } else {
+        resetViolationTimers();
       }
     }
 
@@ -158,7 +191,7 @@ export function useArenaGuard({
         clearSplitWatch();
         clearSidebarWatch();
         clearDevtoolsWatch();
-        if (!inGracePeriod()) disqualify("tab-switch");
+        if (!inGracePeriod()) recordStrike("tab-switch");
       } else {
         clearFocusWatch();
         clearSplitWatch();
@@ -172,7 +205,7 @@ export function useArenaGuard({
     }
 
     function handleFocusOut() {
-      if (document.hidden || firedRef.current) return;
+      if (document.hidden || disqualifiedRef.current) return;
       const profile = buildIntegrityProfile(baseline);
       if (profile.keyboardOpen) return;
       if (focusLostAt === null) focusLostAt = Date.now();
@@ -188,33 +221,59 @@ export function useArenaGuard({
       e.preventDefault();
       if (
         inputEvent.inputType === "insertReplacementText" ||
-        inputEvent.inputType === "insertFromDrop"
+        inputEvent.inputType === "insertFromDrop" ||
+        inputEvent.inputType === "insertFromPaste" ||
+        inputEvent.inputType === "insertFromPasteAsQuotation" ||
+        inputEvent.inputType === "insertFromYank"
       ) {
-        disqualify("external-input");
+        recordStrike("external-input");
       }
     }
 
-    /**
-     * Block keyboard shortcuts that could open a new tab/window/devtools.
-     * The browser still owns these — we can't truly block Ctrl+T on most platforms —
-     * but we strike immediately if they fire. Together with the visibility
-     * watchdog this ensures any tab-opening shortcut results in disqualification.
-     */
+    function handleClipboard(e: ClipboardEvent) {
+      if (!isProtectedTarget(e.target)) return;
+      e.preventDefault();
+      if (e.type === "paste") {
+        const target = e.target as HTMLInputElement | HTMLTextAreaElement;
+        if (target && "value" in target) {
+          target.value = "";
+        }
+        recordStrike("external-input");
+      }
+    }
+
     function handleKeyDown(e: KeyboardEvent) {
-      if (firedRef.current || inGracePeriod()) return;
+      if (disqualifiedRef.current) return;
+
       const mod = e.ctrlKey || e.metaKey;
       const key = e.key.toLowerCase();
+      const inProtected = isProtectedTarget(e.target);
+
+      if (inProtected) {
+        if (
+          (mod && (key === "v" || key === "c" || key === "x")) ||
+          (e.shiftKey && key === "insert")
+        ) {
+          e.preventDefault();
+          if (key === "v" || (e.shiftKey && key === "insert")) {
+            recordStrike("external-input");
+          }
+          return;
+        }
+      }
+
+      if (inGracePeriod()) return;
+
       const isForbiddenCombo =
         (mod && (key === "t" || key === "n" || key === "w")) ||
         (mod && e.shiftKey && (key === "t" || key === "n" || key === "p")) ||
-        // DevTools shortcuts
         key === "f12" ||
         (mod && e.shiftKey && (key === "i" || key === "j" || key === "c")) ||
         (mod && key === "u");
+
       if (isForbiddenCombo) {
         e.preventDefault();
-        // Surface a strike immediately — the browser may still execute on some OS.
-        disqualify(
+        recordStrike(
           key === "f12" || (mod && e.shiftKey && (key === "i" || key === "j" || key === "c")) || (mod && key === "u")
             ? "devtools"
             : "new-window",
@@ -225,12 +284,12 @@ export function useArenaGuard({
     function handleStorage(e: StorageEvent) {
       if (e.key !== ARENA_LOCK_KEY) return;
       if (e.newValue && e.newValue !== lockId) {
-        disqualify("new-window");
+        recordStrike("new-window");
       }
     }
 
     function pollIntegrity() {
-      if (firedRef.current || document.hidden || !baselineReady) return;
+      if (disqualifiedRef.current || document.hidden || !baselineReady) return;
       if (inGracePeriod()) return;
 
       const focusLost = !document.hasFocus();
@@ -249,24 +308,22 @@ export function useArenaGuard({
       const sidebarActive = isDynamicSidebar(profile.snapshot, baseline);
       const devtoolsActive = isDevToolsOpen(profile.snapshot, baseline);
 
-      // DevTools docked is an immediate concern — show warning + strike on sustained.
       if (devtoolsActive) {
         if (devtoolsAt === null) devtoolsAt = Date.now();
         maybeWarn("devtools", devtoolsAt);
         if (Date.now() - devtoolsAt >= INTEGRITY_TIMING.DEVTOOLS_MS) {
-          disqualify("devtools");
+          recordStrike("devtools");
           return;
         }
       } else {
         clearDevtoolsWatch();
       }
 
-      // Pure focus loss (no split or sidebar) — strike when sustained.
       if (focusLost && !splitActive && !sidebarActive && !devtoolsActive) {
         if (focusLostAt === null) focusLostAt = Date.now();
         maybeWarn("window-blur", focusLostAt);
         if (Date.now() - focusLostAt >= INTEGRITY_TIMING.WINDOW_BLUR_MS) {
-          disqualify("window-blur");
+          recordStrike("window-blur");
           return;
         }
       }
@@ -295,12 +352,12 @@ export function useArenaGuard({
           focusElapsed >= INTEGRITY_TIMING.SPLIT_VIEW_WITH_FOCUS_MS &&
           splitElapsed >= INTEGRITY_TIMING.SPLIT_VIEW_WITH_FOCUS_MS
         ) {
-          disqualify("split-view");
+          recordStrike("split-view");
           return;
         }
 
         if (splitElapsed >= INTEGRITY_TIMING.SPLIT_VIEW_MS) {
-          disqualify("split-view");
+          recordStrike("split-view");
           return;
         }
       } else {
@@ -319,7 +376,7 @@ export function useArenaGuard({
             : INTEGRITY_TIMING.SIDE_PANEL_WIDTH_ONLY_MS;
 
         if (sidebarElapsed >= widthOnlyThreshold) {
-          disqualify("side-panel");
+          recordStrike("side-panel");
           return;
         }
       } else {
@@ -338,13 +395,11 @@ export function useArenaGuard({
 
     pollTimer = window.setInterval(pollIntegrity, INTEGRITY_TIMING.POLL_MS);
 
-    // Re-assert the arena lock periodically so any new arena tab steals it
-    // and triggers the storage handler in the original tab.
     lockTimer = window.setInterval(() => {
       try {
         const current = window.localStorage.getItem(ARENA_LOCK_KEY);
         if (current && current !== lockId) {
-          disqualify("new-window");
+          recordStrike("new-window");
         } else {
           window.localStorage.setItem(ARENA_LOCK_KEY, lockId);
         }
@@ -359,6 +414,9 @@ export function useArenaGuard({
     document.addEventListener("contextmenu", handleContextMenu, true);
     document.addEventListener("beforeinput", handleBeforeInput, true);
     document.addEventListener("keydown", handleKeyDown, true);
+    document.addEventListener("paste", handleClipboard, true);
+    document.addEventListener("copy", handleClipboard, true);
+    document.addEventListener("cut", handleClipboard, true);
     window.addEventListener("storage", handleStorage);
     window.visualViewport?.addEventListener("resize", pollIntegrity);
     window.visualViewport?.addEventListener("scroll", pollIntegrity);
@@ -374,6 +432,9 @@ export function useArenaGuard({
       document.removeEventListener("contextmenu", handleContextMenu, true);
       document.removeEventListener("beforeinput", handleBeforeInput, true);
       document.removeEventListener("keydown", handleKeyDown, true);
+      document.removeEventListener("paste", handleClipboard, true);
+      document.removeEventListener("copy", handleClipboard, true);
+      document.removeEventListener("cut", handleClipboard, true);
       window.removeEventListener("storage", handleStorage);
       window.visualViewport?.removeEventListener("resize", pollIntegrity);
       window.visualViewport?.removeEventListener("scroll", pollIntegrity);
@@ -394,6 +455,7 @@ export function useArenaGuard({
     blockContextMenu,
     blockDrop,
     blockCopy,
+    blockCut,
     strikes: strikeCount,
   };
 }
