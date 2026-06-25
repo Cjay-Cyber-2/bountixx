@@ -10,6 +10,7 @@ import { runCode, codeExecutionEnabled } from "@/lib/codeRunner";
 import { getRoomQuestions } from "@/lib/roomQuestions";
 import { gradePlayerAnswer } from "@/lib/gradeAnswer";
 import { allCompetitorsFinished, finalizeArena, tryCrownFirstPerfectScorer } from "@/lib/arenaResolver";
+import { computeArenaTimer } from "@/lib/arenaTimer";
 import { checkAndAwardAchievements, updateConsecutiveWins } from "@/lib/achievements";
 
 const XP_WIN = 200;
@@ -442,6 +443,17 @@ export async function PATCH(
   if (!room) return NextResponse.json({ error: "Room not found" }, { status: 404 });
   if (room.status !== "live") {
     return NextResponse.json({ ok: true, alreadyEnded: true });
+  }
+
+  const timer = computeArenaTimer(room.timerSeconds, room.startedAt);
+  if (timer.hasTimer && !timer.expired) {
+    return NextResponse.json(
+      {
+        error: "Timer has not expired yet",
+        remainingSeconds: timer.remainingSeconds,
+      },
+      { status: 409 },
+    );
   }
 
   await finalizeArena(roomId);

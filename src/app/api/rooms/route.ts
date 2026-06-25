@@ -9,6 +9,7 @@ import { getSession, unauthorized, sessionUnavailable } from "@/lib/getSession";
 import { requireClerkAuth } from "@/lib/requireAuth";
 import { ensureDatabaseSchema } from "@/lib/ensureSchema";
 import { isConcreteAnswer } from "@/lib/aiAnalyse";
+import { normalizeTimerSeconds } from "@/lib/arenaTimer";
 import { randomUUID } from "crypto";
 
 type Category = "coding" | "trivia" | "logic" | "math" | "writing" | "design" | "meme";
@@ -160,7 +161,7 @@ export async function POST(req: Request) {
         status:          "lobby",
         adminId:         session.id,
         playerCap:       Math.min(20, Math.max(2, body.playerCap ?? 2)),
-        timerSeconds:    body.timerSeconds,
+        timerSeconds:    normalizeTimerSeconds(body.timerSeconds) ?? undefined,
         bountyTier:      body.bountyTier ?? "bronze",
         prizePool:       0,
         questionsJson:   questions.length > 1 ? JSON.stringify(questions) : null,

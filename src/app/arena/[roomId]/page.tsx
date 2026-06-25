@@ -73,6 +73,32 @@ interface RoomData {
   totalQuestions?: number;
   mySubmission: { id: string; isWinner: boolean; testsPassed: number; testsTotal: number } | null;
   isAdmin: boolean;
+  timer?: {
+    hasTimer: boolean;
+    totalSeconds: number | null;
+    remainingSeconds: number | null;
+    serverNow: string;
+    expired: boolean;
+  };
+}
+
+function syncArenaTimer(
+  timer: RoomData["timer"] | undefined,
+  setHasTimer: (value: boolean) => void,
+  setTimeLeft: (value: number | null) => void,
+  setTimeUp: (value: boolean) => void,
+) {
+  if (!timer?.hasTimer) {
+    setHasTimer(false);
+    setTimeLeft(null);
+    setTimeUp(false);
+    return;
+  }
+
+  const remaining = Math.max(0, timer.remainingSeconds ?? 0);
+  setHasTimer(true);
+  setTimeLeft(remaining);
+  setTimeUp(timer.expired || remaining <= 0);
 }
 
 interface TestResult {
@@ -578,6 +604,21 @@ export default function ArenaPage() {
   const prevPlayersRef = useRef<Player[]>([]);
   const activityIdRef = useRef(0);
 
+  useEffect(() => {
+    setData(null);
+    setLoading(true);
+    setHasTimer(false);
+    setTimeLeft(null);
+    setTimeUp(false);
+    setSubmitted(false);
+    setTabDisqualified(false);
+    setTestResults([]);
+    setTestRan(false);
+    setQuestionIndex(0);
+    setQuestionsAnswered(0);
+    prevPlayersRef.current = [];
+  }, [roomId]);
+
   /* ─── Fetch room data ─── */
   const fetchRoom = useCallback(async (silent = false) => {
     try {
@@ -591,7 +632,12 @@ export default function ArenaPage() {
       const json = (await res.json()) as RoomData;
 
       if (json.room.status === "lobby") { router.replace(`/lobby/${roomId}`); return; }
-      if (json.room.status === "ended") { router.replace(`/arena/${roomId}/results`); return; }
+      if (json.room.status === "ended" || json.room.status === "cancelled") {
+        router.replace(`/arena/${roomId}/results`);
+        return;
+      }
+
+      syncArenaTimer(json.timer, setHasTimer, setTimeLeft, setTimeUp);
 
       // Derive activity feed from player status changes
       if (prevPlayersRef.current.length > 0) {
@@ -622,22 +668,6 @@ export default function ArenaPage() {
                 getDefaultCode(initCategory, firstQ?.language ?? json.room.language))
             : prev
         );
-
-        const timerSec = json.room.timerSeconds;
-        if (timerSec !== null) {
-          setHasTimer(true);
-          if (json.room.startedAt) {
-            const elapsed = Math.floor((Date.now() - new Date(json.room.startedAt).getTime()) / 1000);
-            const remaining = Math.max(0, timerSec - elapsed);
-            setTimeLeft(remaining);
-            if (remaining === 0) setTimeUp(true);
-          } else {
-            setTimeLeft(timerSec);
-          }
-        } else {
-          setHasTimer(false);
-          setTimeLeft(null);
-        }
       }
 
       setData(json);
@@ -654,28 +684,37 @@ export default function ArenaPage() {
     return () => clearInterval(id);
   }, [fetchRoom]);
 
-  /* ─── Timer countdown — only when timerSeconds was set ─── */
+  /* ─── Timer countdown — synced from server, ticks locally between polls ─── */
   useEffect(() => {
-    if (!hasTimer || timeUp || submitted || tabDisqualified) return;
+    if (!hasTimer || timeUp || submitted || tabDisqualified || timeLeft == null || timeLeft <= 0) {
+      return;
+    }
+
     const id = setInterval(() => {
-      setTimeLeft((t) => {
-        if (t === null || t <= 1) { clearInterval(id); setTimeUp(true); return 0; }
-        return t - 1;
+      setTimeLeft((current) => {
+        if (current == null || current <= 1) {
+          setTimeUp(true);
+          return 0;
+        }
+        return current - 1;
       });
     }, 1000);
+
     return () => clearInterval(id);
   }, [hasTimer, timeUp, submitted, tabDisqualified]);
 
   useEffect(() => {
-    if (!timeUp) return;
+    if (!timeUp || !hasTimer) return;
+
     fetchWithAuth(`/api/rooms/${roomId}/submit`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "finalize" }),
     }).catch(() => {});
+
     const t = setTimeout(() => router.replace(`/arena/${roomId}/results`), 3000);
     return () => clearTimeout(t);
-  }, [timeUp, router, roomId]);
+  }, [timeUp, hasTimer, router, roomId]);
 
   /* ─── Keyboard shortcuts ─── */
   useEffect(() => {

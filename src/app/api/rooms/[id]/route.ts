@@ -9,6 +9,7 @@ import { getRoomQuestions } from "@/lib/roomQuestions";
 import { expireLobbyIfStale } from "@/lib/roomExpiry";
 import { ENTRY_FEE, isEntryFeeExempt, hasAffordableEntry } from "@/lib/coins";
 import { finalizeArena, refundEntryFeesForRoom, repairMissingEntryRefunds } from "@/lib/arenaResolver";
+import { serializeArenaTimer } from "@/lib/arenaTimer";
 import { randomUUID } from "crypto";
 
 export async function GET(
@@ -34,6 +35,18 @@ export async function GET(
     return NextResponse.json({ error: "This arena link has expired" }, { status: 404 });
   }
 
+  let liveRoom = room;
+  let timer = serializeArenaTimer(liveRoom.timerSeconds, liveRoom.startedAt);
+
+  if (liveRoom.status === "live" && timer.hasTimer && timer.expired) {
+    await finalizeArena(id);
+    const [refreshed] = await db.select().from(rooms).where(eq(rooms.id, id)).limit(1);
+    if (refreshed) {
+      liveRoom = refreshed;
+      timer = serializeArenaTimer(liveRoom.timerSeconds, liveRoom.startedAt);
+    }
+  }
+
   const players = await db
     .select({
       id:        roomPlayers.id,
@@ -48,15 +61,15 @@ export async function GET(
     .leftJoin(users, eq(roomPlayers.userId, users.id))
     .where(eq(roomPlayers.roomId, id));
 
-  const isAdmin = room.adminId === session.id;
-  const testCaseRows = room.category === "coding"
+  const isAdmin = liveRoom.adminId === session.id;
+  const testCaseRows = liveRoom.category === "coding"
     ? await db
         .select()
         .from(testCases)
         .where(and(
           eq(testCases.roomId, id),
           eq(testCases.isActive, true),
-          ...(isAdmin || room.status === "ended" ? [] : [eq(testCases.isHidden, false)])
+          ...(isAdmin || liveRoom.status === "ended" ? [] : [eq(testCases.isHidden, false)])
         ))
     : [];
 
@@ -76,8 +89,8 @@ export async function GET(
     submittedAt: Date | null;
   }[] = [];
 
-  if (room.status === "ended" || room.status === "cancelled") {
-    await repairMissingEntryRefunds(id, room.status);
+  if (liveRoom.status === "ended" || liveRoom.status === "cancelled") {
+    await repairMissingEntryRefunds(id, liveRoom.status);
 
     const subRows = await db
       .select({
@@ -99,14 +112,20 @@ export async function GET(
   }
 
   return NextResponse.json({
-    room,
+    room: {
+      ...liveRoom,
+      startedAt: liveRoom.startedAt?.toISOString?.() ?? liveRoom.startedAt ?? null,
+      createdAt: liveRoom.createdAt?.toISOString?.() ?? liveRoom.createdAt,
+      endedAt: liveRoom.endedAt?.toISOString?.() ?? liveRoom.endedAt ?? null,
+    },
     players,
     testCases: testCaseRows,
     mySubmission: userSubmission ?? null,
     isAdmin,
     results,
-    questions: getRoomQuestions(room),
-    totalQuestions: getRoomQuestions(room).length,
+    questions: getRoomQuestions(liveRoom),
+    totalQuestions: getRoomQuestions(liveRoom).length,
+    timer,
   });
 }
 
