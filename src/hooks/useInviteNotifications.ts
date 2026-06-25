@@ -6,7 +6,9 @@ import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useToast } from "@/components/ui/Toast";
 
-const INVITE_POLL_MS = 2_000;
+/** Aggressive polling so invitees see invites in under ~1s without refreshing. */
+const INVITE_POLL_MS = 800;
+const INVITE_POLL_EVENT = "bountixx:poll-invites";
 
 export type PendingInvite = {
   id: string;
@@ -21,7 +23,14 @@ type InvitePollOptions = {
   notify?: boolean;
 };
 
-/** Fast invite polling so invitees see invites within ~2s without refreshing. */
+/** Request an immediate invite poll (e.g. after sending an invite). */
+export function requestInvitePoll() {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent(INVITE_POLL_EVENT));
+  }
+}
+
+/** Fast invite polling so invitees see invites within ~1s without refreshing. */
 export function useInviteNotifications(options: InvitePollOptions = {}) {
   const { onInvites, notify = false } = options;
   const { user, loading: authLoading } = useAuth();
@@ -90,14 +99,19 @@ export function useInviteNotifications(options: InvitePollOptions = {}) {
     const refreshNow = () => {
       if (document.visibilityState === "visible" && !cancelled) void poll();
     };
+    const pollNow = () => {
+      if (!cancelled) void poll();
+    };
     document.addEventListener("visibilitychange", refreshNow);
     window.addEventListener("focus", refreshNow);
+    window.addEventListener(INVITE_POLL_EVENT, pollNow);
 
     return () => {
       cancelled = true;
       window.clearInterval(id);
       document.removeEventListener("visibilitychange", refreshNow);
       window.removeEventListener("focus", refreshNow);
+      window.removeEventListener(INVITE_POLL_EVENT, pollNow);
     };
   }, [authLoading, notify, onInvites, pathname, toast, user]);
 }

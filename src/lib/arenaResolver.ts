@@ -62,6 +62,8 @@ export async function userHasPerfectScore(
   userId: string,
   questionCount: number,
 ): Promise<boolean> {
+  if (questionCount <= 0) return false;
+
   const subs = await db
     .select({
       questionIndex: submissions.questionIndex,
@@ -78,7 +80,43 @@ export async function userHasPerfectScore(
     }
   }
 
-  return correctIndices.size >= questionCount;
+  if (correctIndices.size < questionCount) return false;
+  for (let i = 0; i < questionCount; i++) {
+    if (!correctIndices.has(i)) return false;
+  }
+  return true;
+}
+
+/** True when a user has submitted an answer for every question index (right or wrong). */
+export async function userAnsweredAllQuestions(
+  roomId: string,
+  userId: string,
+  questionCount: number,
+): Promise<boolean> {
+  if (questionCount <= 0) return false;
+
+  const subs = await db
+    .select({ questionIndex: submissions.questionIndex })
+    .from(submissions)
+    .where(and(eq(submissions.roomId, roomId), eq(submissions.userId, userId)));
+
+  const answeredIndices = new Set(subs.map((s) => s.questionIndex ?? 0));
+  if (answeredIndices.size < questionCount) return false;
+  for (let i = 0; i < questionCount; i++) {
+    if (!answeredIndices.has(i)) return false;
+  }
+  return true;
+}
+
+/** Multi-question winner: must have answered every question AND every answer correct. */
+export async function userQualifiesAsMultiQuestionWinner(
+  roomId: string,
+  userId: string,
+  questionCount: number,
+): Promise<boolean> {
+  if (questionCount <= 1) return false;
+  if (!(await userAnsweredAllQuestions(roomId, userId, questionCount))) return false;
+  return userHasPerfectScore(roomId, userId, questionCount);
 }
 
 /** First competitor to answer every question correctly — wins by speed. */
@@ -148,8 +186,15 @@ async function hasArenaWinner(roomId: string): Promise<boolean> {
 export async function crownArenaWinner(roomId: string, winnerId: string): Promise<boolean> {
   const [room] = await db.select().from(rooms).where(eq(rooms.id, roomId)).limit(1);
   if (!room) return false;
-  if (await hasArenaWinner(roomId)) return true;
   if (room.status !== "live" && room.status !== "ended") return false;
+
+  const [existingWinnerTx] = await db
+    .select({ id: coinTransactions.id })
+    .from(coinTransactions)
+    .where(eq(coinTransactions.reference, `room:${roomId}:winner`))
+    .limit(1);
+
+  if (existingWinnerTx) return true;
 
   const competitors = await db
     .select({ userId: roomPlayers.userId })
@@ -252,7 +297,7 @@ export async function tryCrownFirstPerfectScorer(
   if (!room || room.status !== "live") return null;
   if (await hasArenaWinner(roomId)) return null;
 
-  const hasPerfect = await userHasPerfectScore(roomId, userId, questionCount);
+  const hasPerfect = await userQualifiesAsMultiQuestionWinner(roomId, userId, questionCount);
   if (!hasPerfect) return null;
 
   const first = await findFirstPerfectScorer(roomId, questionCount);
@@ -280,7 +325,7 @@ export async function repairMissingEntryRefunds(
 
   const questions = getRoomQuestions(room);
   const firstPerfect = await findFirstPerfectScorer(roomId, questions.length);
-  if (firstPerfect) {
+  if (firstPerfect && (await userQualifiesAsMultiQuestionWinner(roomId, firstPerfect.userId, questions.length))) {
     await crownArenaWinner(roomId, firstPerfect.userId);
     return;
   }
@@ -363,12 +408,12 @@ export async function finalizeArena(roomId: string): Promise<void> {
 
   const firstPerfect = await findFirstPerfectScorer(roomId, questions.length);
 
-  if (firstPerfect) {
+  if (firstPerfect && (await userQualifiesAsMultiQuestionWinner(roomId, firstPerfect.userId, questions.length))) {
     winnerIds = [firstPerfect.userId];
   } else if (isMulti) {
     const perfectLeaders: ScoreRow[] = [];
     for (const leader of leaders) {
-      if (await userHasPerfectScore(roomId, leader.userId, questions.length)) {
+      if (await userQualifiesAsMultiQuestionWinner(roomId, leader.userId, questions.length)) {
         perfectLeaders.push(leader);
       }
     }
@@ -380,7 +425,7 @@ export async function finalizeArena(roomId: string): Promise<void> {
       winnerIds = perfectLeaders.map((l) => l.userId);
     }
     // Partial completion (e.g. 3/4 questions) never wins — winnerIds stays empty
-  } else {
+  } else if (!isMulti) {
     const [existingWinner] = await db
       .select({ userId: submissions.userId })
       .from(submissions)

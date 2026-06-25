@@ -102,23 +102,25 @@ export async function GET(req: Request) {
 
     const submissionsMap = new Map(submissionsForRooms.map((s) => [s.roomId, s]));
 
-    recentRooms = roomDetails
-      .filter((room) => !hiddenRecentSet.has(room.id))
-      .map((room) => {
-      const sub = submissionsMap.get(room.id);
-      const place = sub?.isWinner ? "1st" : "—";
-      const coins = sub?.isWinner ? (room.prizePool ?? 0) : 0;
-      const joinedAt = recentRoomRows.find((r) => r.roomId === room.id)?.joinedAt;
+    recentRooms = recentRoomRows
+      .filter((row) => !hiddenRecentSet.has(row.roomId))
+      .map((row) => {
+        const room = roomDetails.find((r) => r.id === row.roomId);
+        if (!room) return null;
+        const sub = submissionsMap.get(room.id);
+        const place = sub?.isWinner ? "1st" : "—";
+        const coins = sub?.isWinner ? (room.prizePool ?? 0) : 0;
 
-      return {
-        roomId:   room.id,
-        name:     room.name,
-        category: room.category ?? "coding",
-        place,
-        coins,
-        date: joinedAt ? timeAgo(new Date(joinedAt)) : "",
-      };
-    });
+        return {
+          roomId: room.id,
+          name: room.name,
+          category: room.category ?? "coding",
+          place,
+          coins,
+          date: row.joinedAt ? timeAgo(new Date(row.joinedAt)) : "",
+        };
+      })
+      .filter((r): r is NonNullable<typeof r> => r !== null);
   }
 
   const onlineUsers = await listOnlineUsers(uid);

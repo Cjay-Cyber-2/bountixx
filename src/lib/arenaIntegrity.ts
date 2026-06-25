@@ -150,14 +150,26 @@ export function arenaCheatMessage(reason: ArenaCheatReason): string {
 export function arenaWarningMessage(kind: "split-view" | "side-panel" | "window-blur" | "devtools"): string {
   switch (kind) {
     case "split-view":
-      return "Split view detected — switch to a full-width tab or you'll be removed.";
+      return "Split view detected — switch to a full-width tab or you'll receive a strike.";
     case "side-panel":
       return "External panel detected — close side tools and stay focused on the arena.";
     case "window-blur":
-      return "Arena window is not focused — click back into it now to avoid disqualification.";
+      return "Arena window is not focused — click back into it now to avoid a strike.";
     case "devtools":
-      return "Developer tools appear open — close them now to avoid disqualification.";
+      return "Developer tools appear open — close them now to avoid a strike.";
   }
+}
+
+/** Player-facing strike warning before final disqualification. */
+export function arenaStrikeMessage(
+  strike: number,
+  maxStrikes: number,
+  reason: ArenaCheatReason,
+): string {
+  const remaining = maxStrikes - strike;
+  const base = arenaCheatMessage(reason);
+  if (remaining <= 0) return base;
+  return `${base} Warning ${strike}/${maxStrikes} — ${remaining} more violation${remaining === 1 ? "" : "s"} before disqualification.`;
 }
 
 /** Heuristic for detecting that browser DevTools are docked open. */
