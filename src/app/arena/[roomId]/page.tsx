@@ -356,7 +356,7 @@ function CodeEditor({
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="bx-native-cursor flex flex-col h-full">
       {/* IDE-style tab bar with the locked, AI-analysed language */}
       <div className="flex items-center justify-between border-b border-[var(--terminal-border)] bg-[var(--surface-raised)] px-4">
         <div className="flex items-center gap-2 py-2.5">
@@ -1101,12 +1101,12 @@ export default function ArenaPage() {
       </div>
 
       {/* ── Content ── */}
-      <div className="flex flex-col lg:flex-row flex-1 pt-14 lg:h-[calc(100dvh-56px)]">
+      <div className="flex flex-col md:flex-row flex-1 pt-14 lg:h-[calc(100dvh-56px)] min-h-0">
 
-        {/* Challenge panel — desktop sidebar (players + brief) */}
-        {(isCoding || data.isAdmin) && (
+        {/* Challenge panel — always visible beside the IDE when coding (competitors) */}
+        {isCoding && !data.isAdmin && (
           <div
-            className="hidden lg:flex w-full lg:w-[28%] lg:max-w-[320px] border-b lg:border-b-0 lg:border-r flex-col overflow-y-auto shrink-0"
+            className="flex w-full md:w-[32%] lg:w-[28%] lg:max-w-[340px] border-b md:border-b-0 md:border-r flex-col overflow-y-auto shrink-0 max-h-[38vh] md:max-h-none"
             style={{ background: "var(--surface-raised)", borderColor: "var(--border-1)" }}
           >
             <div
@@ -1192,14 +1192,16 @@ export default function ArenaPage() {
               </>
             ) : isCoding ? (
               <>
-                <ChallengePromptCard
-                  prompt={challengePrompt}
-                  questionCategory={questionCategory}
-                  catColor={catColor}
-                  questionIndex={questionIndex}
-                  totalQuestions={totalQuestions}
-                />
-                <div className="flex-1 min-h-0 flex flex-col">
+                <div className="md:hidden shrink-0">
+                  <ChallengePromptCard
+                    prompt={challengePrompt}
+                    questionCategory={questionCategory}
+                    catColor={catColor}
+                    questionIndex={questionIndex}
+                    totalQuestions={totalQuestions}
+                  />
+                </div>
+                <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
                   <CodeEditor
                     code={code} setCode={setCode}
                     language={language}

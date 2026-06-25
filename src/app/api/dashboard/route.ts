@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { rooms, submissions, roomPlayers, users, invites } from "@/lib/schema";
-import { eq, and, desc, count, inArray } from "drizzle-orm";
+import { eq, and, desc, count, inArray, ne } from "drizzle-orm";
 import { getSession, unauthorized } from "@/lib/getSession";
 import { isUnlimitedCoinsEmail } from "@/lib/coins";
 import { listOnlineUsers, serializeOnlineUsers } from "@/lib/presence";
@@ -89,6 +89,7 @@ export async function GET(req: Request) {
       const joinedAt = recentRoomRows.find((r) => r.roomId === room.id)?.joinedAt;
 
       return {
+        roomId:   room.id,
         name:     room.name,
         category: room.category ?? "coding",
         place,
@@ -112,6 +113,22 @@ export async function GET(req: Request) {
     const lobbyExpired = await expireLobbyIfStale(activeLobby);
     if (!lobbyExpired) {
       activeLobbyLive = { id: activeLobby.id, name: activeLobby.name };
+    }
+  }
+
+  const [joinedLobbyRow] = await db
+    .select({ id: rooms.id, name: rooms.name, createdAt: rooms.createdAt, adminId: rooms.adminId, status: rooms.status })
+    .from(roomPlayers)
+    .innerJoin(rooms, eq(roomPlayers.roomId, rooms.id))
+    .where(and(eq(roomPlayers.userId, uid), eq(rooms.status, "lobby"), ne(rooms.adminId, uid)))
+    .orderBy(desc(roomPlayers.joinedAt))
+    .limit(1);
+
+  let joinedLobbyLive: { id: string; name: string } | null = null;
+  if (joinedLobbyRow) {
+    const lobbyExpired = await expireLobbyIfStale(joinedLobbyRow);
+    if (!lobbyExpired) {
+      joinedLobbyLive = { id: joinedLobbyRow.id, name: joinedLobbyRow.name };
     }
   }
 
@@ -171,6 +188,7 @@ export async function GET(req: Request) {
     recentRooms,
     onlineUsers: serializeOnlineUsers(onlineUsers),
     activeLobby: activeLobbyLive,
+    joinedLobby: joinedLobbyLive,
     pendingInvites,
   });
   } catch (err) {

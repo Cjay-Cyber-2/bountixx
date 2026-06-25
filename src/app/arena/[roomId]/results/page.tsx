@@ -117,6 +117,11 @@ export default function ResultsPage() {
     return () => { cancelled = true; };
   }, [roomId, router]);
 
+  useEffect(() => {
+    if (!data?.results?.some((r) => r.isWinner)) return;
+    window.dispatchEvent(new CustomEvent("bountixx:refresh-balance"));
+  }, [data]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-cosmos flex items-center justify-center">

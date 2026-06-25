@@ -13,6 +13,9 @@ import { Button } from "@/components/ui/Button";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { useToast } from "@/components/ui/Toast";
 import { OnlineFriendsList } from "@/components/arena/OnlineFriendsList";
+import { useInviteNotifications, type PendingInvite } from "@/hooks/useInviteNotifications";
+
+const RECENT_HIDDEN_KEY = "bountixx-hidden-recent-rooms";
 
 const CATEGORY_COLORS: Record<string, string> = {
   coding:  "#7C5CFF",
@@ -34,10 +37,11 @@ type DashboardData = {
   totalXp: number;
   coinsBalance: number;
   coinsUnlimited?: boolean;
-  recentRooms: { name: string; category: string; place: string; coins: number; date: string }[];
+  recentRooms: { roomId: string; name: string; category: string; place: string; coins: number; date: string }[];
   onlineUsers: { id: string; username: string; rank: string; avatarUrl: string | null; initials: string }[];
   activeLobby: { id: string; name: string } | null;
-  pendingInvites: { id: string; roomId: string; roomName: string; inviterName: string; minutesLeft: number }[];
+  joinedLobby: { id: string; name: string } | null;
+  pendingInvites: PendingInvite[];
 };
 
 const MAX_AUTH_RETRIES = 4;
@@ -55,7 +59,48 @@ export default function DashboardPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [onlineCount, setOnlineCount] = useState(0);
   const [decliningId, setDecliningId] = useState<string | null>(null);
+  const [hiddenRecentIds, setHiddenRecentIds] = useState<Set<string>>(new Set());
   const hasDataRef = useRef(false);
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    try {
+      const raw = localStorage.getItem(`${RECENT_HIDDEN_KEY}:${user.uid}`);
+      if (raw) setHiddenRecentIds(new Set(JSON.parse(raw) as string[]));
+    } catch {
+      // ignore
+    }
+  }, [user?.uid]);
+
+  const hideRecentRoom = useCallback(
+    (roomId: string) => {
+      if (!user?.uid) return;
+      setHiddenRecentIds((prev) => {
+        const next = new Set(prev);
+        next.add(roomId);
+        localStorage.setItem(`${RECENT_HIDDEN_KEY}:${user.uid}`, JSON.stringify([...next]));
+        return next;
+      });
+    },
+    [user?.uid],
+  );
+
+  const clearRecentRooms = useCallback(() => {
+    if (!data?.recentRooms?.length || !user?.uid) return;
+    setHiddenRecentIds((prev) => {
+      const next = new Set(prev);
+      for (const room of data.recentRooms) next.add(room.roomId);
+      localStorage.setItem(`${RECENT_HIDDEN_KEY}:${user.uid}`, JSON.stringify([...next]));
+      return next;
+    });
+    toast({ type: "info", title: "Recent arenas cleared" });
+  }, [data?.recentRooms, toast, user?.uid]);
+
+  useInviteNotifications({
+    onInvites: (invites) => {
+      setData((prev) => (prev ? { ...prev, pendingInvites: invites } : prev));
+    },
+  });
 
   useEffect(() => {
     hasDataRef.current = data !== null;
@@ -100,7 +145,7 @@ export default function DashboardPage() {
     if (authLoading || !user) return;
 
     void fetchData();
-    const id = setInterval(() => void fetchData(), 15_000);
+    const id = setInterval(() => void fetchData(), 10_000);
 
     const refresh = () => {
       if (document.visibilityState === "visible") void fetchData();
@@ -219,6 +264,30 @@ export default function DashboardPage() {
             );
           })}
         </motion.div>
+
+        {!!data?.joinedLobby && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.45 }}
+            className="mb-8 p-5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+            style={{ background: "var(--surface-inset)", border: "1px solid var(--border-accent)" }}
+          >
+            <div>
+              <p className="font-space-mono text-[10px] text-[var(--brand-primary)] tracking-widest uppercase mb-1">
+                Waiting room
+              </p>
+              <p className="font-body text-base text-haze">
+                You&apos;re in <span className="font-semibold">{data.joinedLobby.name}</span> — return to the lobby anytime.
+              </p>
+            </div>
+            <Link href={`/lobby/${data.joinedLobby.id}`} className="shrink-0">
+              <Button variant="primary" size="md" className="w-full sm:w-auto gap-2">
+                <ArrowRight size={14} aria-hidden /> Return to lobby
+              </Button>
+            </Link>
+          </motion.div>
+        )}
 
         {!!data?.pendingInvites?.length && (
           <motion.div
@@ -350,12 +419,23 @@ export default function DashboardPage() {
         >
           <div className="flex items-baseline justify-between gap-3 mb-5">
             <h3 className="font-display text-xl md:text-2xl text-haze">Recent arenas</h3>
-            <Link
-              href="/profile/me"
-              className="cursor-target font-mono text-[11px] text-haze-3 hover:text-[var(--brand-primary)] transition-colors tracking-widest uppercase"
-            >
-              View all →
-            </Link>
+            <div className="flex items-center gap-4">
+              {data?.recentRooms?.some((r) => !hiddenRecentIds.has(r.roomId)) ? (
+                <button
+                  type="button"
+                  onClick={clearRecentRooms}
+                  className="cursor-target font-mono text-[11px] text-haze-3 hover:text-danger transition-colors tracking-widest uppercase"
+                >
+                  Clear all
+                </button>
+              ) : null}
+              <Link
+                href="/profile/me"
+                className="cursor-target font-mono text-[11px] text-haze-3 hover:text-[var(--brand-primary)] transition-colors tracking-widest uppercase"
+              >
+                View all →
+              </Link>
+            </div>
           </div>
 
           {loading ? (
@@ -373,7 +453,7 @@ export default function DashboardPage() {
                 </div>
               ))}
             </div>
-          ) : !data?.recentRooms?.length ? (
+          ) : !data?.recentRooms?.filter((r) => !hiddenRecentIds.has(r.roomId)).length ? (
             <div className="rounded-2xl p-12 text-center bg-[var(--surface-inset)] border border-[var(--border-1)]">
               <p className="font-display text-lg md:text-xl text-haze mb-2">No arenas yet</p>
               <p className="font-body text-sm md:text-base text-haze-3">
@@ -382,9 +462,11 @@ export default function DashboardPage() {
             </div>
           ) : (
             <div className="rounded-2xl overflow-hidden border border-[var(--border-1)]">
-              {data.recentRooms.map((room, i) => (
-                <RoomRow key={i} room={room} />
-              ))}
+              {data.recentRooms
+                .filter((room) => !hiddenRecentIds.has(room.roomId))
+                .map((room) => (
+                  <RoomRow key={room.roomId} room={room} onRemove={() => hideRecentRoom(room.roomId)} />
+                ))}
             </div>
           )}
         </motion.div>
@@ -395,8 +477,10 @@ export default function DashboardPage() {
 
 function RoomRow({
   room,
+  onRemove,
 }: {
-  room: { name: string; category: string; place: string; coins: number; date: string };
+  room: { roomId: string; name: string; category: string; place: string; coins: number; date: string };
+  onRemove: () => void;
 }) {
   const catColor = CATEGORY_COLORS[room.category] ?? "var(--haze-3)";
   const resColor = RESULT_COLORS[room.place] ?? "var(--haze-3)";
@@ -421,6 +505,14 @@ function RoomRow({
       <span className="font-stats font-bold text-sm shrink-0 w-14 text-right tracking-wide" style={{ color: resColor }}>
         {room.place}
       </span>
+      <button
+        type="button"
+        onClick={onRemove}
+        className="cursor-target font-mono text-[10px] text-haze-3 hover:text-danger shrink-0 px-2 py-1 transition-colors"
+        aria-label={`Remove ${room.name} from recent arenas`}
+      >
+        ✕
+      </button>
     </div>
   );
 }

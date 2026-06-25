@@ -7,6 +7,7 @@ import { LenisProvider } from "@/components/providers/LenisProvider";
 import { ToastProvider } from "@/components/ui/Toast";
 import { TargetCursorWrapper } from "@/components/ui/TargetCursor";
 import { PresenceProvider } from "@/components/providers/PresenceProvider";
+import { InviteNotifier } from "@/components/providers/InviteNotifier";
 
 // Static mapping to avoid next/font/google network failures during offline build
 const fontDisplay = { variable: "font-display" };
@@ -64,6 +65,7 @@ export default function RootLayout({
               <LenisProvider>
                 <ToastProvider>
                   <PresenceProvider>
+                    <InviteNotifier />
                     <TargetCursorWrapper />
                     {children}
                   </PresenceProvider>

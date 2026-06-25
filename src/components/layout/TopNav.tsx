@@ -74,8 +74,10 @@ export function TopNav() {
     const refresh = () => {
       if (document.visibilityState === "visible") void loadProfile();
     };
+    const onBalanceRefresh = () => void loadProfile();
     document.addEventListener("visibilitychange", refresh);
     window.addEventListener("focus", refresh);
+    window.addEventListener("bountixx:refresh-balance", onBalanceRefresh);
 
     return () => {
       cancelled = true;
@@ -83,6 +85,7 @@ export function TopNav() {
       window.clearInterval(id);
       document.removeEventListener("visibilitychange", refresh);
       window.removeEventListener("focus", refresh);
+      window.removeEventListener("bountixx:refresh-balance", onBalanceRefresh);
     };
   }, [authLoading, user]);
 

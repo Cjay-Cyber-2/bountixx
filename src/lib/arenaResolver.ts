@@ -166,6 +166,10 @@ export async function crownArenaWinner(roomId: string, winnerId: string): Promis
     .where(and(eq(submissions.roomId, roomId), eq(submissions.userId, winnerId)));
 
   const prize = room.prizePool ?? 0;
+  if (prize <= 0) {
+    console.warn(`[crownArenaWinner] room ${roomId} prize pool is ${prize}`);
+  }
+
   await db
     .update(users)
     .set({
@@ -362,12 +366,20 @@ export async function finalizeArena(roomId: string): Promise<void> {
   if (firstPerfect) {
     winnerIds = [firstPerfect.userId];
   } else if (isMulti) {
-    if (leaders.length === 1) {
-      winnerIds = [leaders[0].userId];
-    } else if (leaders.length > 1) {
-      tieRefund = true;
-      winnerIds = leaders.map((l) => l.userId);
+    const perfectLeaders: ScoreRow[] = [];
+    for (const leader of leaders) {
+      if (await userHasPerfectScore(roomId, leader.userId, questions.length)) {
+        perfectLeaders.push(leader);
+      }
     }
+
+    if (perfectLeaders.length === 1) {
+      winnerIds = [perfectLeaders[0].userId];
+    } else if (perfectLeaders.length > 1) {
+      tieRefund = true;
+      winnerIds = perfectLeaders.map((l) => l.userId);
+    }
+    // Partial completion (e.g. 3/4 questions) never wins — winnerIds stays empty
   } else {
     const [existingWinner] = await db
       .select({ userId: submissions.userId })

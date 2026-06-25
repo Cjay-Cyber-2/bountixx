@@ -15,7 +15,7 @@ import { useEffect, useRef, useMemo } from "react";
 import "./TargetCursor.css";
 
 const SELECTOR =
-  '.cursor-target, a[href], button:not([disabled]), [role="button"], input:not([type="hidden"]), textarea, select, summary, label[for]';
+  '.cursor-target, a[href], button:not([disabled]), [role="button"], input:not([type="hidden"]):not(.bx-native-cursor), select, summary, label[for]';
 
 export function TargetCursorWrapper() {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -41,9 +41,22 @@ export function TargetCursorWrapper() {
     const styleEl = document.createElement("style");
     styleEl.id = "bx-cursor-hide";
     styleEl.textContent = `
-      *, *::before, *::after { cursor: none !important; }
-      .bx-native-cursor, .bx-native-cursor * { cursor: auto !important; }
-      textarea.bx-native-cursor, input.bx-native-cursor { cursor: text !important; caret-color: var(--brand-primary); }
+      html:not(.bx-native-cursor-active) *,
+      html:not(.bx-native-cursor-active) *::before,
+      html:not(.bx-native-cursor-active) *::after {
+        cursor: none !important;
+      }
+      .bx-native-cursor,
+      .bx-native-cursor * {
+        cursor: text !important;
+      }
+      textarea.bx-native-cursor,
+      input.bx-native-cursor,
+      .bx-native-cursor textarea,
+      .bx-native-cursor input {
+        cursor: text !important;
+        caret-color: #7C5CFF !important;
+      }
     `;
     document.head.appendChild(styleEl);
 
@@ -92,19 +105,39 @@ export function TargetCursorWrapper() {
       }
     };
 
+    const setNativeActive = (active: boolean) => {
+      document.documentElement.classList.toggle("bx-native-cursor-active", active);
+      if (active) {
+        root.classList.add("is-hidden");
+        setTarget(null);
+      }
+    };
+
     const onMove = (e: MouseEvent) => {
       px = e.clientX;
       py = e.clientY;
       const el = e.target as Element | null;
       const overNative = el?.closest?.(".bx-native-cursor");
       if (overNative) {
-        root.classList.add("is-hidden");
-        setTarget(null);
+        setNativeActive(true);
         return;
       }
+      setNativeActive(false);
       if (root.classList.contains("is-hidden")) root.classList.remove("is-hidden");
       const t = (el?.closest?.(SELECTOR) as HTMLElement) || null;
       setTarget(t && !t.hasAttribute("disabled") ? t : null);
+    };
+
+    const onFocusIn = (e: FocusEvent) => {
+      if ((e.target as Element | null)?.closest?.(".bx-native-cursor")) {
+        setNativeActive(true);
+      }
+    };
+    const onFocusOut = (e: FocusEvent) => {
+      const next = e.relatedTarget as Element | null;
+      if (!next?.closest?.(".bx-native-cursor")) {
+        setNativeActive(false);
+      }
     };
 
     const onDown = () => root.classList.add("is-pressing");
@@ -119,6 +152,8 @@ export function TargetCursorWrapper() {
     };
 
     window.addEventListener("mousemove", onMove);
+    document.addEventListener("focusin", onFocusIn);
+    document.addEventListener("focusout", onFocusOut);
     window.addEventListener("mousedown", onDown);
     window.addEventListener("mouseup", onUp);
     window.addEventListener("blur", onUp);
@@ -129,6 +164,8 @@ export function TargetCursorWrapper() {
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("mousemove", onMove);
+      document.removeEventListener("focusin", onFocusIn);
+      document.removeEventListener("focusout", onFocusOut);
       window.removeEventListener("mousedown", onDown);
       window.removeEventListener("mouseup", onUp);
       window.removeEventListener("blur", onUp);
@@ -136,6 +173,7 @@ export function TargetCursorWrapper() {
       window.removeEventListener("scroll", onSync);
       window.removeEventListener("resize", onSync);
       styleEl.remove();
+      document.documentElement.classList.remove("bx-native-cursor-active");
     };
   }, [isTouch]);
 

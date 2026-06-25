@@ -53,6 +53,11 @@ export default function JoinPage() {
         if (res.status === 201 || (res.ok && json.redirectTo)) {
           setState({ phase: "success" });
           const dest = json.redirectTo ?? `/lobby/${roomId}`;
+          try {
+            sessionStorage.setItem("bountixx-last-lobby", roomId);
+          } catch {
+            // ignore
+          }
           setTimeout(() => router.replace(dest), 600);
           return;
         }

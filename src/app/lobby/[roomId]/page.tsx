@@ -153,7 +153,25 @@ export default function LobbyPage() {
           router.replace(`/login?next=/lobby/${roomId}`);
           return;
         }
-        if (!res.ok) return;
+
+        if (!res.ok) {
+          // Recover after refresh: re-assert membership then retry once
+          const joinRes = await fetchWithAuth(`/api/rooms/${roomId}/join`, { method: "POST" });
+          const joinJson = (await joinRes.json().catch(() => ({}))) as { redirectTo?: string; roomStatus?: string };
+          if (joinRes.ok && joinJson.redirectTo?.includes("/lobby/")) {
+            const retry = await fetchWithAuth(`/api/rooms/${roomId}`);
+            if (retry.ok) {
+              const json = (await retry.json()) as RoomData;
+              if (json.room.status === "lobby") {
+                setData(json);
+                if (!silent) setLoading(false);
+                return;
+              }
+            }
+          }
+          if (!silent) setLoading(false);
+          return;
+        }
 
         const json = (await res.json()) as RoomData;
 
@@ -167,9 +185,11 @@ export default function LobbyPage() {
         }
 
         setData(json);
-
-        // Sync my ready status from server data
-        // We don't know who "I am" from here, but we rely on polling to stay fresh
+        try {
+          sessionStorage.setItem("bountixx-last-lobby", roomId);
+        } catch {
+          // ignore
+        }
       } catch {
         // ignore
       } finally {
