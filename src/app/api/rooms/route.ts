@@ -164,7 +164,7 @@ export async function POST(req: Request) {
         timerSeconds:    normalizeTimerSeconds(body.timerSeconds) ?? undefined,
         bountyTier:      body.bountyTier ?? "bronze",
         prizePool:       0,
-        questionsJson:   questions.length > 1 ? JSON.stringify(questions) : null,
+        questionsJson:   JSON.stringify(questions),
       })
       .returning();
 

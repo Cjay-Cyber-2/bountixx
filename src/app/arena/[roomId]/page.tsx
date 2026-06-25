@@ -11,6 +11,7 @@ import { useToast } from "@/components/ui/Toast";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { readApiError } from "@/lib/readApiError";
 import { getLanguage } from "@/lib/languages";
+import { getChallengePromptText } from "@/lib/roomQuestions";
 
 /* ─── Types ─── */
 type RoomCategory = "coding" | "trivia" | "logic" | "math" | "writing" | "design" | "meme";
@@ -233,6 +234,50 @@ function TestResults({ testCases, results, ran }: TestResultsProps) {
         );
       })}
       {ran && <p className="font-mono text-[10px] text-haze-3 mt-3">Submit to run against hidden tests</p>}
+    </div>
+  );
+}
+
+/* ─── Challenge prompt (coding + shared) ─── */
+function ChallengePromptCard({
+  prompt,
+  questionCategory,
+  catColor,
+  questionIndex,
+  totalQuestions,
+}: {
+  prompt: string;
+  questionCategory: RoomCategory;
+  catColor: string;
+  questionIndex: number;
+  totalQuestions: number;
+}) {
+  return (
+    <div
+      className="border-b shrink-0 px-5 py-5 md:px-6 md:py-6"
+      style={{ background: "var(--surface-raised)", borderColor: "var(--border-1)" }}
+    >
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <p className="font-mono text-[10px] text-[var(--brand-primary)] tracking-[3px] uppercase">
+          Challenge
+        </p>
+        {questionCategory && (
+          <span
+            className="font-mono text-[10px] px-2 py-0.5 border rounded tracking-wider shrink-0"
+            style={{ color: catColor, borderColor: `${catColor}55`, backgroundColor: `${catColor}14` }}
+          >
+            {questionCategory.toUpperCase()}
+          </span>
+        )}
+      </div>
+      <p className="font-body text-base md:text-lg lg:text-xl text-haze leading-relaxed whitespace-pre-wrap">
+        {prompt}
+      </p>
+      {totalQuestions > 1 && (
+        <p className="font-mono text-[10px] text-[var(--brand-primary)] mt-3 tracking-widest uppercase">
+          Question {questionIndex + 1} of {totalQuestions}
+        </p>
+      )}
     </div>
   );
 }
@@ -769,6 +814,9 @@ export default function ArenaPage() {
   const currentQuestion = data?.questions?.[questionIndex];
   const questionCategory = (currentQuestion?.category ?? data?.room.category ?? "trivia") as RoomCategory;
   const isCoding = questionCategory === "coding";
+  const challengePrompt = data
+    ? getChallengePromptText(currentQuestion, data.room)
+    : "";
 
   const prevQuestionIndexRef = useRef(-1);
 
@@ -973,29 +1021,31 @@ export default function ArenaPage() {
       {/* ── Content ── */}
       <div className="flex flex-col lg:flex-row flex-1 pt-14 lg:h-[calc(100dvh-56px)]">
 
-        {/* Challenge panel */}
+        {/* Challenge panel — desktop sidebar (players + brief) */}
         {(isCoding || data.isAdmin) && (
           <div
-            className="w-full lg:w-[28%] lg:max-w-[320px] border-b lg:border-b-0 lg:border-r flex flex-col overflow-y-auto shrink-0"
+            className="hidden lg:flex w-full lg:w-[28%] lg:max-w-[320px] border-b lg:border-b-0 lg:border-r flex-col overflow-y-auto shrink-0"
             style={{ background: "var(--surface-raised)", borderColor: "var(--border-1)" }}
           >
             <div
               className="px-6 pt-5 pb-4 border-b shrink-0"
               style={{ background: "var(--surface-inset)", borderColor: "var(--border-1)" }}
             >
-              <p className="font-mono text-[10px] text-[var(--brand-primary)] tracking-[3px] uppercase mb-1.5">Challenge Brief</p>
+              <p className="font-mono text-[10px] text-[var(--brand-primary)] tracking-[3px] uppercase mb-1.5">Arena</p>
               <p className="font-display text-base md:text-lg text-haze leading-snug">{room.name}</p>
             </div>
 
             <div className="px-6 py-5 flex-1 overflow-y-auto">
-              <div
-                className="p-4 mb-5 border-l-2 rounded-r-md"
-                style={{ borderLeftColor: catColor, background: "var(--surface-inset)" }}
-              >
-                <p className="font-body text-sm md:text-base text-haze leading-relaxed whitespace-pre-wrap">
-                  {currentQuestion?.taskNormalised ?? room.taskNormalised ?? room.taskRaw}
-                </p>
-              </div>
+              {!isCoding && (
+                <div
+                  className="p-4 mb-5 border-l-2 rounded-r-md"
+                  style={{ borderLeftColor: catColor, background: "var(--surface-inset)" }}
+                >
+                  <p className="font-body text-sm md:text-base text-haze leading-relaxed whitespace-pre-wrap">
+                    {challengePrompt}
+                  </p>
+                </div>
+              )}
 
               <div className="flex flex-wrap gap-2 mb-6">
                 {questionCategory && (
@@ -1042,16 +1092,27 @@ export default function ArenaPage() {
                 onEnded={() => router.replace("/dashboard")}
               />
             ) : isCoding ? (
-              <CodeEditor
-                code={code} setCode={setCode}
-                language={language}
-                onRun={handleRunTests} onSubmit={handleSubmit}
-                disabled={inputDisabled} running={running} submitting={submitting}
-                onPaste={blockPaste}
-                onCopy={blockCopy}
-                onBeforeInput={blockBeforeInput}
-                onDrop={blockDrop}
-              />
+              <>
+                <ChallengePromptCard
+                  prompt={challengePrompt}
+                  questionCategory={questionCategory}
+                  catColor={catColor}
+                  questionIndex={questionIndex}
+                  totalQuestions={totalQuestions}
+                />
+                <div className="flex-1 min-h-0 flex flex-col">
+                  <CodeEditor
+                    code={code} setCode={setCode}
+                    language={language}
+                    onRun={handleRunTests} onSubmit={handleSubmit}
+                    disabled={inputDisabled} running={running} submitting={submitting}
+                    onPaste={blockPaste}
+                    onCopy={blockCopy}
+                    onBeforeInput={blockBeforeInput}
+                    onDrop={blockDrop}
+                  />
+                </div>
+              </>
             ) : (
               /* Centered non-coding Q&A card */
               <div className="flex-1 flex flex-col justify-center items-center p-5 md:p-10 overflow-y-auto w-full">
@@ -1082,7 +1143,7 @@ export default function ArenaPage() {
 
                   <div>
                     <p className="font-body font-semibold text-lg md:text-xl lg:text-2xl text-haze leading-relaxed whitespace-pre-wrap">
-                      {currentQuestion?.taskNormalised ?? room.taskNormalised ?? room.taskRaw}
+                      {challengePrompt}
                     </p>
                     {totalQuestions > 1 && (
                       <p className="font-mono text-xs text-[var(--brand-primary)] mt-4 tracking-widest">
